@@ -3,6 +3,7 @@ Company: Hooli Talent Partners
 Location: Remote (US)
 Work model: Remote
 Pay: $155,000 - $180,000 a year
+Source: jsearch
 
 Hooli Talent Partners is recruiting a Director of FP&A on behalf of our client, Aperture Science, a privately held research company that develops portable energy and materials technologies for industrial and government customers. Aperture Science employs about 1,100 people across two research campuses. This is a direct-hire role; you will be an Aperture Science employee.
 

@@ -3,6 +3,7 @@ Company: Pied Piper
 Location: Remote (US)
 Work model: Remote
 Pay: $160,000 - $185,000 a year
+Source: ats
 
 Pied Piper builds data storage software that companies use to keep large files fast to reach and cheap to store. More than 900 customers run on our platform, including the hospitals that keep patients' imaging records on it and the public libraries that archive their collections with us. We are a 450-person software company with recurring revenue of $140 million, growing about 30 percent a year.
 

@@ -3,6 +3,7 @@ Company: Vandelay Industries
 Location: Chicago, IL
 Work model: Hybrid
 Pay: $150,000 - $170,000 a year
+Source: linkedin_email
 
 Vandelay Industries imports and distributes industrial packaging and specialty plastics to manufacturers across North America. We run twelve distribution centers and employ about 1,800 people, with revenue of $900 million.
 

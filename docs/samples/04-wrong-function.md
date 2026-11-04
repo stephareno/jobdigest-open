@@ -3,6 +3,7 @@ Company: Stark Industries
 Location: Chicago, IL
 Work model: Hybrid
 Pay: $165,000 - $185,000 a year
+Source: ats
 
 Stark Industries designs and manufactures industrial equipment, power systems and precision components for customers in energy, transportation and construction. We are an 11,000-person company with operations in nine countries.
 

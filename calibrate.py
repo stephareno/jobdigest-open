@@ -31,7 +31,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_DIR = os.path.join(ROOT, "docs", "samples")
-FIELDS = {"company": "company", "location": "location", "work model": "work_model", "pay": "comp"}
+FIELDS = {"company": "company", "location": "location", "work model": "work_model", "pay": "comp",
+          "source": "display_source"}
 # The industries tiers the "what drove the ranking" block looks for, in the
 # order the prompt weighs them.
 TIERS = ("strong_yes", "lean_in", "neutral", "lowest_interest", "deprioritize")
@@ -57,6 +58,13 @@ def parse_posting(path):
             body_at = i + 1
             break
     job["description"] = "\n".join(lines[body_at:]).strip()
+    if job.get("display_source"):
+        # PUB-18: a sample may name the source it stands in for ("Source: ats"),
+        # so the digest badge and the Sheet's Source column read like a real
+        # run; its apply link is then a plausible one on example.com.
+        from config import source_key
+        job["source"] = source_key(job.pop("display_source"))
+        job["apply_link"] = f"https://example.com/jobs/{os.path.splitext(job['file'])[0]}"
     return job
 
 

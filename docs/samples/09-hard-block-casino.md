@@ -3,6 +3,7 @@ Company: Canto Bight Casino Group
 Location: Las Vegas, NV
 Work model: In-office
 Pay: $160,000 - $190,000 a year
+Source: adzuna
 
 Canto Bight Casino Group owns and operates four resort casinos with hotels, restaurants and entertainment venues. We employ about 9,000 people and host more than twelve million guests a year.
 

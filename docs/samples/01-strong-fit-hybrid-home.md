@@ -3,6 +3,7 @@ Company: Wonka Industries
 Location: Chicago, IL
 Work model: Hybrid
 Pay: $175,000 - $195,000 a year
+Source: ats
 
 Wonka Industries makes chocolate bars, seasonal candy and baking ingredients sold in grocery, club and convenience stores across North America. We run three factories, a test kitchen and a distribution center, and we are a 2,400-person, family-owned consumer products company with $1.3 billion in annual revenue.
 

@@ -3,6 +3,7 @@ Company: Dunder Mifflin
 Location: Remote (US)
 Work model: Remote
 Pay: $95,000 - $110,000 a year
+Source: adzuna
 
 Dunder Mifflin is a regional paper and office supplies distributor serving small and mid-size businesses across the Northeast and Midwest. We run eleven branches with about 900 employees and annual revenue of $310 million.
 

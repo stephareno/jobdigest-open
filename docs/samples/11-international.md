@@ -2,6 +2,7 @@
 Company: Gringotts
 Location: London, United Kingdom
 Work model: Hybrid
+Source: adzuna
 
 Gringotts is a private bank serving families, businesses and institutions from its headquarters in London. It has kept its customers' assets safe for generations and employs about 3,000 people across the United Kingdom.
 

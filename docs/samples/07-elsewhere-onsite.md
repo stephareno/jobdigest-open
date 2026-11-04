@@ -3,6 +3,7 @@ Company: Los Pollos Hermanos
 Location: Albuquerque, NM
 Work model: In-office
 Pay: $140,000 - $155,000 a year
+Source: jsearch
 
 Los Pollos Hermanos is a fast-casual restaurant chain with 140 locations across the Southwest, known for fresh chicken, house-made sides and fast service. We are a 4,000-person company, and we are adding twenty restaurants a year.
 

@@ -3,6 +3,7 @@ Company: Pym Technologies
 Location: Seattle, WA
 Work model: Hybrid
 Pay: $170,000 - $200,000 a year
+Source: bespoke
 
 Pym Technologies develops advanced materials: lightweight alloys, specialty coatings and the processes that make them at scale. Our materials are used by aircraft, medical device and electronics manufacturers. We are a 1,500-person company with a research campus and two production sites, and our revenue has doubled in four years.
 

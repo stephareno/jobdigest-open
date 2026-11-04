@@ -2,6 +2,7 @@
 Company: Wayne Enterprises
 Location: Chicago, IL
 Work model: Hybrid
+Source: watchlist
 
 Wayne Enterprises is a family-controlled holding company. Its businesses span commercial real estate, property management and professional services. The group employs about 6,000 people, and its Chicago office runs finance for the holding company and three of its operating businesses.
 
