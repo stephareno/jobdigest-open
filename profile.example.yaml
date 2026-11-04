@@ -429,6 +429,10 @@ scoring:
   # criterion, with no points. The scoring call only reports whether it
   # applies; the code then sets the score to 0 and files the role on the
   # Disqualified tab ("Dealbreaker: <id>."), never emailed.
+  # A dealbreaker also needs evidence_terms: the words a posting would use to
+  # say it ("no direct reports"). The scoring call must quote the posting's
+  # sentence for it; the code applies the dealbreaker only when that sentence
+  # is really in the posting and contains one of these phrases (PUB-19).
   # Example: five criteria and one dealbreaker for a finance leader. Write your own.
   role_criteria:
     - id: owns_plan
@@ -449,6 +453,7 @@ scoring:
     - id: no_team
       dealbreaker: true
       criterion: Individual contributor role with no team
+      evidence_terms: ["individual contributor", "no direct reports", "no team", "sole", "without a team"]
   # Prompt: mission and values factor, applied on top of the criteria above.
   # enabled false drops the whole block from the prompt.
   mission_values:

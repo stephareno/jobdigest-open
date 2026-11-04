@@ -97,6 +97,7 @@ class LocationConfig:
     function_cap: int                # scoring.function_cap (SCO-09)
     criteria: tuple = ()             # ((id, points), ...) from scoring.role_criteria (PUB-09)
     dealbreakers: tuple = ()         # ids of the dealbreaker role criteria (PUB-10)
+    dealbreaker_terms: tuple = ()    # ((id, (evidence term, ...)), ...) (PUB-19)
 
     def state_override(self, abbr):
         """The fixed penalty for a state-only location, or None."""
@@ -140,6 +141,8 @@ def build_config(profile):
         criteria=tuple((c["id"], c["points"]) for c in scoring.get("role_criteria") or ()
                        if not c.get("dealbreaker")),
         dealbreakers=tuple(c["id"] for c in scoring.get("role_criteria") or () if c.get("dealbreaker")),
+        dealbreaker_terms=tuple((c["id"], tuple(c.get("evidence_terms") or ()))
+                                for c in scoring.get("role_criteria") or () if c.get("dealbreaker")),
     )
 
 
@@ -434,6 +437,59 @@ def location_penalty(job, tier=None):
     return 0 if tier.penalty == DISQUALIFY else tier.penalty
 
 
+# PUB-19: a dealbreaker role criterion applies only on evidence the code can
+# check. The scoring call quotes the posting's sentence for it
+# (dealbreaker_evidence); the quote must be in the description (whitespace and
+# case aside), at least DEALBREAKER_QUOTE_MIN characters, and contain one of the
+# criterion's evidence_terms (whole words). A hit that fails is not applied:
+# it is recorded in job["dealbreaker_unverified"] and logged.
+DEALBREAKER_QUOTE_MIN = 20
+
+
+def _fold(text):
+    return " ".join(str(text or "").split()).casefold()
+
+
+def verify_dealbreaker(job, cid):
+    """(applies, reason) for the dealbreaker criterion cid on this job:
+    reason is "" when it applies, else why the evidence does not hold."""
+    quote = (job.get("dealbreaker_evidence") or {}).get(cid)
+    if not quote or not str(quote).strip():
+        return False, "no sentence quoted"
+    folded = _fold(quote)
+    if len(folded) < DEALBREAKER_QUOTE_MIN:
+        return False, f"quote under {DEALBREAKER_QUOTE_MIN} characters"
+    if folded not in _fold(job.get("description")):
+        return False, "quote not found in the posting"
+    terms = dict(CONFIG.dealbreaker_terms).get(cid, ())
+    if not any(re.search(r"(?<!\w)" + re.escape(_fold(t)) + r"(?!\w)", folded) for t in terms):
+        return False, "quote has none of the evidence terms"
+    return True, ""
+
+
+def verified_dealbreaker(job):
+    """The first dealbreaker criterion the scoring call reported (in profile
+    order) whose evidence holds, or None. Every reported one whose evidence
+    fails is recorded in job["dealbreaker_unverified"] ({id, reason, quote})
+    and logged; a job with none of those carries no such field."""
+    job.pop("dealbreaker_unverified", None)
+    found, unverified = None, []
+    for cid in job.get("criteria_hits") or ():
+        if cid not in CONFIG.dealbreakers:
+            continue
+        ok, reason = verify_dealbreaker(job, cid)
+        if ok:
+            found = found or cid
+            continue
+        unverified.append({"id": cid, "reason": reason,
+                           "quote": (job.get("dealbreaker_evidence") or {}).get(cid, "")})
+        print(f"[Scorer] dealbreaker {cid} reported without verifiable evidence; ignored: {reason} "
+              f"({job.get('title', '')} at {job.get('company', '')})")
+    if unverified:
+        job["dealbreaker_unverified"] = unverified
+    return found
+
+
 def apply_location_tier(job, base_score, record=True):
     """Set the FIL-09 location fields on a scored job and return its final score.
 
@@ -485,7 +541,7 @@ def apply_location_tier(job, base_score, record=True):
     # a dealbreaker role criterion the scoring call reported comes first; the
     # code decides, whatever score the call returned.
     dealbreaker = None
-    criterion = next((h for h in job.get("criteria_hits") or () if h in CONFIG.dealbreakers), None)
+    criterion = verified_dealbreaker(job)
     if criterion and not job.get("hard_block_industry"):
         dealbreaker = criterion_name(criterion)
     elif base_score > 0:

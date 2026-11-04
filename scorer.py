@@ -157,6 +157,9 @@ Description: {job.get('description', 'None')[:JD_CHARS]}
             "function_fit": _function_fit(result, job),
             # PUB-09: the scoring.role_criteria ids the call found in the posting
             "criteria_hits": criteria_hits(result, job),
+            # PUB-19: the sentence quoted for each reported dealbreaker; the
+            # code checks it (location.verify_dealbreaker) before applying it
+            "dealbreaker_evidence": dealbreaker_evidence(result),
         }
     except ApiAccessError:
         # OPS-12: billing/auth/permission fails every call the same way. Scoring
@@ -231,6 +234,23 @@ def criteria_hits(result, job, criteria=None):
         print(f"[Scorer] criteria_hits {unknown} not in scoring.role_criteria for "
               f"{job.get('title', '')} at {job.get('company', '')}: dropped")
     return [cid for cid in known if cid in hits]
+
+
+def dealbreaker_evidence(result, criteria=None):
+    """PUB-19: the reply's dealbreaker_evidence as {dealbreaker id: quoted
+    sentence}, for the profile's dealbreaker criteria only. Anything else
+    (a points criterion, an unknown id, a non-string quote) is dropped; a
+    missing or malformed field is an empty dict."""
+    deals = {c["id"] for c in (criteria or PROFILE["scoring"]["role_criteria"]) if c.get("dealbreaker")}
+    value = result.get("dealbreaker_evidence")
+    if not isinstance(value, dict):
+        return {}
+    out = {}
+    for key, quote in value.items():
+        cid = str(key).strip().lower()
+        if cid in deals and isinstance(quote, str) and quote.strip():
+            out[cid] = " ".join(quote.split())
+    return out
 
 
 def _function_fit(result, job):

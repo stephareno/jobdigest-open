@@ -400,6 +400,11 @@ def drivers(job, profile):
             f"{h} ({points[h]:+d})" if h in points else h for h in hits))
     elif job.get("base_score"):
         out.append("scoring.role_criteria: none named by the scoring call")
+    # PUB-19: a dealbreaker the call reported but the code could not verify.
+    for miss in job.get("dealbreaker_unverified") or ():
+        quote = f' (quoted: "{_cut(miss["quote"], 90)}")' if miss.get("quote") else ""
+        out.append(f"scoring.role_criteria.{miss['id']}: dealbreaker reported without verifiable evidence; "
+                   f"ignored: {miss['reason']}{quote}")
     reason = job.get("location_reason", "")
     deal = job.get("dealbreaker")
     if deal:

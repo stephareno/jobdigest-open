@@ -520,7 +520,9 @@ import location
 import scorer
 from tests.llm_stub import StubProvider
 
-NO_TEAM = {"id": "no_team", "dealbreaker": True, "criterion": "Individual contributor role with no team"}
+NO_TEAM = {"id": "no_team", "dealbreaker": True, "criterion": "Individual contributor role with no team",
+           "evidence_terms": ["individual contributor", "no direct reports", "no team", "sole", "without a team"]}
+NO_TEAM_SENTENCE = "This is an individual contributor role with no direct reports."
 
 
 def _criteria_errors(entry):
@@ -554,7 +556,12 @@ def test_dealbreakers_render_in_their_own_block_and_in_the_ids():
             "to the sentence in the posting that shows it. Judge it on the role as posted,\n"
             "in whatever department: a role outside the target department is\n"
             "function_fit's question, never a dealbreaker's.\n"
-            "- no_team: Individual contributor role with no team\n") in text     # PUB-11 wording
+            "For each dealbreaker you report, copy that sentence from the posting, word\n"
+            "for word, into dealbreaker_evidence under the dealbreaker's id. The code\n"
+            "checks the sentence against the posting: a dealbreaker without a sentence\n"
+            "that is in the posting and says it plainly is ignored.\n"
+            "- no_team: Individual contributor role with no team\n") in text     # PUB-11, PUB-19 wording
+    assert '"dealbreaker_evidence": {"<id of each dealbreaker in criteria_hits>"' in text
     ids = text.split('"criteria_hits": ["<the id of each SCORING criterion that applies, from: ')[1].split(">")[0]
     assert ids.endswith(", no_team")
     scoring = text.split("SCORING (")[1].split("Hard disqualify")[0]
@@ -582,8 +589,8 @@ def with_no_team(monkeypatch):
     monkeypatch.setattr(scorer.time, "sleep", lambda s: None)
 
 
-def _reply(hits, score=9):
-    payload = {"score": score, "criteria_hits": hits,
+def _reply(hits, score=9, evidence=None):
+    payload = {"score": score, "criteria_hits": hits, "dealbreaker_evidence": evidence or {},
                "rationale": {"company": "Robot maker.", "role": "Owns internal IT.", "culture": "candid"},
                "hard_block_industry": None, "is_cool_company_wrong_role": False,
                "function_fit": "leads_department", "work_model": "Remote", "city": None, "state": None,
@@ -591,17 +598,18 @@ def _reply(hits, score=9):
     return StubProvider(lambda call: json.dumps(payload))
 
 
-def _scored(monkeypatch, hits, score=9):
-    monkeypatch.setattr(llm, "_provider", _reply(hits, score))
+def _scored(monkeypatch, hits, score=9, evidence=None, description=""):
+    monkeypatch.setattr(llm, "_provider", _reply(hits, score, evidence))
     job = {"title": "VP IT", "company": "Acme", "location": "Remote, US", "work_model": "Remote",
-           "description": "", "comp": "Pay range: $250,000 - $300,000"}
+           "description": description, "comp": "Pay range: $250,000 - $300,000"}
     scorer.score_jobs([job])
     return job
 
 
 def test_a_reported_dealbreaker_scores_zero_with_the_reason(with_no_team, monkeypatch):
     first = profile_loader.read()["scoring"]["role_criteria"][0]["id"]
-    job = _scored(monkeypatch, [first, "no_team"])
+    job = _scored(monkeypatch, [first, "no_team"], evidence={"no_team": NO_TEAM_SENTENCE},
+                  description=f"We are hiring a VP of IT. {NO_TEAM_SENTENCE} Remote.")   # PUB-19: verified
     assert job["score"] == 0 and job["base_score"] == 9
     assert job["dealbreaker"] == "no team" and job["dealbreaker_criterion"] == "no_team"
     blurb, notes = location.split_rationale(job["rationale"])
@@ -622,7 +630,8 @@ def test_no_dealbreaker_hit_leaves_the_score_alone(with_no_team, monkeypatch):
 
 
 def test_the_code_decides_even_when_the_model_returns_zero(with_no_team, monkeypatch):
-    job = _scored(monkeypatch, ["no_team"], score=0)
+    job = _scored(monkeypatch, ["no_team"], score=0, evidence={"no_team": NO_TEAM_SENTENCE},
+                  description=NO_TEAM_SENTENCE)
     assert job["score"] == 0 and job["dealbreaker"] == "no team" and scorer.is_disqualified(job)
 
 

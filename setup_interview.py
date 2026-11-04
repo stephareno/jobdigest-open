@@ -76,7 +76,10 @@ class Interview:
         while True:
             answer = self._prompt(question + " (comma-separated" + (", - for none)" if allow_empty else ")"), shown)
             if not answer:
-                return list(default)
+                if default or allow_empty:
+                    return list(default)
+                self.say("   at least one, please")
+                continue
             values = [] if answer == "-" else [v.strip() for v in answer.split(",") if v.strip()]
             if metros:
                 values = _pair_states(values)
@@ -161,8 +164,14 @@ def role_criteria(ui, current):
         kept = next((c for c in deals if c["criterion"] == text), None)
         if kept:
             taken.add(kept["id"])
-        out.append(dict(kept) if kept else {"id": _criterion_id(text, taken), "dealbreaker": True,
-                                             "criterion": text})
+            out.append(dict(kept))
+            continue
+        # PUB-19: the words a posting would use to say it; the dealbreaker
+        # applies only when the quoted sentence holds one of them.
+        terms = ui.items(f"Words a posting would use to say \"{text}\" (e.g. no direct reports)", [],
+                         allow_empty=False)
+        out.append({"id": _criterion_id(text, taken), "dealbreaker": True, "criterion": text,
+                    "evidence_terms": terms})
     return out
 
 

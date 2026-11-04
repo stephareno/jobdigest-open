@@ -93,7 +93,7 @@ _SCORE_FIELDS = ("score", "rationale", "base_score", "location_penalty",
                  "location_method", "location_reason", "home_bonus", "dc_bonus", "comp_adjustment", "relo",
                  "work_model", "comp", "hard_block_industry", "is_insurance", "is_cool_company_wrong_role",
                  "function_fit", "function_capped", "criteria_hits", "work_model_adjustment", "dealbreaker",
-                 "dealbreaker_criterion")
+                 "dealbreaker_criterion", "dealbreaker_evidence", "dealbreaker_unverified")
 
 
 def dedupe(jobs):

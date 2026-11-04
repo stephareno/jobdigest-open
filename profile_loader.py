@@ -305,7 +305,10 @@ def _check_place(value, path, errors):
 
 def _check_criteria(value, path, errors):
     """scoring.role_criteria: a non-empty list of {id, points, criterion}, or
-    {id, dealbreaker: true, criterion} (PUB-10): points or dealbreaker, not both."""
+    {id, dealbreaker: true, criterion, evidence_terms} (PUB-10): points or
+    dealbreaker, not both. PUB-19: a dealbreaker needs evidence_terms, a
+    non-empty list of short phrases, one of which must appear in the sentence
+    the scoring call quotes for it; points-based criteria take none."""
     if not isinstance(value, list):
         errors.append(f"{path}: must be a list of criteria (id, points, criterion), got {_type_name(value)}")
         return
@@ -319,9 +322,9 @@ def _check_criteria(value, path, errors):
             errors.append(f"{sub}: must be a mapping with id, points and criterion, got {_type_name(item)}")
             continue
         for key in item:
-            if key not in ("id", "points", "criterion", "dealbreaker"):
+            if key not in ("id", "points", "criterion", "dealbreaker", "evidence_terms"):
                 errors.append(f"{sub}.{key}: unknown field (a criterion takes id, points or dealbreaker, "
-                              f"and criterion)")
+                              f"and criterion; a dealbreaker also takes evidence_terms)")
         cid = item.get("id")
         if not isinstance(cid, str) or not _CRITERION_ID_RE.fullmatch(cid):
             errors.append(f"{sub}.id: required, snake_case (lower-case letters, digits, underscores), got {cid!r}")
@@ -337,6 +340,13 @@ def _check_criteria(value, path, errors):
             if points not in (None, 0):
                 errors.append(f"{sub}: has points ({points!r}) and dealbreaker: true; give one or the "
                               f"other (a dealbreaker is never scored: omit points or set it to 0)")
+            terms = item.get("evidence_terms")
+            if (not isinstance(terms, list) or not terms
+                    or not all(isinstance(t, str) and t.strip() for t in terms)):
+                errors.append(f"{sub}.evidence_terms: required for a dealbreaker, a non-empty list of short "
+                              f"phrases a posting would use to say it (\"no direct reports\"); got {terms!r}")
+        elif "evidence_terms" in item:
+            errors.append(f"{sub}.evidence_terms: only a dealbreaker takes evidence_terms")
         elif points is None or not _type_ok("int", points):
             errors.append(f"{sub}.points: required, a non-zero integer from {low} to +{high}, got {points!r}")
         elif points == 0 or not low <= points <= high:

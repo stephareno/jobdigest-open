@@ -19,6 +19,10 @@ is silent or ambiguous, it does not apply. Report one only if you can point
 to the sentence in the posting that shows it. Judge it on the role as posted,
 in whatever department: a role outside the target department is
 function_fit's question, never a dealbreaker's.
+For each dealbreaker you report, copy that sentence from the posting, word
+for word, into dealbreaker_evidence under the dealbreaker's id. The code
+checks the sentence against the posting: a dealbreaker without a sentence
+that is in the posting and says it plainly is ignored.
 {{rubric.dealbreakers}}{{/if}}
 
 {{#if scoring.mission_values.enabled}}MISSION & VALUES FIT — a weighted factor applied on top of the criteria above:
@@ -128,7 +132,8 @@ Return ONLY this JSON:
 {
   "score": <integer 0-{{scoring.max_score}}>,
   "criteria_hits": ["<the id of each SCORING criterion that applies, from: {{rubric.ids}}>"],
-  "rationale": {
+{{#if rubric.dealbreakers}}  "dealbreaker_evidence": {"<id of each dealbreaker in criteria_hits>": "<the sentence from the posting that shows it, copied exactly>"},
+{{/if}}  "rationale": {
     "company": "<fragment: size, what they make, who for>",
     "role": "<{{roles.top_seat_phrase}}; what it owns, as keywords>",
     "culture": "<keywords, or: no signal in posting.>"
