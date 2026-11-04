@@ -201,7 +201,7 @@ def test_the_allowlist_ships_docs_as_two_documents_and_the_site():
                if p.is_file() and not {".git", ".venv", "__pycache__"} & set(p.parts)]
     files, _ = ep.select(patterns, tracked)
     docs = sorted(f for f in files if f.startswith("docs/") and not f.startswith("docs/assets/"))
-    assert docs == ["docs/PRD.md", "docs/SETUP_GUIDE.md", "docs/index.html"]
+    assert docs == ["docs/.nojekyll", "docs/PRD.md", "docs/SETUP_GUIDE.md", "docs/index.html"]
     assert ep.layout_violations(files) == []
     assets = {f.split("/", 2)[2] for f in files if f.startswith("docs/assets/")}
     assert {"architecture.svg", "sample_digest.png", "sample_sheet.png", "sample_digest.html",
