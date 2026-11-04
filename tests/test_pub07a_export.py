@@ -177,3 +177,16 @@ def test_refuses_a_non_empty_out_dir(tmp_path):
     (tmp_path / "keep.txt").write_text("x")
     with pytest.raises(SystemExit, match="not empty"):
         ep.main(["--out", str(tmp_path)])
+
+
+def test_the_manifest_is_written_beside_the_export_not_inside_it(tmp_path):
+    """PUB-07c: the manifest is a local record; nothing in <dir> names it."""
+    out = tmp_path / "jda-export"
+    (out / "sub").mkdir(parents=True)
+    (out / "main.py").write_text("x = 1\n")
+    (out / "sub" / "a.txt").write_text("ab")
+    assert ep.write_manifest(out, "abc1234") == (2, 8)
+    manifest = tmp_path / "jda-export.EXPORT_MANIFEST.txt"
+    assert ep.manifest_path(out) == manifest and manifest.exists()
+    assert ep.list_files(out) == ["main.py", "sub/a.txt"]
+    assert "abc1234" in manifest.read_text() and "sub/a.txt" in manifest.read_text()

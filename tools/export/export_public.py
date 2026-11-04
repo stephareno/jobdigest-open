@@ -16,7 +16,9 @@ then rewrites what must differ in the public version:
   - workflow schedule blocks regenerated for the example profile's timezone
     (python main.py cron --write).
 
-It writes <dir>/EXPORT_MANIFEST.txt (every file, its size, the source commit).
+It writes the manifest (every file, its size, the source commit) next to the
+export, as <dir>.EXPORT_MANIFEST.txt beside <dir>, never inside it: the manifest
+is a local record and does not ship (PUB-07c).
 
 PUB-15: the public docs link to the repository as OWNER/REPO. --repo OWNER/NAME
 (default stephareno/jobdigest-open, the public repository: PUB-07b) replaces
@@ -57,7 +59,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 ALLOWLIST = Path(__file__).resolve().parent / "allowlist.txt"
 EXAMPLE_PROFILE = "profile.example.yaml"
-MANIFEST = "EXPORT_MANIFEST.txt"
+MANIFEST = "EXPORT_MANIFEST.txt"   # suffix of the file written beside <dir>, never inside it
 
 # A safety net, not the selection: if the allowlist ever matches one of these,
 # the export stops rather than ship it.
@@ -407,13 +409,18 @@ def list_files(out: Path) -> list[str]:
     return sorted(files)
 
 
+def manifest_path(out: Path) -> Path:
+    """The manifest's place: beside the export directory, so it never ships."""
+    return out.parent / f"{out.name}.{MANIFEST}"
+
+
 def write_manifest(out: Path, sha: str) -> tuple[int, int]:
-    files = [f for f in list_files(out) if f != MANIFEST]
+    files = list_files(out)
     sizes = [(out / f).stat().st_size for f in files]
     lines = [f"# Public export of commit {sha}",
              f"# {len(files)} files, {sum(sizes)} bytes. Columns: size in bytes, path.", ""]
     lines += [f"{size:>10}  {f}" for f, size in zip(files, sizes)]
-    (out / MANIFEST).write_text("\n".join(lines) + "\n")
+    manifest_path(out).write_text("\n".join(lines) + "\n")
     return len(files), sum(sizes)
 
 
@@ -591,7 +598,7 @@ def main(argv=None) -> int:
     regenerate(out)
     clean_scratch(out)
     count, size = write_manifest(out, sha)
-    log(f"{count} files, {size} bytes; manifest at {out / MANIFEST}")
+    log(f"{count} files, {size} bytes; manifest at {manifest_path(out)} (not shipped)")
 
     if not args.check:
         return 0
