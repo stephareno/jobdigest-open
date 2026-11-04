@@ -8,6 +8,9 @@ then rewrites what must differ in the public version:
 
   - header-only skeletons for the sourcing CSVs and data/companies.yaml, so a
     fresh install starts with no companies;
+  - docs/public/ (where the root README.md and AGENTS.md are staged) never
+    ships; --check fails on any file under it and on any two shipped files
+    with identical content (PUB-20);
   - ROADMAP.md reduced to its framework (IDs, statuses, chat names, the Live
     rule) with an empty index; LICENSE (MIT); CLAUDE.md as "@AGENTS.md";
     AGENTS.md and README.md from docs/public/, or placeholders;
@@ -67,7 +70,8 @@ NEVER = ["profile.yaml", "*state*.json", "state/*", "seen_jobs.json", "bespoke_c
          "service-account.json", ".env", ".env.*", "connections.csv", "connections.py", "*.docx",
          "ROADMAP.md", ".claude/*", "chat-export-*", "Claude outputs/*", "*__pycache__*", ".venv/*",
          "out/*", "sourcing/*.csv", "sourcing/*.csv.gz", "data/dream_companies.txt",
-         "data/companies.yaml", "company_profiles.json", "status_email_cache.json"]
+         "data/companies.yaml", "company_profiles.json", "status_email_cache.json",
+         "docs/public/*"]   # PUB-20: staged copies of the root README.md and AGENTS.md
 
 # Header-only CSVs written in place of the maintainer's, header read from the
 # committed file so it always matches what the code expects.
@@ -427,6 +431,28 @@ def write_manifest(out: Path, sha: str) -> tuple[int, int]:
 # --- --check -------------------------------------------------------------------------
 
 
+def layout_violations(files: list[str]) -> list[str]:
+    """PUB-20: shipped paths that break the public layout (docs/public/ is
+    v2-only staging; its two files ship at the root)."""
+    return [f for f in files if f.startswith("docs/public/")]
+
+
+def duplicate_files(out: Path, files: list[str]) -> list[tuple[str, str]]:
+    """PUB-20: every pair of shipped files with identical content, each pair
+    (first path, later path) in path order."""
+    import hashlib
+    first: dict[str, str] = {}
+    pairs = []
+    for rel in sorted(files):
+        digest = hashlib.sha256((out / rel).read_bytes()).hexdigest()
+        if digest in first:
+            pairs.append((first[digest], rel))
+        else:
+            first[digest] = rel
+    return pairs
+
+
+
 def pytest_pin() -> str:
     for line in show("tools/requirements.txt").decode().splitlines():
         if line.strip().startswith("pytest=="):
@@ -605,6 +631,16 @@ def main(argv=None) -> int:
 
     failures = []
     shipped = set(list_files(out))
+    bad = layout_violations(sorted(shipped))
+    log(f"check: layout: {len(bad)} file(s) under docs/public/")
+    if bad:
+        failures.append(f"docs/public/ shipped: {', '.join(bad)}")
+    dupes = duplicate_files(out, sorted(shipped))
+    for a, b in dupes:
+        print(f"  duplicate content: {a} == {b}")
+    log(f"check: duplicates: {len(dupes)} pair(s) of identical files")
+    if dupes:
+        failures.append(f"{len(dupes)} pair(s) of shipped files with identical content")
     passed, summary, skips = run_suite(out)
     log(f"check: tests: {summary}")
     if not passed:

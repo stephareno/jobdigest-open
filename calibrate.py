@@ -1,6 +1,6 @@
 # calibrate.py — `python main.py calibrate`: how does this profile rank postings? (PUB-06)
 #
-#   python main.py calibrate --dir docs/samples   # the twelve sample postings
+#   python main.py calibrate --dir examples/postings   # the twelve sample postings
 #   python main.py calibrate --dir my_postings    # any folder of .md / .txt postings
 #   python main.py calibrate --titles             # live postings: title gate + country filter, no model calls
 #   python main.py calibrate                      # live postings: score up to --max (default 15)
@@ -30,7 +30,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DIR = os.path.join(ROOT, "docs", "samples")
+DEFAULT_DIR = os.path.join(ROOT, "examples", "postings")
 FIELDS = {"company": "company", "location": "location", "work model": "work_model", "pay": "comp",
           "source": "display_source"}
 # The industries tiers the "what drove the ranking" block looks for, in the
@@ -548,7 +548,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog="python main.py calibrate",
                                      description="Rank postings under this profile: the samples in a folder, "
                                                  "or live postings from the sources (PUB-06, PUB-10)")
-    parser.add_argument("--dir", help="score the .md/.txt postings in this folder (docs/samples has twelve)")
+    parser.add_argument("--dir", help="score the .md/.txt postings in this folder (examples/postings has twelve)")
     parser.add_argument("--titles", action="store_true",
                         help="live postings through the title gate and country filter only: no model calls")
     parser.add_argument("--sources", help="comma-separated sources to fetch (default: the enabled fast ones, "

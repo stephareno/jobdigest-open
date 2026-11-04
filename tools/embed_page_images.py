@@ -1,6 +1,6 @@
 # tools/embed_page_images.py — put the generated sample images into docs/index.html (PUB-16)
 #
-#   python tools/render_sample_sheet.py    # writes docs/sample_digest.png and docs/sample_sheet.png
+#   python tools/render_sample_sheet.py    # writes docs/assets/sample_digest.png and docs/assets/sample_sheet.png
 #   python tools/embed_page_images.py      # replaces the page's two embedded images with them
 #   python tools/embed_page_images.py --check   # exit 1 if the page does not carry the current PNGs
 #
@@ -21,8 +21,8 @@ PAGE = ROOT / "docs" / "index.html"
 
 # (alt text starts with, PNG, the scale it was rendered at)
 IMAGES = (
-    ("A sample digest email", ROOT / "docs" / "sample_digest.png", 1),
-    ("A Google Sheet", ROOT / "docs" / "sample_sheet.png", 1.5),
+    ("A sample digest email", ROOT / "docs" / "assets" / "sample_digest.png", 1),
+    ("A Google Sheet", ROOT / "docs" / "assets" / "sample_sheet.png", 1.5),
 )
 
 IMG_RE = re.compile(r'<img\b[^>]*>', re.S)

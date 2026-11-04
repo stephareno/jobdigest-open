@@ -168,7 +168,7 @@ def test_setup_from_document_stops_on_an_access_error_and_the_cli_exits_red(monk
         llm.complete("m", None, [{"role": "user", "content": "x"}], 1, purpose="scoring call")
     import calibrate
     monkeypatch.setattr(calibrate, "main", calibrate_main)
-    assert cli.early(["calibrate", "--dir", "docs/samples"]) == 1
+    assert cli.early(["calibrate", "--dir", "examples/postings"]) == 1
     assert "::error title=Anthropic API access failed::scoring call failed: credit balance" in capsys.readouterr().out
 
 
@@ -232,7 +232,7 @@ def test_each_call_site_names_its_model_and_json_mode(monkeypatch, llm_stub):
     applied_doc.claude_extract("1 Acme - VP IT", "Applied 1/2/2026")
     bespoke.extract_jobs("Acme", "<html></html>", "https://acme.com/careers")
     websites.ModelGuesser(config.PROFILE_MODEL).guess("Acme")
-    setup_document.propose(str(ROOT / "docs" / "samples" / "02-strong-fit-remote.md"), "claude-sonnet-4-6")
+    setup_document.propose(str(ROOT / "examples" / "postings" / "02-strong-fit-remote.md"), "claude-sonnet-4-6")
 
     asked = [(c["model"], c["json_mode"]) for c in stub.calls]
     assert asked == [

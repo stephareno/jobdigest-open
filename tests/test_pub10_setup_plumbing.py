@@ -324,7 +324,7 @@ def test_slow_sources_run_only_when_named():
 
 def test_dir_keeps_the_offline_mode_and_rejects_live_flags(capsys):
     with pytest.raises(SystemExit):
-        calibrate.main(["--dir", "docs/samples", "--titles"])
+        calibrate.main(["--dir", "examples/postings", "--titles"])
 
 
 # --- STEP 4: opt-in inbox readers ----------------------------------------------------
@@ -777,7 +777,7 @@ def _denylist():
 def test_sample_renders_carry_no_personal_values(name):
     deny = _denylist()
     assert len(deny) >= 3                         # name, short name, email
-    text = (ROOT / "docs" / name).read_text().casefold()
+    text = (ROOT / "docs" / "assets" / name).read_text().casefold()
     # Whole words: a short name ("Sam") must not match inside "Sample".
     found = sorted(v for v in deny if re.search(r"(?<!\w)" + re.escape(v.casefold()) + r"(?!\w)", text))
-    assert found == [], f"docs/{name} must be rendered under profile.example.yaml (tools/render_sample_sheet.py)"
+    assert found == [], f"docs/assets/{name} must be rendered under profile.example.yaml (tools/render_sample_sheet.py)"

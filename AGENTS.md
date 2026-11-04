@@ -88,6 +88,7 @@ tools/                    resolve_ats, probe_parked_boards, build_us_places, bui
 data/                     us_places.tsv.gz, company_lists/, companies.yaml, dream_companies.txt
 sourcing/                 parked_boards.csv, bespoke lists, startup-tier CSV (written by resolve)
 state/pending/            queued batches (workflow-written)
-docs/                     PRD.md, SETUP_GUIDE.md, samples/, sample_digest.html
+docs/                     PRD.md, SETUP_GUIDE.md; index.html (the Pages site) and assets/ (its images, the sample renders)
+examples/postings/        twelve sample postings (calibrate --dir, digest --dry-run --from-calibrate)
 tests/                    conftest forces the test profile; golden/ holds rendered prompts
 ```

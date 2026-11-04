@@ -190,3 +190,36 @@ def test_the_manifest_is_written_beside_the_export_not_inside_it(tmp_path):
     assert ep.manifest_path(out) == manifest and manifest.exists()
     assert ep.list_files(out) == ["main.py", "sub/a.txt"]
     assert "abc1234" in manifest.read_text() and "sub/a.txt" in manifest.read_text()
+
+
+# --- PUB-20: layout and duplicates ----------------------------------------------
+
+
+def test_the_allowlist_ships_docs_as_two_documents_and_the_site():
+    patterns = ep.read_allowlist(ep.ALLOWLIST.read_text())
+    tracked = [str(p.relative_to(ROOT)) for p in ROOT.rglob("*")
+               if p.is_file() and not {".git", ".venv", "__pycache__"} & set(p.parts)]
+    files, _ = ep.select(patterns, tracked)
+    docs = sorted(f for f in files if f.startswith("docs/") and not f.startswith("docs/assets/"))
+    assert docs == ["docs/PRD.md", "docs/SETUP_GUIDE.md", "docs/index.html"]
+    assert ep.layout_violations(files) == []
+    assets = {f.split("/", 2)[2] for f in files if f.startswith("docs/assets/")}
+    assert {"architecture.svg", "sample_digest.png", "sample_sheet.png", "sample_digest.html",
+            "sample_sheet.html"} <= assets
+    postings = [f for f in files if f.startswith("examples/")]
+    assert len(postings) == 12 and all(f.startswith("examples/postings/") for f in postings)
+
+
+def test_docs_public_is_a_layout_violation_and_never_ships():
+    assert ep.layout_violations(["docs/PRD.md", "docs/public/README.md"]) == ["docs/public/README.md"]
+    assert ep.never_violations(["docs/public/AGENTS.md"]) == ["docs/public/AGENTS.md"]
+
+
+def test_duplicate_files_lists_both_paths_of_each_identical_pair(tmp_path):
+    (tmp_path / "docs" / "public").mkdir(parents=True)
+    (tmp_path / "README.md").write_text("same")
+    (tmp_path / "docs" / "public" / "README.md").write_text("same")
+    (tmp_path / "AGENTS.md").write_text("different")
+    files = ["AGENTS.md", "README.md", "docs/public/README.md"]
+    assert ep.duplicate_files(tmp_path, files) == [("README.md", "docs/public/README.md")]
+    assert ep.duplicate_files(tmp_path, ["AGENTS.md", "README.md"]) == []

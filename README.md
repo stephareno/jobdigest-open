@@ -4,7 +4,7 @@
 
 A job search agent that runs on your own GitHub account and emails you one ranked digest of job postings every morning. It reads company career boards directly, plus aggregators, LinkedIn alert emails and USAJOBS; scores every posting against a profile you build in a short interview; adjusts for where the job is and what it pays; and logs everything to a Google Sheet. It never applies to anything and never contacts anyone.
 
-![A sample digest](docs/sample_digest.png)
+![A sample digest](docs/assets/sample_digest.png)
 
 *A digest built from sample postings for an example profile. The real one looks the same with your roles in it.*
 
@@ -17,7 +17,7 @@ A job search agent that runs on your own GitHub account and emails you one ranke
 
 ## How it works
 
-![Pipeline: profile.yaml and secrets at the top; six stages from sources through filters, scoring, modifiers and queue to delivery; outputs are the daily digest, the Google Sheet and a weekly summary](docs/architecture.svg)
+![Pipeline: profile.yaml and secrets at the top; six stages from sources through filters, scoring, modifiers and queue to delivery; outputs are the daily digest, the Google Sheet and a weekly summary](docs/assets/architecture.svg)
 
 Postings are fetched three times a day, a slice of the boards each run, so every board is read at least daily without long runs. Cheap filters (title gate, already seen, country, blocked industries) decide what is worth a model call; that is where cost is controlled. One model call scores each remaining posting for role fit, modifiers in code adjust for work model, distance and pay, and the daily run emails the digest and writes the Sheet. The visual walkthrough at **[the project page](https://OWNER.github.io/REPO/)** has the same diagram with the sample digest and the setup phases.
 
@@ -87,7 +87,8 @@ emailer.py          the digest
 sheets.py           the Google Sheet
 data/company_lists/ shipped and personal company lists
 data/us_places.tsv.gz  offline places (GeoNames)
-docs/               PRD, SETUP_GUIDE, sample postings, sample digest
+docs/               PRD.md and SETUP_GUIDE.md; index.html (the project page) and assets/ (its images)
+examples/postings/  twelve sample postings for calibrate --dir
 tests/              1,100+ tests; run with pytest
 .github/workflows/  fetch (3x daily), daily digest, weekly summary, monthly resolve
 ROADMAP.md          a simple way to track changes you make (optional)

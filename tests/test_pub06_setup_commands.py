@@ -407,7 +407,7 @@ def test_calibrate_needs_the_key(monkeypatch, capsys):
 
 
 def test_every_sample_is_fictional_and_sized():
-    for path in sorted((ROOT / "docs" / "samples").glob("*.md")):
+    for path in sorted((ROOT / "examples" / "postings").glob("*.md")):
         job = calibrate.parse_posting(path)
         assert job["title"] and job["company"] and job["location"] and job["work_model"], path.name
         assert 200 <= len(path.read_text().split()) <= 400, path.name

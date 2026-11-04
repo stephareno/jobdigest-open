@@ -14,7 +14,7 @@ from pathlib import Path
 import calibrate
 
 ROOT = Path(__file__).resolve().parent.parent
-SAMPLES = ROOT / "docs" / "samples"
+SAMPLES = ROOT / "examples" / "postings"
 
 SOURCES = {"01": "ats", "02": "ats", "03": "watchlist", "04": "ats", "05": "linkedin_email",
            "06": "bespoke", "07": "jsearch", "08": "adzuna", "09": "adzuna", "10": "jsearch",
@@ -40,11 +40,11 @@ def test_every_sample_names_its_source():
 
 
 def test_the_saved_results_and_renders_never_say_calibrate():
-    data = json.loads((ROOT / "docs" / "sample_calibrate.json").read_text())
+    data = json.loads((ROOT / "docs" / "assets" / "sample_calibrate.json").read_text())
     assert {j["file"][:2]: j["source"] for j in data["jobs"]} == SOURCES
     assert all(j["apply_link"].startswith("https://example.com/jobs/") for j in data["jobs"])
     for name in ("sample_digest.html", "sample_sheet.html"):
-        assert "calibrate" not in (ROOT / "docs" / name).read_text().lower(), name
+        assert "calibrate" not in (ROOT / "docs" / "assets" / name).read_text().lower(), name
 
 
 def test_the_page_keeps_its_skeleton_sections_and_new_tab_links():
@@ -53,7 +53,7 @@ def test_the_page_keeps_its_skeleton_sections_and_new_tab_links():
     assert '<meta charset="utf-8">' in page
     assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in page
     sections = [re.sub(r"\s+", " ", h).strip() for h in re.findall(r"<h2[^>]*>([^<]*)", page)]
-    assert [s.split(" each")[0] for s in sections] == ["What arrives", "How to set up", "Cost and limits",
+    assert [s.split(" each")[0] for s in sections] == ["What arrives", "How to Set Up", "Cost and limits",
                                                        "How it works"]
     links = re.findall(r'<a [^>]*target="_blank"[^>]*>', page)
     assert len(links) == 6 and all('rel="noopener"' in a for a in links)

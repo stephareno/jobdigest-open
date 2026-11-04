@@ -84,7 +84,7 @@ def fake(job, feedback_block=""):
 
 scorer._score_single = fake
 scorer.time.sleep = lambda s: None
-ranked, calls = calibrate.run("docs/samples")
+ranked, calls = calibrate.run("examples/postings")
 print(json.dumps({"order": [j["file"] for j in ranked], "calls": calls,
                   "finals": {j["file"]: j["score"] for j in ranked},
                   "dream": sorted(j["company"] for j in ranked if j.get("is_dream_company")),
@@ -167,13 +167,13 @@ def test_the_page_carries_the_generated_images():
 
 def test_the_saved_results_are_the_twelve_samples_under_the_example_profile():
     import json
-    data = json.loads((ROOT / "docs" / "sample_calibrate.json").read_text())
-    files = sorted(p.name for p in (ROOT / "docs" / "samples").glob("*.md"))
+    data = json.loads((ROOT / "docs" / "assets" / "sample_calibrate.json").read_text())
+    files = sorted(p.name for p in (ROOT / "examples" / "postings").glob("*.md"))
     assert sorted(j["file"] for j in data["jobs"]) == files and data["postings_scored"] == 9
     assert data["claude_calls"] == 10   # the real run: one retry after a malformed reply
     dream = {j["company"] for j in data["jobs"] if j.get("is_dream_company")}
     assert dream == {"Wayne Enterprises", "Pym Technologies", "Stark Industries"}
-    html = (ROOT / "docs" / "sample_digest.html").read_text()
+    html = (ROOT / "docs" / "assets" / "sample_digest.html").read_text()
     for company in ("Wayne Enterprises", "Pym Technologies"):
         at = html.index(company)
         card = html[html.rindex('<div style="background:#ffffff', 0, at):at]   # this card, up to the name

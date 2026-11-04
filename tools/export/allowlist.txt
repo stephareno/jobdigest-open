@@ -78,9 +78,17 @@ requirements.txt
 .env.example
 profile.example.yaml
 
-# Documentation: everything under docs/ (the sample digest, calibrate samples,
-# and docs/public/ once the docs item lands).
-docs/
+# Documentation (PUB-20): docs/ is the two documents and the website. index.html
+# is the GitHub Pages entry and must stay at the top of docs/; assets/ holds its
+# images and the sample renders. docs/public/ stages the root README.md and
+# AGENTS.md: the export writes those two at the root and never ships the folder
+# (NEVER below stops it if a line here ever matches it).
+docs/PRD.md
+docs/SETUP_GUIDE.md
+docs/index.html
+docs/assets/
+# The twelve sample postings (calibrate --dir, digest --dry-run --from-calibrate).
+examples/postings/
 
 # Tests: the whole suite. The export drops any test file that imports a module
 # this list does not ship (computed, not listed).

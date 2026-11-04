@@ -1,19 +1,19 @@
 # tools/render_sample_sheet.py — the sample digest and Sheet snapshot the docs show (PUB-16)
 #
-#   python tools/render_sample_sheet.py --refresh   # score docs/samples (real calls, about nine) and save the results
+#   python tools/render_sample_sheet.py --refresh   # score examples/postings (real calls, about nine) and save the results
 #   python tools/render_sample_sheet.py             # render from the saved results, no model calls
 #   python tools/embed_page_images.py               # then put the two PNGs into docs/index.html
 #
 # Always runs under profile.example.yaml, whatever JOB_DIGEST_PROFILE says, so
 # nothing of the maintainer's profile reaches the docs. --refresh runs the
-# pipeline's own calibrate steps on docs/samples and saves every scored posting
-# to docs/sample_calibrate.json; the renders read only that file, so both
+# pipeline's own calibrate steps on examples/postings and saves every scored posting
+# to docs/assets/sample_calibrate.json; the renders read only that file, so both
 # images show the same scores and are reproducible without an API key.
 #
 # Writes:
-#   docs/sample_digest.html / .png   the digest dry_run.build makes from those
+#   docs/assets/sample_digest.html / .png   the digest dry_run.build makes from those
 #                                    postings; PNG 900 CSS px wide at 1x
-#   docs/sample_sheet.html / .png    the same postings in the Sheet's columns
+#   docs/assets/sample_sheet.html / .png    the same postings in the Sheet's columns
 #                                    (sheet_layout: SHEET_COLUMNS, OPTIONAL_COLUMNS,
 #                                    DISQUALIFIED_COLUMNS), styled like a
 #                                    spreadsheet; PNG 1400 CSS px wide at 1.5x
@@ -50,12 +50,12 @@ os.environ["GMAIL_ADDRESS"] = "you@example.com"
 for _name in ("GMAIL_APP_PASSWORD", "GOOGLE_SHEET_ID", "GOOGLE_SERVICE_ACCOUNT_JSON"):
     os.environ.setdefault(_name, "")
 
-SAMPLES = ROOT / "docs" / "samples"
-RESULTS = ROOT / "docs" / "sample_calibrate.json"
-DIGEST_HTML = ROOT / "docs" / "sample_digest.html"
-DIGEST_PNG = ROOT / "docs" / "sample_digest.png"
-SHEET_HTML = ROOT / "docs" / "sample_sheet.html"
-SHEET_PNG = ROOT / "docs" / "sample_sheet.png"
+SAMPLES = ROOT / "examples" / "postings"
+RESULTS = ROOT / "docs" / "assets" / "sample_calibrate.json"
+DIGEST_HTML = ROOT / "docs" / "assets" / "sample_digest.html"
+DIGEST_PNG = ROOT / "docs" / "assets" / "sample_digest.png"
+SHEET_HTML = ROOT / "docs" / "assets" / "sample_sheet.html"
+SHEET_PNG = ROOT / "docs" / "assets" / "sample_sheet.png"
 DIGEST_WIDTH, DIGEST_SCALE = 900, 1
 SHEET_WIDTH, SHEET_SCALE = 1400, 1.5
 CHROME_DEFAULT = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -75,7 +75,7 @@ ROW_NUMBER_WIDTH = 30
 # --- results ---------------------------------------------------------------------------
 
 def refresh(path=RESULTS):
-    """Score docs/samples under the example profile (real calls) and save every
+    """Score examples/postings under the example profile (real calls) and save every
     posting; prints calibrate's table."""
     import calibrate
     import profile_loader
@@ -232,7 +232,7 @@ def render_sheet(data):
 <body>
 <div class="frame">
   <div class="bar"><span class="icon"></span><span class="name">Job Digest Index</span>
-    <span class="note">Sample: postings from docs/samples under profile.example.yaml; statuses illustrative</span></div>
+    <span class="note">Sample: postings from examples/postings under profile.example.yaml; statuses illustrative</span></div>
   <div class="formula">fx</div>
   {_table(headers, main)}
   <div class="tabs"><span class="on">Jobs</span><span>Disqualified</span></div>
@@ -298,7 +298,7 @@ def png_size(path):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Render the sample digest and Sheet snapshot (PUB-16)")
     parser.add_argument("--refresh", action="store_true",
-                        help="score docs/samples first (real calls, about nine; needs ANTHROPIC_API_KEY)")
+                        help="score examples/postings first (real calls, about nine; needs ANTHROPIC_API_KEY)")
     parser.add_argument("--no-png", action="store_true", help="write the HTML only")
     args = parser.parse_args(argv)
     data = refresh() if args.refresh else load()

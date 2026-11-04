@@ -397,7 +397,7 @@ company_fit:
 # --- Scoring -------------------------------------------------------------------
 # Example: a finance leader's settings. `python main.py setup` keeps them; tune
 # them once `python main.py calibrate` shows how your profile ranks postings
-# (--dir docs/samples for the samples, no flag for live postings).
+# (--dir examples/postings for the samples, no flag for live postings).
 # Every fixed point value. "Prompt" values are applied by Claude inside the
 # scoring call (prompts/scoring_system.txt); "code" values are applied
 # afterwards in location.apply_location_tier. Bonuses are positive, penalties
