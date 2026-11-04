@@ -194,6 +194,9 @@ def check_gmail_imap(profile):
         return result(2, "GMAIL imap", FAIL, f"IMAP login refused ({_error(e)}): use a Gmail app password "
                                              f"(myaccount.google.com/apppasswords), not the account password, and turn IMAP on in Gmail settings.")
     try:
+        if profile is None:
+            return result(2, "GMAIL imap", PASS, "IMAP login OK (no profile yet: the LinkedIn label is checked "
+                                                 "once phase 3 names it).")
         if not _enabled(profile, "linkedin_email"):
             return result(2, "GMAIL imap", PASS, "IMAP login OK (linkedin_email is disabled, so no label to check).")
         label = profile["sources"]["linkedin_label"]
@@ -233,7 +236,7 @@ def check_google(profile):
     except (ValueError, KeyError, TypeError) as e:
         return result(2, "GOOGLE sheet", FAIL, f"GOOGLE_SERVICE_ACCOUNT_JSON does not parse as a service account "
                                                f"key ({type(e).__name__}): paste the whole downloaded .json file's contents.")
-    import config
+    import sheet_layout                                # PUB-07b: no profile needed (config loads one)
     try:
         import gspread
         from google.oauth2.service_account import Credentials
@@ -244,13 +247,15 @@ def check_google(profile):
         return result(2, "GOOGLE sheet", FAIL, f"the Sheet would not open ({_error(e)}): check GOOGLE_SHEET_ID and "
                                                f"share the Sheet with {email} as Editor.")
     titles = [ws.title for ws in book.worksheets()]
-    missing_tabs = [t for t in (config.SHEET_NAME, config.DISQUALIFIED_SHEET_NAME) if t not in titles]
+    missing_tabs = [t for t in (sheet_layout.SHEET_NAME, sheet_layout.DISQUALIFIED_SHEET_NAME) if t not in titles]
     if missing_tabs:
         return result(2, "GOOGLE sheet", FAIL, f"the Sheet opened but has no tab named {', '.join(map(repr, missing_tabs))}: "
-                                               f"rename the tabs, or let the first digest create them.")
-    header = book.worksheet(config.SHEET_NAME).row_values(1)
+                                               f"run python main.py sheet-init on a blank Sheet, or rename the tabs.")
+    header = book.worksheet(sheet_layout.SHEET_NAME).row_values(1)
     role = _drive_role(creds, values["GOOGLE_SHEET_ID"], email)
-    access = f"the service account is {role}" if role else "read OK, write not verified"
+    access = (f"the service account is {role}" if role else
+              "read OK, write not verified (enabling the Google Drive API in the same Cloud project lets this "
+              "check read the service account's role)")
     return result(2, "GOOGLE sheet", PASS, f"Sheet opened; both tabs found; header row has {len(header)} columns; {access}.")
 
 

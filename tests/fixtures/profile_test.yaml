@@ -347,10 +347,10 @@ sources:
     - director IT
     - VP IT
     search_urls:
-    - https://builtin.com/jobs/chicago?title=director+IT&seniority[]=senior-leader
-    - https://builtin.com/jobs/remote?title=director+IT&seniority[]=senior-leader
-    - https://builtin.com/jobs/chicago?title=VP+IT&seniority[]=senior-leader
-    - https://builtin.com/jobs/remote?title=VP+IT&seniority[]=senior-leader
+    - https://builtin.com/jobs/chicago?search=director+IT&seniority[]=senior-leader
+    - https://builtin.com/jobs/remote?search=director+IT&seniority[]=senior-leader
+    - https://builtin.com/jobs/chicago?search=VP+IT&seniority[]=senior-leader
+    - https://builtin.com/jobs/remote?search=VP+IT&seniority[]=senior-leader
   usajobs:
     series: '2210'
     hiring_paths:

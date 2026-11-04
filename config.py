@@ -118,7 +118,8 @@ BUILTIN_METRO_SLUGS = {
     "Washington, DC": "washington-dc",
 }
 BUILTIN_REMOTE_SLUG = "remote"
-BUILTIN_SEARCH_URL = "https://builtin.com/jobs/{slug}?title={query}&seniority[]=senior-leader"
+# PUB-07b: Built In ignores ?title= and returns its unfiltered list; ?search= filters.
+BUILTIN_SEARCH_URL = "https://builtin.com/jobs/{slug}?search={query}&seniority[]=senior-leader"
 
 
 def builtin_search_urls(profile=None):

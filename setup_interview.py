@@ -316,7 +316,9 @@ def interview(data, ui):
         fit["exemplars"] = ui.items("Companies whose fit you admire", fit["exemplars"])
 
     ui.say("\n-- Dream companies: their boards are fetched directly --")
-    dream = ui.items("Dream companies (Enter keeps the current file)", [])
+    current = data["dream_companies"]["file"]           # PUB-07b: say which file Enter keeps
+    keep = "the example's names" if current.endswith(".example.txt") else current
+    dream = ui.items(f"Dream companies (Enter keeps {keep}, from {current})", [])
 
     ui.say("\n-- Sources: which job sources run --")
     for key in src["enabled"]:

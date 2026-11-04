@@ -23,7 +23,7 @@ You are helping one person set up the Job Digest Agent: a program that runs on t
 
 Say this in your own words, briefly:
 
-> The goal of this agent is that you no longer have to search for jobs. Relevant, recent postings arrive in your email every day, or whenever you choose. Each morning you get one email listing the open roles that fit you best, each with a score out of 10 and a line explaining why. Every posting the agent sees is also logged to a Google Sheet, so you can track all of them, their scores, where you applied and the status. This is a capable agent, and I will walk you through setup every step of the way. You do not need any coding experience, and you can ask about anything you don't understand at any time.
+> The goal of this agent is that you no longer have to search for jobs. Relevant, recent postings arrive in your email every day, or whenever you choose. Each morning you get one email listing the open roles that fit you best, each with a score out of 10 and a line explaining why. Every posting the agent scores is also logged to a Google Sheet, so you can track all of them, their scores, where you applied and the status. This is a capable agent, and I will walk you through setup every step of the way. You do not need any coding experience, and you can ask about anything you don't understand at any time.
 >
 > The agent runs on your GitHub account, reads job boards and company career pages, scores each posting with an AI model using a profile we'll build together, and sends the digest from your Gmail. It never applies to anything and never contacts anyone.
 >
@@ -41,10 +41,11 @@ Then ask two questions and wait:
 Why this phase matters: the agent runs as GitHub Actions in the person's own repository, with their own secrets. So they need a repository they own, not a clone of someone else's.
 
 1. On the public repository page, click **Use this template**, then **Create a new repository**. Name it (`job-digest-agent` is fine), make it **Private**, create it. Say why it is "Use this template" and not Fork: a template copy has a clean history and no link back to the original; a fork would show as a fork forever and would pull the original's changes into their setup.
-2. Clone their new repository to their computer: `git clone <their repo URL>`, then `cd` into it.
-3. Python 3.11 or later: `python3 --version`. If it is older, they need to install a newer Python before anything else.
-4. Install the dependencies: `python3 -m pip install -r requirements.txt`. If their system refuses, `python3 -m venv .venv && source .venv/bin/activate` first, then install.
-5. Copy `.env.example` to `.env`. It stays empty for now. `.env` is already in `.gitignore`; confirm with `git check-ignore .env`, which should print `.env`.
+2. Turn the schedules off until setup is done. A template copy starts with its four workflows active, so their schedules would start running, and failing, before any key is in place. Repository → Actions tab → open each of `fetch`, `daily`, `weekly_summary` and `resolve_ats` → the `...` menu → **Disable workflow**. With the `gh` tool, from inside the clone (step 3): `gh workflow disable fetch.yml`, then the same for `daily.yml`, `weekly_summary.yml` and `resolve_ats.yml`. Phase 5 turns them back on.
+3. Clone their new repository to their computer: `git clone <their repo URL>`, then `cd` into it.
+4. Python 3.11 or later: `python3 --version`. If it is older, they need to install a newer Python before anything else.
+5. Install the dependencies into a virtual environment: `python3 -m venv .venv && source .venv/bin/activate`, then `python -m pip install -r requirements.txt`. (A plain `pip install` outside a virtual environment is refused by Homebrew's Python and most recent Linux systems.) Every command in this guide runs inside it: in a new terminal, `cd` into the repository and `source .venv/bin/activate` first. That is also what makes the `python` in `python main.py ...` work on a Mac, which has no `python` command of its own.
+6. Copy `.env.example` to `.env`. It stays empty for now. `.env` is already in `.gitignore`; confirm with `git check-ignore .env`, which should print `.env`.
 
 Checkpoint: `python main.py doctor --phase 1`.
 
@@ -70,7 +71,9 @@ Do the required ones first, then the recommended ones. Ask before each optional 
    - IAM & Admin → Service Accounts → Create → any name → Done. Open it → Keys → Add key → JSON. A file downloads. That file's entire contents become `GOOGLE_SERVICE_ACCOUNT_JSON`.
    - Create a blank Google Sheet in their Drive. Share it with the service account's email address (it ends in `iam.gserviceaccount.com`; it is in the JSON file as `client_email`) as **Editor**. This is the step everyone misses; without it the agent can see nothing.
    - The Sheet ID is the long string in the Sheet's URL between `/d/` and `/edit`.
-   - Then `python main.py sheet-init`, which creates the tabs and header row the agent expects. It refuses to touch a Sheet that already has data.
+   - Put both values in `.env`: `GOOGLE_SHEET_ID=` the ID, and `GOOGLE_SERVICE_ACCOUNT_JSON=` the JSON file's whole contents on one line, wrapped in single quotes.
+   - Then `python main.py sheet-init`, which creates the tabs and header row the agent expects. It refuses to touch a Sheet that already has data. It leaves the Sheet's original empty tab (`Sheet1`) alone; they can delete it.
+   - Optional: also enable the **Google Drive API** in the same project. The agent does not need it, but with it `doctor` can confirm the service account is an Editor rather than reporting "write not verified".
 3. **Model API key** (`ANTHROPIC_API_KEY`). console.anthropic.com → API keys → create. They need a small amount of prepaid credit on the account; $5 lasts weeks at this volume.
 
 **Strongly recommended, one per source**
@@ -92,7 +95,9 @@ Known trouble: Gmail IMAP failing with the right app password usually means IMAP
 
 ## Phase 3: The interview, which builds profile.yaml
 
-This phase produces `profile.yaml`, the only file about them. Ask section by section, in order. After each section, read back what you will write in two or three lines and get a yes before moving on. Recommend that they use dictation or voice mode so you get thorough answers, and say that this is the most important phase: the more detail they give, the better the scoring. Keep questions short, but getting a detailed picture comes first. At the end, write the whole file.
+This phase produces `profile.yaml`, the only file about them.
+
+If they run `python main.py setup` instead of talking it through with you, it asks sections A to G and I with the example profile's answers as defaults, then writes `profile.yaml`, runs `profile-check` and `cron --write` itself. It does not ask section H: the company lists (`sources.company_lists`) stay as `profile.example.yaml` sets them, which is the example persona's starter-list filter (consumer, food, retail and manufacturing codes). Go through section H with them afterwards and edit `sources.company_lists` to their field. Ask section by section, in order. After each section, read back what you will write in two or three lines and get a yes before moving on. Recommend that they use dictation or voice mode so you get thorough answers, and say that this is the most important phase: the more detail they give, the better the scoring. Keep questions short, but getting a detailed picture comes first. At the end, write the whole file.
 
 Open with an overview of the sections you will walk through, then ask: "If you have your current job description, a job posting or two you'd love to get, or your resume, share them now. I'll take a first pass at draft answers for you to correct." If they do, read them and pre-fill the sections below as proposals; still confirm each one.
 
@@ -183,17 +188,17 @@ Checkpoint: `python main.py doctor --phase 3`.
 
 The profile is a first draft until they have seen it rank real postings. Two steps, both read-only.
 
-1. `python main.py calibrate --titles`: fetches recent postings from the enabled sources using the profile's queries and lists and shows which titles passed the gate and which did not. No model calls. Read the two lists with them: "Is anything in the failed list a role you'd want? Is anything in the passed list obviously not?" Adjust `roles.*` and run it again until the gate looks right.
+1. `python main.py calibrate --titles`: fetches recent postings from the enabled fast sources (the aggregators and Built In) using the profile's queries and shows which titles passed the gate and which did not. The company boards from their lists (`ats`, `startups`, `watchlist`, `bespoke`) are slow and are read only when named: `python main.py calibrate --titles --sources ats` checks the gate on those too. No model calls. Read the two lists with them: "Is anything in the failed list a role you'd want? Is anything in the passed list obviously not?" Adjust `roles.*` and run it again until the gate looks right.
 2. `python main.py calibrate`: scores the postings that passed (about 15, one model call each) and prints a ranked table with each posting's score, the criteria that fired, the modifiers applied and a one-line rationale, then a block naming which profile fields moved each posting. Ask them to react to the order, not the numbers: "Which of these would you open first? Which should not be here?" Translate their reaction into profile edits (a criterion's weight, a missing industry, a location radius), apply them, run again. Two or three passes is normal. Stop when the top five are roles they would actually apply to.
 
 If no source is enabled yet or they are offline, `python main.py calibrate --dir docs/samples` scores twelve built-in sample postings instead; it checks that the mechanics work but says less about their preferences.
 
 ## Phase 5: Dry run, then switch on
 
-1. `python main.py digest --dry-run --from-calibrate --send`: builds a real digest from the calibration results, saves the HTML to `out/digest_dry_run.html`, and emails it to them with "[DRY RUN]" in the subject. Nothing is written to the Sheet. Ask them to confirm it arrived and that it looks right on whatever they read mail on.
+1. `python main.py digest --dry-run --from-calibrate --send`: builds a real digest from the twelve built-in sample postings in `docs/samples`, scored under their profile (about ten model calls; it does not reuse phase 4's live postings), so they see the format, the sections and the pills, saves the HTML to `out/digest_dry_run.html`, and emails it to them with "[DRY RUN]" in the subject. Nothing is written to the Sheet. Ask them to confirm it arrived and that it looks right on whatever they read mail on.
 2. `python main.py cron --write`: writes the schedule lines for their timezone into the two workflow files. Explain that it writes two lines per workflow for timezones with daylight saving and that the agent itself decides which one is the real run, so they never edit these for clock changes.
 3. Commit and push: `git add -A && git commit -m "config: my profile, lists and schedule" && git push`. The profile and the company lists belong in their private repository; `.env` is ignored and must not be committed (check that `git status` shows no `.env`).
-4. Enable the workflows: repository → Actions tab → if GitHub shows a banner asking to enable workflows for the repository, click it; then open each of `fetch`, `daily`, `weekly_summary` and `resolve_ats` and click **Enable workflow** if the button is there.
+4. Enable the workflows turned off in phase 1: repository → Actions tab → if GitHub shows a banner asking to enable workflows for the repository, click it; then open each of `fetch`, `daily`, `weekly_summary` and `resolve_ats` and click **Enable workflow** if the button is there (`gh workflow enable fetch.yml` and so on).
 5. Start the first fetch by hand so they do not wait a day: Actions → `fetch` → Run workflow. Watch the run. It should end green and the log's summary says how many postings were fetched, gated, scored and queued. A fetch that finds nothing new is normal on a second run the same day.
 6. The first real digest arrives the next scheduled morning. Tell them the time to expect it and that GitHub's queue can add a couple of hours to a scheduled run.
 

@@ -73,3 +73,46 @@ def test_calibrate_counts_api_calls_apart_from_postings():
 def test_the_export_defaults_to_the_public_repository():
     src = (ROOT / "tools" / "export" / "export_public.py").read_text()
     assert 'default="stephareno/jobdigest-open"' in src
+
+
+# --- fixes from the stranger test ----------------------------------------------------
+
+def test_builtin_searches_with_search_not_title():
+    import config
+    assert "?search={query}" in config.BUILTIN_SEARCH_URL and "?title=" not in config.BUILTIN_SEARCH_URL
+    for path in ("profile.example.yaml", "tests/fixtures/profile_test.yaml"):
+        assert "?title=" not in (ROOT / path).read_text(), path
+
+
+def test_doctor_imap_passes_on_login_with_no_profile_yet(monkeypatch):
+    import imaplib
+    import doctor
+
+    class FakeIMAP:
+        def __init__(self, *a, **k):
+            pass
+
+        def login(self, *a):
+            return "OK", []
+
+        def logout(self):
+            pass
+
+    monkeypatch.setattr(imaplib, "IMAP4_SSL", FakeIMAP)
+    monkeypatch.setenv("GMAIL_ADDRESS", "you@example.com")
+    monkeypatch.setenv("GMAIL_APP_PASSWORD", "x")
+    out = doctor.check_gmail_imap(None)
+    assert "PASS" in str(out) and "no profile yet" in str(out)
+
+
+def test_doctor_sheet_check_needs_no_profile():
+    """The Sheet check names its tabs from sheet_layout, never config (which loads a profile)."""
+    import inspect
+    import doctor
+    src = inspect.getsource(doctor.check_google)
+    assert "import config" not in src and "sheet_layout.SHEET_NAME" in src
+
+
+def test_setup_says_which_dream_list_enter_keeps():
+    src = (ROOT / "setup_interview.py").read_text()
+    assert "Enter keeps the current file" not in src and "the example's names" in src

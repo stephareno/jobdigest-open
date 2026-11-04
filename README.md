@@ -27,7 +27,7 @@ Three separate parts, and nothing is stored in two of them: `profile.yaml`, your
 
 This project is designed to be set up with an AI assistant. You do not need coding experience.
 
-1. On this repository's GitHub page, click the green **Use this template** button (next to **Code**), choose **Create a new repository**, and make it private. Not Fork: a template copy has a clean history and no link back here, and GitHub Actions will run in your repository with your secrets.
+1. On this repository's GitHub page, click the green **Use this template** button (next to **Code**), choose **Create a new repository**, and make it private. Not Fork: a template copy has a clean history and no link back here, and GitHub Actions will run in your repository with your secrets. Your copy's scheduled workflows start out active; the setup guide's first phase turns them off until your keys are in place.
 2. Open your new repository in a coding agent such as Claude Code or Codex, or start a chat with Claude or ChatGPT and attach three files from it: `README.md`, `docs/PRD.md` and `docs/SETUP_GUIDE.md`.
 3. Say "help me set this up". The assistant walks you through five phases: GitHub setup, accounts and keys, an interview about the roles you want that becomes your `profile.yaml`, calibration on real postings, and a dry run. Plan on 60 to 90 minutes if you have none of the accounts, 20 if you have most.
 

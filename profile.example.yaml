@@ -598,10 +598,10 @@ sources:
     # derive them from title_queries as above; these are exactly what that
     # derivation gives for this example.
     search_urls:
-      - https://builtin.com/jobs/chicago?title=director+FP%26A&seniority[]=senior-leader
-      - https://builtin.com/jobs/remote?title=director+FP%26A&seniority[]=senior-leader
-      - https://builtin.com/jobs/chicago?title=director+finance&seniority[]=senior-leader
-      - https://builtin.com/jobs/remote?title=director+finance&seniority[]=senior-leader
+      - https://builtin.com/jobs/chicago?search=director+FP%26A&seniority[]=senior-leader
+      - https://builtin.com/jobs/remote?search=director+FP%26A&seniority[]=senior-leader
+      - https://builtin.com/jobs/chicago?search=director+finance&seniority[]=senior-leader
+      - https://builtin.com/jobs/remote?search=director+finance&seniority[]=senior-leader
   usajobs:
     # OPM job series searched; 0501 is Financial Administration and Program.
     series: "0501"

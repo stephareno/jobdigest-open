@@ -72,8 +72,8 @@ def test_a_denver_profile_derives_adzuna_locations_and_builtin_urls():
     assert config.adzuna_locations(p) == ["Denver", "Salt Lake City", "Remote"]
     # Built In has no Denver site: remote only, each title query in order.
     assert config.builtin_search_urls(p) == [
-        "https://builtin.com/jobs/remote?title=director+IT&seniority[]=senior-leader",
-        "https://builtin.com/jobs/remote?title=VP+IT&seniority[]=senior-leader",
+        "https://builtin.com/jobs/remote?search=director+IT&seniority[]=senior-leader",
+        "https://builtin.com/jobs/remote?search=VP+IT&seniority[]=senior-leader",
     ]
 
 
@@ -84,8 +84,8 @@ def test_a_home_metro_with_a_built_in_site_gets_it_first():
     data["sources"]["builtin"]["title_queries"] = ["Head of IT"]
     p = profile_loader._freeze(data)
     assert config.builtin_search_urls(p) == [
-        "https://builtin.com/jobs/seattle?title=Head+of+IT&seniority[]=senior-leader",
-        "https://builtin.com/jobs/remote?title=Head+of+IT&seniority[]=senior-leader",
+        "https://builtin.com/jobs/seattle?search=Head+of+IT&seniority[]=senior-leader",
+        "https://builtin.com/jobs/remote?search=Head+of+IT&seniority[]=senior-leader",
     ]
 
 

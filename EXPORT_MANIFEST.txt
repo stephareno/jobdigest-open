@@ -1,5 +1,5 @@
-# Public export of commit 7394ef409a318799558070f36405fb631c53d5b0
-# 198 files, 7476978 bytes. Columns: size in bytes, path.
+# Public export of commit 2cea18a24da1b9a637fdcc6ca36027423c33f01b
+# 198 files, 7481767 bytes. Columns: size in bytes, path.
 
       2357  .env.example
       7685  .github/workflows/daily.yml
@@ -10,13 +10,13 @@
      10331  AGENTS.md
         11  CLAUDE.md
       1073  LICENSE
-      9669  README.md
+      9794  README.md
       2199  ROADMAP.md
      28255  calibrate.py
       7585  cli.py
       6768  comp.py
      14937  company_lists.py
-     28623  config.py
+     28711  config.py
         40  data/companies.yaml
       4523  data/company_lists/README.md
        388  data/company_lists/corrections.csv
@@ -27,11 +27,11 @@
    3131635  data/us_places.tsv.gz
          3  data/us_places.tsv.gz.country
      32058  docs/PRD.md
-     31202  docs/SETUP_GUIDE.md
+     33521  docs/SETUP_GUIDE.md
       7325  docs/architecture.svg
     596093  docs/index.html
      10331  docs/public/AGENTS.md
-      9669  docs/public/README.md
+      9794  docs/public/README.md
      31893  docs/sample_calibrate.json
      11279  docs/sample_digest.html
     223339  docs/sample_digest.png
@@ -49,7 +49,7 @@
       1649  docs/samples/10-staffing-firm-client.md
       1494  docs/samples/11-international.md
       1672  docs/samples/12-international-off-planet.md
-     27318  doctor.py
+     27791  doctor.py
       5021  dry_run.py
      16730  emailer.py
       6944  envfile.py
@@ -58,7 +58,7 @@
      38434  main.py
      16424  pending.py
      13044  places.py
-     30428  profile.example.yaml
+     30432  profile.example.yaml
      38423  profile_loader.py
      33302  profiles.py
       8782  prompt_template.py
@@ -69,7 +69,7 @@
      10494  schedule.py
      15241  scorer.py
       7998  setup_document.py
-     21266  setup_interview.py
+     21449  setup_interview.py
      10082  sheet_dates.py
       4699  sheet_init.py
       1212  sheet_layout.py
@@ -107,7 +107,7 @@
      16347  tests/fixtures/ats/teamtailor_site.json
       4182  tests/fixtures/ats/ukg_ready.json
         30  tests/fixtures/dream_companies_test.txt
-      8521  tests/fixtures/profile_test.yaml
+      8525  tests/fixtures/profile_test.yaml
       1595  tests/fixtures/status_email/ack_axon.txt
        517  tests/fixtures/status_email/ack_chronograph.txt
        575  tests/fixtures/status_email/ack_figma.txt
@@ -156,10 +156,10 @@
       8587  tests/test_profile.py
       7362  tests/test_pub03_location_config.py
      15351  tests/test_pub04_config_profile.py
-     14955  tests/test_pub05_delivery_sources.py
+     14959  tests/test_pub05_delivery_sources.py
      22392  tests/test_pub06_setup_commands.py
       8029  tests/test_pub07a_export.py
-      3178  tests/test_pub07b_staging.py
+      4642  tests/test_pub07b_staging.py
      12447  tests/test_pub08_schedule.py
      16914  tests/test_pub09_rubric_modifiers.py
      34049  tests/test_pub10_setup_plumbing.py
