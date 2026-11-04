@@ -1,5 +1,5 @@
 # python>=3.11  (doctor checks this; the workflows run 3.11)
-anthropic==0.49.0
+anthropic==2.3.0
 requests==2.31.0
 beautifulsoup4==4.12.3
 gspread==6.1.2
