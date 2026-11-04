@@ -31,7 +31,7 @@ This project is designed to be set up with an AI assistant. You do not need codi
 2. Open your new repository in a coding agent such as Claude Code or Codex, or start a chat with Claude or ChatGPT and attach three files from it: `README.md`, [`docs/PRD.md`](docs/PRD.md) and [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md).
 3. Say "help me set this up". The assistant walks you through five phases: GitHub setup, accounts and keys, an interview about the roles you want that becomes your `profile.yaml`, calibration on real postings, and a dry run. Plan on 60 to 90 minutes if you have none of the accounts, 20 if you have most.
 
-Every phase ends with `python main.py doctor`, which checks what has been set up so far, so you can stop and come back later. The guide also covers doing it by hand from the terminal if you prefer.
+Every phase ends with `python main.py doctor`, which checks what has been set up so far, so you can stop and come back later. The guide also covers doing it by hand from the terminal if you prefer. To install by hand, `pip install -r requirements.txt` in a virtual environment; `requirements.lock` holds the same pins with hashes, and it is what the workflows and CI install.
 
 ## What you need
 
@@ -72,6 +72,18 @@ The repository ships one starter list: about 4,700 US public companies from SEC 
 - Built and tested for the United States. The location model uses an offline US places file; another country needs that file rebuilt from GeoNames (`tools/build_us_places.py` is the starting point) and has not been tried.
 - Delivery time depends on GitHub's scheduled-run queue, which on free-tier repositories routinely adds two to four hours. The schedule is set early enough that most digests arrive on time, not all.
 - No source that requires a login. LinkedIn is covered through its alert emails.
+
+## Privacy and data
+
+Everything runs in your own GitHub repository and on your own computer; there is no server, analytics or telemetry of this project's. What leaves it:
+
+- **To the model provider (Anthropic):** your profile's scoring text and each posting's text, once per posting scored. Also: text from the website of each company on a digest card (to rewrite its blurb), careers-page text when the bespoke crawler sees a page change, once a week the notes you wrote on rows you marked Declined, and, if you use `setup --from-document`, the resume or job description you give it.
+- **Your own accounts:** the Google Sheet is yours, written through a service account you create. Gmail is yours: the digest is sent from it to you, and the LinkedIn reader opens one label you name, read-only, for alert emails from at least the last 7 days.
+- **Status tracking, off by default:** once a day it opens your inbox read-only and reads each message from the last 14 days, skipping mail sent from your own address. Only a message whose subject or body names a company that has a row on the main tab of your Sheet goes to the model: its sender, date, subject and body (up to 20,000 characters, links cut to their host), with up to 30 matching rows (company, title, status). No other message is sent. The model's replies are cached in `status_email_cache.json` in your repository.
+- **Index Doc, off by default:** each entry of your applications Doc goes to the model to read the company, title and date.
+- **Job sources:** the searches you configure (titles, places) go to the sources you turn on: Adzuna, JSearch, Built In and USAJOBS, which requires your Gmail address as its User-Agent. Company career boards are read directly.
+
+Nothing is sent anywhere else.
 
 ## Repository map
 

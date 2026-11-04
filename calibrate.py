@@ -443,7 +443,8 @@ def drivers(job, profile):
     # role, where "data centers" or "hardware" are duties, not the sector.
     from location import split_rationale
     blurb = split_rationale(job.get("rationale"))[0]
-    text = f"{job.get('company', '')} {re.split(r'(?<=[.!?])\s', blurb, maxsplit=1)[0]}".casefold()
+    first_sentence = re.split(r"(?<=[.!?])\s", blurb, maxsplit=1)[0]   # outside the f-string: Python 3.11
+    text = f"{job.get('company', '')} {first_sentence}".casefold()
     for tier in TIERS:
         for entry in profile["industries"][tier]:
             core = re.split(r"\s*\(", entry)[0].casefold()

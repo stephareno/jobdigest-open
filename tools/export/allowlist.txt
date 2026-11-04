@@ -38,6 +38,7 @@ tools/build_starter_companies.py
 tools/fetch_run_outcomes.py
 tools/freshness_dry_run.py
 tools/requirements.txt
+tools/requirements.lock
 # PUB-12 adds this; it ships once it exists on main.
 tools/build_public_boards.py
 # PUB-16: the sample digest and Sheet snapshot the docs show, and the page embed.
@@ -71,9 +72,15 @@ data/dream_companies.example.txt
 .github/workflows/daily.yml
 .github/workflows/weekly_summary.yml
 .github/workflows/resolve_ats.yml
+# PUB-21: the test suite on push and pull request (no secrets), and weekly
+# Dependabot updates for the pinned actions and the Python pins.
+.github/workflows/tests.yml
+.github/dependabot.yml
 
 # Root setup files. README.md, AGENTS.md and CLAUDE.md are written by the export.
 requirements.txt
+# PUB-21: the hash-pinned lock files the workflows install from.
+requirements.lock
 .gitignore
 .env.example
 profile.example.yaml

@@ -3,13 +3,19 @@
 # Priority order per CLAUDE.md:
 #   company site > LinkedIn > Indeed/ZipRecruiter > aggregator (flagged)
 
+import ipaddress
 import re
-from urllib.parse import urlsplit
+import socket
+from urllib.parse import urljoin, urlsplit
 
 import requests
 from state import normalize_url
 
 _TIMEOUT = 6
+# PUB-21: redirects are followed by hand, at most this many, and every hop is
+# checked (scheme and address) before it is requested.
+MAX_REDIRECTS = 5
+_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 # Patterns that indicate a direct company career page (not an aggregator)
 _AGGREGATOR_DOMAINS = re.compile(
@@ -68,36 +74,84 @@ def best_link(urls):
     return min(urls, key=lambda u: LINK_RANK[link_class(u)]) if urls else ""
 
 
+def _resolve_host(host):
+    """Every IP address the host resolves to (a seam for tests)."""
+    return [info[4][0] for info in socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)]
+
+
+def refuse_reason(url):
+    """PUB-21: why this URL must not be requested, or "" if it may be. Only
+    http and https; the host must resolve, and to public addresses only
+    (no loopback, private, link-local, multicast, reserved or unspecified).
+    The check runs before every request, each redirect hop included."""
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return "unparseable URL"
+    if parts.scheme.lower() not in ("http", "https"):
+        return f"scheme {parts.scheme or '(none)'} not allowed"
+    host = parts.hostname
+    if not host:
+        return "no host"
+    try:
+        addresses = _resolve_host(host)
+    except (socket.gaierror, UnicodeError, OSError) as e:
+        return f"host does not resolve ({type(e).__name__})"
+    if not addresses:
+        return "host does not resolve"
+    for raw in addresses:
+        addr = ipaddress.ip_address(raw.split("%")[0])
+        for flag in ("is_loopback", "is_private", "is_link_local", "is_multicast", "is_reserved",
+                     "is_unspecified"):
+            if getattr(addr, flag):
+                return f"{host} resolves to {addr} ({flag[3:].replace('_', '-')})"
+    return ""
+
+
+def _request(url):
+    """One hop, never following a redirect: HEAD, or GET if HEAD fails."""
+    try:
+        return requests.head(url, allow_redirects=False, timeout=_TIMEOUT, headers=_HEADERS)
+    except Exception:
+        return requests.get(url, allow_redirects=False, timeout=_TIMEOUT, stream=True, headers=_HEADERS)
+
+
 def resolve_apply_link(url):
     """
     Follow redirects and return the final URL, normalized.
     Falls back to the original URL on any error.
     Adds 'link_resolved' bool and 'link_is_aggregator' bool to help flag
     unresolved aggregator links in the sheet.
+
+    PUB-21: redirects are followed one hop at a time, at most MAX_REDIRECTS,
+    and each URL is checked by refuse_reason before it is requested. A link
+    refused at any hop, or one that redirects more than MAX_REDIRECTS times,
+    is stored as given (unresolved) with a log line; the refused address is
+    never requested.
     """
     if not url:
         return url, False, False
 
+    unresolved = (normalize_url(url), False, bool(_AGGREGATOR_DOMAINS.search(url)))
+    current = url.strip()
     try:
-        # HEAD first (fast), fall back to GET if server rejects HEAD
-        try:
-            resp = requests.head(
-                url, allow_redirects=True, timeout=_TIMEOUT,
-                headers={"User-Agent": "Mozilla/5.0"}
-            )
-        except Exception:
-            resp = requests.get(
-                url, allow_redirects=True, timeout=_TIMEOUT, stream=True,
-                headers={"User-Agent": "Mozilla/5.0"}
-            )
-
-        final = normalize_url(resp.url)
-        resolved = final.lower() != normalize_url(url).lower()
-        is_aggregator = bool(_AGGREGATOR_DOMAINS.search(final))
-        return final, resolved, is_aggregator
+        for hop in range(MAX_REDIRECTS + 1):
+            reason = refuse_reason(current)
+            if reason:
+                where = "" if hop == 0 else f" (redirect {hop} to {current})"
+                print(f"[URLResolver] not followed: {reason}{where}: {url}")
+                return unresolved
+            resp = _request(current)
+            location = resp.headers.get("Location") if 300 <= resp.status_code < 400 else None
+            if not location:
+                final = normalize_url(current)
+                resolved = final.lower() != normalize_url(url).lower()
+                return final, resolved, bool(_AGGREGATOR_DOMAINS.search(final))
+            current = urljoin(current, location)
+        print(f"[URLResolver] not followed: more than {MAX_REDIRECTS} redirects: {url}")
+        return unresolved
     except Exception:
-        is_aggregator = bool(_AGGREGATOR_DOMAINS.search(url))
-        return normalize_url(url), False, is_aggregator
+        return unresolved
 
 
 def resolve_jobs(jobs):

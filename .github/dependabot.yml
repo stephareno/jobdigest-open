@@ -1,0 +1,15 @@
+# PUB-21: weekly update pull requests for the pinned actions (full commit SHAs
+# in .github/workflows/) and the Python pins in requirements.txt. After a pip
+# update, regenerate the hashed lock files the workflows install from:
+#   pip-compile --generate-hashes --strip-extras --no-emit-index-url --allow-unsafe -o requirements.lock requirements.txt
+#   pip-compile --generate-hashes --strip-extras --no-emit-index-url --allow-unsafe -o tools/requirements.lock requirements.txt tools/requirements.txt
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"

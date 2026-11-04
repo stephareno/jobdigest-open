@@ -3,6 +3,7 @@
 import html as html_lib
 import os
 import smtplib
+from urllib.parse import urlparse
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
@@ -56,6 +57,36 @@ def _today():
     return datetime.now(_TZ).strftime("%B %d, %Y")
 
 
+# PUB-21: every value that comes from a posting or a model reply goes through
+# _text before it is put into the HTML, and every link through _link: only an
+# http(s) URL becomes an href (escaped as an attribute); anything else
+# (javascript:, data:, a bare path) renders as the label alone, with no link.
+def _text(value):
+    """A posting or model value as HTML text: &, <, >, " and ' escaped."""
+    return html_lib.escape("" if value is None else str(value), quote=True)
+
+
+def _safe_href(url):
+    """The URL escaped for an href attribute, or None unless it is http(s)
+    with a host."""
+    try:
+        parsed = urlparse(str(url or "").strip())
+    except ValueError:
+        return None
+    if parsed.scheme.lower() not in ("http", "https") or not parsed.netloc:
+        return None
+    return html_lib.escape(str(url).strip(), quote=True)
+
+
+def _link(url, label_html, style):
+    """<a href=...> for an http(s) URL; otherwise the label as plain text in a
+    span with the same style. label_html is already escaped."""
+    href = _safe_href(url)
+    if href is None:
+        return f'<span style="{style}">{label_html}</span>'
+    return f'<a href="{href}" style="{style}">{label_html}</a>'
+
+
 def _score_badge(score):
     if score >= 8:
         color, bg = "#1D9E75", "#E1F5EE"
@@ -63,13 +94,13 @@ def _score_badge(score):
         color, bg = "#185FA5", "#E6F1FB"
     else:
         color, bg = "#888780", "#F1EFE8"
-    return f'<span style="display:inline-block;padding:2px 10px;border-radius:20px;background:{bg};color:{color};font-size:12px;font-weight:600;">{score}/10</span>'
+    return f'<span style="display:inline-block;padding:2px 10px;border-radius:20px;background:{bg};color:{color};font-size:12px;font-weight:600;">{_text(score)}/10</span>'
 
 
 def _warm_badge(warm_contact):
     if not warm_contact:
         return ""
-    return f'<span style="display:inline-block;padding:2px 10px;border-radius:20px;background:#FAEEDA;color:#854F0B;font-size:12px;font-weight:600;margin-left:6px;">&#128100; {warm_contact}</span>'
+    return f'<span style="display:inline-block;padding:2px 10px;border-radius:20px;background:#FAEEDA;color:#854F0B;font-size:12px;font-weight:600;margin-left:6px;">&#128100; {_text(warm_contact)}</span>'
 
 
 def _source_badge(source):
@@ -82,7 +113,7 @@ def _source_badge(source):
         "Watchlist": ("#3B6D11", "#EAF3DE"),
     }
     color, bg = colors.get(source, ("#888780", "#F1EFE8"))
-    return f'<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:{bg};color:{color};font-size:11px;">{source}</span>'
+    return f'<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:{bg};color:{color};font-size:11px;">{_text(source)}</span>'
 
 
 def _startup_badge(job):
@@ -129,7 +160,7 @@ def _age_html(job):
     text = posted_age_text(job)
     if not text:
         return ""
-    return f'<span style="font-size:12px;color:#888;margin-left:8px;">{text}</span>'
+    return f'<span style="font-size:12px;color:#888;margin-left:8px;">{_text(text)}</span>'
 
 
 def _linkedin_link(job, small=False):
@@ -139,9 +170,9 @@ def _linkedin_link(job, small=False):
     if not url or url == job.get("apply_link", ""):
         return ""
     if small:
-        return f'<a href="{url}" style="font-size:12px;color:#185FA5;text-decoration:none;margin-left:12px;">LinkedIn &#8594;</a>'
-    return (f'<a href="{url}" style="display:inline-block;padding:6px 16px;border:1px solid #185FA5;'
-            f'color:#185FA5;border-radius:6px;font-size:13px;text-decoration:none;font-weight:500;">LinkedIn</a>')
+        return _link(url, "LinkedIn &#8594;", "font-size:12px;color:#185FA5;text-decoration:none;margin-left:12px;")
+    return _link(url, "LinkedIn", "display:inline-block;padding:6px 16px;border:1px solid #185FA5;"
+                 "color:#185FA5;border-radius:6px;font-size:13px;text-decoration:none;font-weight:500;")
 
 
 def _other_links(job, small=False):
@@ -163,12 +194,8 @@ def _other_links(job, small=False):
             label += f" · via {poster_name(company)}"
         if other.get("sent"):
             label += f" (sent {other['sent']})"
-        label = html_lib.escape(label)
-        href = html_lib.escape(url, quote=True)
-        if small:
-            links.append(f'<a href="{href}" style="font-size:12px;color:#185FA5;text-decoration:none;margin-left:12px;">{label} &#8594;</a>')
-        else:
-            links.append(f'<a href="{href}" style="font-size:12px;color:#185FA5;text-decoration:none;">{label} &#8594;</a>')
+        style = "font-size:12px;color:#185FA5;text-decoration:none;" + ("margin-left:12px;" if small else "")
+        links.append(_link(url, f"{_text(label)} &#8594;", style))
     return "".join(links)
 
 
@@ -187,17 +214,19 @@ def _job_card(job, show_status=False):
     warm_contact = job.get("warm_contact", "")
     status = job.get("status", "")
     location_line = " · ".join(filter(None, [location, work_model, comp]))
-    status_html = f'<span style="font-size:11px;color:#888;margin-left:8px;">({status})</span>' if show_status and status else ""
+    status_html = f'<span style="font-size:11px;color:#888;margin-left:8px;">({_text(status)})</span>' if show_status and status else ""
+    apply_html = _link(apply_link, "Apply (ATS)", "display:inline-block;padding:6px 16px;background:#1a1a1a;"
+                       "color:#ffffff;border-radius:6px;font-size:13px;text-decoration:none;font-weight:500;")
 
     return f"""
 <div style="background:#ffffff;border:1px solid #e8e8e8;border-radius:10px;padding:16px 20px;margin-bottom:12px;">
   <div style="margin-bottom:6px;">{_score_badge(score)}{_dream_badge(job)}{_fresh_badge(job)}{_warm_badge(warm_contact)}{_relo_badge(job)}{_startup_badge(job)}{_age_html(job)}{status_html}</div>
-  <div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">{title}</div>
-  <div style="font-size:14px;color:#444;margin-bottom:4px;">{company}</div>
-  <div style="font-size:13px;color:#888;margin-bottom:8px;">{location_line}</div>
-  <div style="font-size:13px;color:#555;font-style:italic;margin-bottom:10px;">{rationale}</div>
+  <div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">{_text(title)}</div>
+  <div style="font-size:14px;color:#444;margin-bottom:4px;">{_text(company)}</div>
+  <div style="font-size:13px;color:#888;margin-bottom:8px;">{_text(location_line)}</div>
+  <div style="font-size:13px;color:#555;font-style:italic;margin-bottom:10px;">{_text(rationale)}</div>
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-    <a href="{apply_link}" style="display:inline-block;padding:6px 16px;background:#1a1a1a;color:#ffffff;border-radius:6px;font-size:13px;text-decoration:none;font-weight:500;">Apply (ATS)</a>
+    {apply_html}
     {_linkedin_link(job)}{_other_links(job)}{_source_badge(source)}
   </div>
 </div>"""
@@ -205,7 +234,7 @@ def _job_card(job, show_status=False):
 
 def _section_header(title, count=None, color="#1a1a1a"):
     count_str = f" ({count})" if count is not None else ""
-    return f'<div style="margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;"><span style="font-size:13px;font-weight:700;color:{color};text-transform:uppercase;letter-spacing:0.06em;">{title}{count_str}</span></div>'
+    return f'<div style="margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;"><span style="font-size:13px;font-weight:700;color:{color};text-transform:uppercase;letter-spacing:0.06em;">{_text(title)}{count_str}</span></div>'
 
 
 def _function_cap_html(job):
@@ -213,7 +242,7 @@ def _function_cap_html(job):
     if not job.get("function_capped"):
         return ""
     return (f'<div style="font-size:12px;color:#888;font-style:italic;margin:-4px 0 8px;">'
-            f'{html_lib.escape(function_note(job.get("function_fit")))}</div>')
+            f'{_text(function_note(job.get("function_fit")))}</div>')
 
 
 def _cool_rank(job):
@@ -263,9 +292,9 @@ def _fetch_failure_banner(failed_fetch_runs):
         return ""
     lines = "".join(
         f'<div style="font-size:13px;color:#791F1F;margin:4px 0;">'
-        f'Fetch run {_fetch_run_time_et(run["started_at"])} failed: {html_lib.escape(_fetch_failure_cause(run))}. '
+        f'Fetch run {_fetch_run_time_et(run["started_at"])} failed: {_text(_fetch_failure_cause(run))}. '
         f'Postings from that run were not scored. '
-        f'<a href="{html_lib.escape(run["url"], quote=True)}" style="color:#A32D2D;font-weight:600;">View run &#8594;</a></div>'
+        f'{_link(run.get("url"), "View run &#8594;", "color:#A32D2D;font-weight:600;")}</div>'
         for run in failed_fetch_runs)
     return ('<div style="background:#FCEBEB;border:1px solid #F09595;border-radius:10px;'
             f'padding:12px 18px;margin-bottom:24px;">{lines}</div>')
@@ -316,9 +345,9 @@ def _build_html(main, worth_a_look, cool_wrong_role, fallback_jobs, is_first_run
             body += f'<div style="font-size:12px;color:#888;margin:-4px 0 10px;">{hidden} more logged to the Sheet only.</div>'
         for job in shown:
             body += f'''<div style="background:#FAFAF8;border:1px solid #e8e8e8;border-radius:10px;padding:14px 18px;margin-bottom:10px;">
-  <div style="font-size:14px;font-weight:600;color:#1a1a1a;">{job.get("company", "")}{_dream_badge(job)}{_fresh_badge(job)}{_relo_badge(job)}{_startup_badge(job)}{_age_html(job)}</div>
-  <div style="font-size:13px;color:#555;margin:2px 0 8px;">{job.get("title", "")}</div>{_function_cap_html(job)}
-  <a href="{job.get("apply_link", "#")}" style="font-size:12px;color:#185FA5;text-decoration:none;">View role &#8594;</a>{_linkedin_link(job, small=True)}{_other_links(job, small=True)}
+  <div style="font-size:14px;font-weight:600;color:#1a1a1a;">{_text(job.get("company", ""))}{_dream_badge(job)}{_fresh_badge(job)}{_relo_badge(job)}{_startup_badge(job)}{_age_html(job)}</div>
+  <div style="font-size:13px;color:#555;margin:2px 0 8px;">{_text(job.get("title", ""))}</div>{_function_cap_html(job)}
+  {_link(job.get("apply_link"), "View role &#8594;", "font-size:12px;color:#185FA5;text-decoration:none;")}{_linkedin_link(job, small=True)}{_other_links(job, small=True)}
 </div>'''
 
     if body == banner:
@@ -339,7 +368,7 @@ def _wrap(content):
     </div>
     {content}
     <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e8e8e8;font-size:11px;color:#aaa;text-align:center;">
-      Job Digest Agent · {html_lib.escape(RECIPIENT_EMAIL)} · All jobs logged in your Google Sheet
+      Job Digest Agent · {_text(RECIPIENT_EMAIL)} · All jobs logged in your Google Sheet
     </div>
   </div>
 </body>
