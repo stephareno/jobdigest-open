@@ -67,6 +67,10 @@ python main.py profile-check             load, validate, summarize
 - Stop and ask before anything destructive or irreversible that the task did not name: deleting files, force-pushing, editing state files, sending email, writing to the Sheet outside a normal run, setting or changing secrets.
 - Report when done: what changed, what was verified (test counts, what you ran), the pull request, decisions you made that the owner should check, anything left undone.
 
+## Dependencies
+
+`requirements.txt` is the readable source of the engine's pins and `tools/requirements.txt` adds the tools' and pytest's. `requirements.lock` and `tools/requirements.lock` are compiled from them with `pip-compile --generate-hashes`, every package pinned and hashed; the workflows install those with `pip install --require-hashes`. To update a package: bump its pin in `requirements.txt` (or `tools/requirements.txt`), run `tools/lock.sh` (needs `pip install pip-tools` in the virtual environment) to recompile both locks, run the suite, and open one pull request with the pin and both locks. Dependabot opens a monthly pull request for the GitHub Actions only, never for Python packages, because it would change a pin without its lock. The Anthropic SDK pin (`anthropic` in `requirements.txt`) is deliberate: bump it by hand, with a `python main.py calibrate --dir examples/postings` run before and after to check the scores hold, never through a bot.
+
 ## Where things live
 
 ```

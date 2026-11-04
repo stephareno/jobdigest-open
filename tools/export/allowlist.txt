@@ -39,6 +39,8 @@ tools/fetch_run_outcomes.py
 tools/freshness_dry_run.py
 tools/requirements.txt
 tools/requirements.lock
+# PUB-21: recompiles both lock files (AGENTS.md, Dependencies).
+tools/lock.sh
 # PUB-12 adds this; it ships once it exists on main.
 tools/build_public_boards.py
 # PUB-16: the sample digest and Sheet snapshot the docs show, and the page embed.

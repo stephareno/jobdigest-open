@@ -207,10 +207,19 @@ def test_every_install_is_hash_checked(path):
     assert all("--require-hashes" in line for line in installs), installs
 
 
-def test_dependabot_covers_actions_and_pip_weekly():
+def test_dependabot_updates_actions_monthly_in_one_group_and_never_pip():
+    """PUB-21 follow-up: a pip PR would change a pin without its lock (AGENTS.md, Dependencies)."""
     cfg = yaml.safe_load((ROOT / ".github" / "dependabot.yml").read_text())
-    got = {(u["package-ecosystem"], u["schedule"]["interval"]) for u in cfg["updates"]}
-    assert got == {("github-actions", "weekly"), ("pip", "weekly")}
+    assert [(u["package-ecosystem"], u["schedule"]["interval"]) for u in cfg["updates"]] == [("github-actions", "monthly")]
+    assert cfg["updates"][0]["groups"] == {"actions": {"patterns": ["*"]}}
+
+
+def test_lock_sh_recompiles_both_locks_with_hashes():
+    script = (ROOT / "tools" / "lock.sh").read_text()
+    assert script.startswith("#!/usr/bin/env bash") and (ROOT / "tools" / "lock.sh").stat().st_mode & 0o111
+    assert "--generate-hashes" in script
+    assert "-o requirements.lock requirements.txt" in script
+    assert "-o tools/requirements.lock requirements.txt tools/requirements.txt" in script
 
 
 def test_the_tests_workflow_needs_no_secrets():
