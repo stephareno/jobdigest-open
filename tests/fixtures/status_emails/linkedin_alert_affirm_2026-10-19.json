@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Director, Information Technology & Security at Affirm",
+    "from": "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+    "date": "Mon, 19 Oct 2026 07:24:35 +0000 (UTC)",
+    "body": "Your job alert for Senior Director Information Technology in 20005            \r\nDirector, Information Technology & Security\r\nAffirm\r\nWashington, DC\r\n\nThis company is actively hiring\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nDeputy Chief Technology Officer, Infrastructure\r\nSteerBridge\r\nVienna, VA\r\n\nThis company is actively hiring\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nExecutive Director, Enterprise Capability Integration\r\nMANTECH\r\nHerndon, VA\r\n\nThis company is actively hiring\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nSr Director, Consumer Digital Originations Platforms\r\nPenFed Credit Union\r\nWashington DC-Baltimore Area\r\n\n1 company alum\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nSee all jobs on LinkedIn:  [link: www.linkedin.com]\r\nManage your job alerts:  [link: www.linkedin.com]\r\n\nJob search smarter with Premium\r\n[link: www.linkedin.com]\r\n\n----------------------------------------\r\n\nThis email was intended for Candidate (SVP, IT, InfoSec & People | Builder bringing out the best of People, Process, & Technology 🤝 | Scaling organizations through smart systems, AI-driven automation, and high-performing teams)\r\nLearn why we included this: [link: www.linkedin.com]\r\nYou are receiving Job Alert emails.\r\n\nManage your job alerts:  [link: www.linkedin.com] \r\nUnsubscribe: [link: www.linkedin.com]    ·  Help: [link: www.linkedin.com]\r\n\n© 2026 LinkedIn Corporation, 1zwnj000 West Maude Avenue, Sunnyvale, CA 94085.\r\nLinkedIn and the LinkedIn logo are registered trademarks of LinkedIn."
+  },
+  "expected": {
+    "status": "none",
+    "row": null
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "66e7e105ee3b03d5",
+    "raw": "{\"status\": \"none\", \"row\": null, \"confidence\": \"high\", \"reason\": \"This is a LinkedIn job alert listing several open roles (Affirm, SteerBridge, MANTECH, PenFed) with 'This company is actively hiring', which is a job recommendation, not a status update on any of the candidate's applications.\"}",
+    "usage": {
+      "input_tokens": 1849,
+      "output_tokens": 107
+    }
+  }
+}

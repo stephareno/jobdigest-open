@@ -1,0 +1,338 @@
+[
+  {
+    "row": 12,
+    "company": "Axon",
+    "title": "Senior Director, Enterprise Applications",
+    "status": "New",
+    "first_seen": "9/20/2026"
+  },
+  {
+    "row": 13,
+    "company": "Axon",
+    "title": "Senior Director, Enterprise Applications",
+    "status": "New",
+    "first_seen": "9/20/2026"
+  },
+  {
+    "row": 14,
+    "company": "Axon",
+    "title": "Senior Director, IT Business Solutions & Delivery",
+    "status": "Rejected",
+    "first_seen": "9/20/2026"
+  },
+  {
+    "row": 19,
+    "company": "Axon",
+    "title": "Senior Director, Enterprise Applications",
+    "status": "New",
+    "first_seen": "9/18/2026"
+  },
+  {
+    "row": 163,
+    "company": "Axon",
+    "title": "Senior Director, Enterprise Applications",
+    "status": "New",
+    "first_seen": "9/15/2026"
+  },
+  {
+    "row": 174,
+    "company": "Axon",
+    "title": "Senior Director, IT Business Solutions & Delivery",
+    "status": "New",
+    "first_seen": "9/15/2026"
+  },
+  {
+    "row": 175,
+    "company": "Axon",
+    "title": "Senior Director, IT Business Solutions & Delivery",
+    "status": "New",
+    "first_seen": "9/14/2026"
+  },
+  {
+    "row": 200,
+    "company": "Axon",
+    "title": "Senior Director, Enterprise Applications",
+    "status": "New",
+    "first_seen": "9/13/2026"
+  },
+  {
+    "row": 201,
+    "company": "Axon",
+    "title": "Senior Director, IT Business Solutions & Delivery",
+    "status": "New",
+    "first_seen": "9/13/2026"
+  },
+  {
+    "row": 259,
+    "company": "GovCIO",
+    "title": "Remote Federal IT Program Director - Hybrid Infra & SIAM",
+    "status": "New",
+    "first_seen": "5/27/2026"
+  },
+  {
+    "row": 266,
+    "company": "GovCIO",
+    "title": "Vice President",
+    "status": "New",
+    "first_seen": "5/28/2026"
+  },
+  {
+    "row": 273,
+    "company": "Axon",
+    "title": "Senior Director, IT Business Solutions & Delivery",
+    "status": "Rejected",
+    "first_seen": "9/11/2026"
+  },
+  {
+    "row": 277,
+    "company": "Axon",
+    "title": "Senior Director, Enterprise Applications",
+    "status": "New",
+    "first_seen": "9/11/2026"
+  },
+  {
+    "row": 278,
+    "company": "Axon",
+    "title": "Senior Director, IT Business Solutions & Delivery",
+    "status": "New",
+    "first_seen": "9/11/2026"
+  },
+  {
+    "row": 296,
+    "company": "Peraton",
+    "title": "Information Technology Infrastructure Manager",
+    "status": "New",
+    "first_seen": "6/1/2026"
+  },
+  {
+    "row": 297,
+    "company": "Peraton",
+    "title": "Technical Lead Manager",
+    "status": "New",
+    "first_seen": "6/1/2026"
+  },
+  {
+    "row": 300,
+    "company": "Affirm",
+    "title": "IT Engineering Manager (Endpoint Engineering)",
+    "status": "New",
+    "first_seen": "6/1/2026"
+  },
+  {
+    "row": 306,
+    "company": "Affirm",
+    "title": "Director, Information Technology & Security",
+    "status": "New",
+    "first_seen": "6/2/2026"
+  },
+  {
+    "row": 314,
+    "company": "Chronograph",
+    "title": "Head of Information Security & IT",
+    "status": "Applied",
+    "first_seen": "9/1/2026"
+  },
+  {
+    "row": 400,
+    "company": "Cape",
+    "title": "Chief Information Security Officer (CISO)",
+    "status": "Rejected",
+    "first_seen": "8/28/2026"
+  },
+  {
+    "row": 408,
+    "company": "The Johns Hopkins University",
+    "title": "Sr. Director Strategic Initiatives & Public Affairs (CTY Strategic Initiatives/Public Affairs)",
+    "status": "New",
+    "first_seen": "6/29/2026"
+  },
+  {
+    "row": 431,
+    "company": "Peraton",
+    "title": "Senior Director - Technology Program Manager",
+    "status": "New",
+    "first_seen": "7/4/2026"
+  },
+  {
+    "row": 521,
+    "company": "Zeno Group",
+    "title": "Senior Vice President, AI & Technology Programs",
+    "status": "Applied",
+    "first_seen": "8/25/2026"
+  },
+  {
+    "row": 552,
+    "company": "Shatterproof",
+    "title": "Vice President, Technology & Digital Strategy",
+    "status": "Rejected",
+    "first_seen": "8/22/2026"
+  },
+  {
+    "row": 574,
+    "company": "Affirm",
+    "title": "Director, Information Technology & Security",
+    "status": "New",
+    "first_seen": "8/6/2026"
+  },
+  {
+    "row": 585,
+    "company": "The Johns Hopkins University",
+    "title": "IT Operating Unit Director (IT@JH Client Technology Solutions)",
+    "status": "Applied",
+    "first_seen": "8/8/2026"
+  },
+  {
+    "row": 739,
+    "company": "Affirm",
+    "title": "Director, Information Technology & Security",
+    "status": "New",
+    "first_seen": "8/26/2026"
+  },
+  {
+    "row": 754,
+    "company": "The Johns Hopkins University",
+    "title": "IT Sr. Director (School of Medicine - Information Technology)",
+    "status": "New",
+    "first_seen": "7/8/2026"
+  },
+  {
+    "row": 884,
+    "company": "Affirm",
+    "title": "Director, Information Technology & Security",
+    "status": "New",
+    "first_seen": "9/9/2026"
+  },
+  {
+    "row": 890,
+    "company": "PenFed Credit Union",
+    "title": "Availability Director, IT Core Engineering",
+    "status": "New",
+    "first_seen": "9/9/2026"
+  },
+  {
+    "row": 916,
+    "company": "Cape",
+    "title": "Chief Information Security Officer (CISO)",
+    "status": "New",
+    "first_seen": "9/11/2026"
+  },
+  {
+    "row": 925,
+    "company": "Chronograph",
+    "title": "Head of Information Security & IT",
+    "status": "New",
+    "first_seen": "9/11/2026"
+  },
+  {
+    "row": 999,
+    "company": "SteerBridge",
+    "title": "Deputy Chief Technology Officer, Infrastructure",
+    "status": "New",
+    "first_seen": "9/13/2026"
+  },
+  {
+    "row": 1190,
+    "company": "Affirm",
+    "title": "Director, Information Technology & Security",
+    "status": "New",
+    "first_seen": "9/20/2026"
+  },
+  {
+    "row": 1310,
+    "company": "Peraton",
+    "title": "End User Operations Manager",
+    "status": "New",
+    "first_seen": "9/26/2026"
+  },
+  {
+    "row": 1352,
+    "company": "GovCIO",
+    "title": "Service Center Manager",
+    "status": "New",
+    "first_seen": "9/29/2026"
+  },
+  {
+    "row": 1355,
+    "company": "Amentum",
+    "title": "Information Systems Manager",
+    "status": "New",
+    "first_seen": "9/29/2026"
+  },
+  {
+    "row": 1602,
+    "company": "Dell Technologies",
+    "title": "Senior Director of Networking and Generative AI Infrastructure",
+    "status": "New",
+    "first_seen": "10/9/2026"
+  },
+  {
+    "row": 1666,
+    "company": "GovCIO",
+    "title": "Program Director",
+    "status": "New",
+    "first_seen": "10/12/2026"
+  },
+  {
+    "row": 1782,
+    "company": "Peraton",
+    "title": "Director, Telecommunications Operations & Delivery",
+    "status": "New",
+    "first_seen": "10/15/2026"
+  },
+  {
+    "row": 1875,
+    "company": "AstraZeneca",
+    "title": "Senior Director, Operations IT – Strategy and Operational Excellence",
+    "status": "New",
+    "first_seen": "10/17/2026"
+  },
+  {
+    "row": 1884,
+    "company": "The Johns Hopkins University",
+    "title": "Director, Carey IT and Software Services (Carey Business School)",
+    "status": "New",
+    "first_seen": "10/17/2026"
+  },
+  {
+    "row": 1885,
+    "company": "Peraton",
+    "title": "Technology Program Management Director",
+    "status": "New",
+    "first_seen": "10/17/2026"
+  },
+  {
+    "row": 1918,
+    "company": "Affirm",
+    "title": "Director, Information Technology & Security",
+    "status": "New",
+    "first_seen": "10/18/2026"
+  },
+  {
+    "row": 1919,
+    "company": "Peraton",
+    "title": "Operating Unit Leader - Citizen Services Portfolio",
+    "status": "New",
+    "first_seen": "10/18/2026"
+  },
+  {
+    "row": 1932,
+    "company": "MANTECH",
+    "title": "Executive Director, Enterprise Capability Integration",
+    "status": "New",
+    "first_seen": "10/19/2026"
+  },
+  {
+    "row": 1933,
+    "company": "GovCIO",
+    "title": "Engineering and Implementation Manager",
+    "status": "New",
+    "first_seen": "10/19/2026"
+  },
+  {
+    "row": 1936,
+    "company": "PenFed Credit Union",
+    "title": "Sr Director, Consumer Digital Originations Platforms",
+    "status": "New",
+    "first_seen": "10/19/2026"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Thank You for Your Application",
+    "from": "Johns Hopkins University No Reply <system@successfactors.com>",
+    "date": "Mon, 24 Aug 2026 18:46:38 +0000 (UTC)",
+    "body": "Greetings,\nThank you for submitting an application for the IT Operating Unit Director (IT@JH Client Technology Solutions) position. Your application has been received by the Talent Acquisition Team and is pending review. You may be contacted by a Johns Hopkins University representative to schedule an interview if your experience and qualifications are deemed a suitable match for the position.\nWe appreciate your interest and time in completing your application. For information on your status, you may check your profile page at any time for updates. To update your profile or see more openings at Johns Hopkins University, visit our Careers site at\nhiring.jhu.edu\n.\nThank you,\nThe Johns Hopkins University Talent Acquisition Team"
+  },
+  "expected": {
+    "status": "Applied",
+    "row": 585
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "3b3519bf1084f762",
+    "raw": "{\"status\": \"Applied\", \"row\": 585, \"confidence\": \"high\", \"reason\": \"The email confirms receipt of her application for the IT Operating Unit Director position, saying it \\\"has been received\\\" and is \\\"pending review\\\", while the mention of being contacted to schedule an interview is only hypothetical (\\\"if your experience and qualifications are deemed a suitable match\\\").\"}",
+    "usage": {
+      "input_tokens": 1382,
+      "output_tokens": 122
+    }
+  }
+}

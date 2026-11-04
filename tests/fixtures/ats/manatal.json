@@ -1,0 +1,58 @@
+{
+ "count": 30,
+ "next": null,
+ "previous": null,
+ "results": [
+  {
+   "id": 4160283,
+   "hash": "93X86VW4",
+   "organization_name": "Sales",
+   "position_name": "Account Manager \u2013 Cybersecurity Solutions",
+   "description": "<h3>About ExeQut</h3>\n<p>ExeQut is a fast-growing consulting and technology services firm specializing in cybersecurity, IAM, cloud, AI-driven platforms, and custom software engineering. We partner with public and private sector organizations to deliver high-impact digital transformation initiatives across the Kingdom of Saudi Arabia.</p>\n<p>As part of our growth, we are looking for a motivated Sales Account Manager to support account expansion and revenue growth within the Saudi market.</p>\n<h3>Role Overview</h3>\n<p>The Sales Account Manager will be responsible for managing and growing a port",
+   "country": "Saudi Arabia",
+   "state": "",
+   "city": "Eastern Province",
+   "address": "",
+   "zipcode": "",
+   "location_display": "Eastern Province, Saudi Arabia",
+   "is_salary_visible": false,
+   "is_remote": null,
+   "contract_details": "full_time",
+   "is_pinned_in_career_page": false
+  },
+  {
+   "id": 4170080,
+   "hash": "63RY3X95",
+   "organization_name": "Sales",
+   "position_name": "Account Manager \u2013 Cybersecurity Solutions",
+   "description": "<p><strong>About ExeQut</strong><br/>\nExeQut is a fast-growing consulting and technology services firm specializing in cybersecurity, IAM, cloud, AI-driven platforms, and custom software engineering. We partner with public and private sector organizations to deliver high-impact digital transformation initiatives across the Kingdom of Saudi Arabia.</p><p></p>\n<p><strong>Position Summary</strong><br/>\nAs part of our continued growth, ExeQut is hiring a Sales Account Manager to drive account expansion and revenue growth within the Saudi market. You will manage a portfolio of accounts, deepening e",
+   "country": "Saudi Arabia",
+   "state": "",
+   "city": "Riyadh",
+   "address": "",
+   "zipcode": "",
+   "location_display": "Riyadh, Saudi Arabia",
+   "is_salary_visible": false,
+   "is_remote": null,
+   "contract_details": "full_time",
+   "is_pinned_in_career_page": true
+  },
+  {
+   "id": 3944821,
+   "hash": "7XW9496X",
+   "organization_name": "Software Development",
+   "position_name": "Back-End Java Developer",
+   "description": "<p><strong>About ExeQut</strong></p>\n<p>ExeQut is a leader in consulting, delivering customized solutions for enterprise applications and digital platforms. We emphasize transparency, collaboration, and addressing core business challenges through a structured, agile development process. Partnering with clients from ideation to deployment, we ensure our solutions deliver long-term value and streamline the user experience.</p>\n<p><strong>Role Summary</strong></p>\n<p>ExeQut is hiring a Backend Java Developer to join our Maryland-based team in a hybrid capacity. You will design and develop robust ",
+   "country": "United States",
+   "state": "Maryland",
+   "city": "Baltimore",
+   "address": "",
+   "zipcode": "",
+   "location_display": "Baltimore, Maryland, United States",
+   "is_salary_visible": false,
+   "is_remote": true,
+   "contract_details": "full_time",
+   "is_pinned_in_career_page": true
+  }
+ ]
+}

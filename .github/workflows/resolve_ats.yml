@@ -1,0 +1,147 @@
+name: Monthly ATS Re-resolve
+
+on:
+  schedule:
+    # 1st of each month, 06:00 UTC — re-probe every ATS board to catch migrations
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install resolver dependencies
+        run: pip install -r requirements.txt -r tools/requirements.txt
+
+      - name: Re-resolve all ATS boards
+        run: python tools/resolve_ats.py --force
+
+      # Parked boards and watchlist entries (Workday tenants, career URLs) are
+      # re-probed here, never deleted: entries that now succeed are unparked;
+      # active boards and tenants that fail are parked with their reason
+      # (sourcing/parked_boards.csv). Parking lands in the PR below for review.
+      - name: Re-probe parked boards and watchlist entries
+        run: python tools/probe_parked_boards.py --park-failures
+
+      # PUB-11: companies newly added to the profile's company lists get their
+      # first resolution (boards, Workday tenants, careers pages; failures and
+      # unsupported vendors parked). Companies already tried are skipped.
+      - name: Resolve newly listed companies
+        run: python main.py resolve --yes
+
+      # PUB-13: the companies Workable blocked from the maintainer's address are
+      # retried from the runner's, paced, a bounded number a month so the job
+      # stays inside its timeout. Answers land in the PR below. PUB-15: the
+      # unchecked companies are the starter list's public segment, which the
+      # committed profile filters out, so the retry reads the whole list
+      # through a copy of the profile with that one entry.
+      - name: Retry companies Workable has not checked
+        shell: bash
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          python - <<'PY'
+          import yaml
+          profile = yaml.safe_load(open("profile.yaml"))
+          profile["sources"]["company_lists"] = [{"file": "data/company_lists/starter_companies.csv", "tier": "watch",
+                                                  "boards": "data/company_lists/starter_boards.csv"}]
+          yaml.safe_dump(profile, open("/tmp/retry_profile.yaml", "w"), sort_keys=False)
+          PY
+          JOB_DIGEST_PROFILE=/tmp/retry_profile.yaml python main.py resolve --retry-unchecked --list data/company_lists/starter_companies.csv --max 300 --yes 2>&1 | tee retry.log
+
+      - name: Open PR if companies.yaml, the parked list or the board lists changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FILES="data/companies.yaml sourcing/parked_boards.csv sourcing/startups_ats_resolved.csv sourcing/startups_unresolved.csv data/company_lists/starter_companies.csv data/company_lists/starter_boards.csv"
+          if git diff --quiet $FILES; then
+            echo "No ATS or parked-board changes this month"
+            exit 0
+          fi
+          BRANCH="ats-resolve-$(date +%Y-%m)"
+          RETRY=$(grep -E '^\[Retry\]' retry.log || true)
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git checkout -b "$BRANCH"
+          git add $FILES
+          git commit -m "chore: monthly ATS re-resolve $(date +%Y-%m)"
+          git push -u origin "$BRANCH" --force
+          gh pr create \
+            --base main \
+            --title "Monthly ATS re-resolve $(date +%Y-%m)" \
+            --body "Automated re-run of tools/resolve_ats.py --force, then python main.py resolve for newly listed companies and python main.py resolve --retry-unchecked. Review moves between resolved and unresolved before merging.
+
+          \`\`\`
+          $RETRY
+          \`\`\`" \
+            || echo "PR already exists for $BRANCH"
+
+  # OPS-11: the companies SRC-18 dropped from Bespoke (sourcing/bespoke_dropped.csv)
+  # are re-asked through their own website, seed-only, never the old careers_url.
+  # Its own job so it runs alongside the re-resolve and adds no time to it.
+  # Website comes from the committed sourcing/companies_min.csv.gz, since
+  # companies_master.csv is gitignored and absent here. Writes nothing to main:
+  # changes land in their own PR for review.
+  recheck-dropped:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install resolver dependencies
+        run: pip install -r requirements.txt -r tools/requirements.txt
+
+      - name: Re-check companies dropped from Bespoke
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: python sourcing/recheck_dropped.py 2>&1 | tee recheck.log
+
+      - name: Open PR if the re-check changed anything
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FILES="sourcing/bespoke_dropped.csv sourcing/startups_ats_resolved.csv sourcing/startups_unresolved.csv"
+          if git diff --quiet $FILES; then
+            echo "No re-check changes this month"
+            exit 0
+          fi
+          BRANCH="bespoke-recheck-$(date +%Y-%m)"
+          SUMMARY=$(grep -E '^\[Recheck\] (re-checked|  (board|bespoke|held|refused) )' recheck.log || true)
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git checkout -b "$BRANCH"
+          git add $FILES
+          git commit -m "chore: monthly re-check of companies dropped from Bespoke $(date +%Y-%m)"
+          git push -u origin "$BRANCH" --force
+          gh pr create \
+            --base main \
+            --title "Bespoke dropped-company re-check $(date +%Y-%m)" \
+            --body "Automated run of sourcing/recheck_dropped.py (OPS-11): each company in sourcing/bespoke_dropped.csv re-asked through its own website, seed-only. Companies that came back re-enter the Bespoke list or gain a board; every re-checked row gets a fresh last_checked. Held companies found a page on another domain and stay dropped; listed here for review. Review new boards and careers URLs before merging.
+
+          \`\`\`
+          $SUMMARY
+          \`\`\`" \
+            || echo "PR already exists for $BRANCH"

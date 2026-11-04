@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Thank you for your interest in working with Shatterproof",
+    "from": "Shatterproof <recruiting+434597118-bc2fa890@applytojob.com>",
+    "date": "Thu, 27 Aug 2026 13:25:46 +0000",
+    "body": "Dear Candidate,\nWe wanted to thank you for your participation in the recruitment process thus far. We've enjoyed getting to know a bit more about you and your experiences. We had a number of qualified candidates for this role and have had to make some tough decisions. Unfortunately, we won't be moving forward with your candidacy at this time. We thank you again for your participation and encourage you to keep an eye on our careers page.\nBest,\nShatterproof"
+  },
+  "expected": {
+    "status": "Rejected",
+    "row": 552
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "ca0f51df16bfa706",
+    "raw": "{\"status\": \"Rejected\", \"row\": 552, \"confidence\": \"high\", \"reason\": \"The email says \\\"we won't be moving forward with your candidacy at this time\\\" after \\\"we had a number of qualified candidates for this role and have had to make some tough decisions,\\\" a decision about her own application for the Shatterproof role on row 552.\"}",
+    "usage": {
+      "input_tokens": 1141,
+      "output_tokens": 108
+    }
+  }
+}

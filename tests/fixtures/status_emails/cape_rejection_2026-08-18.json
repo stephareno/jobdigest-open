@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Application Follow-up: Cape",
+    "from": "Cape Hiring Team <no-reply@ashbyhq.com>",
+    "date": "Tue, 18 Aug 2026 13:31:16 +0000",
+    "body": "Hi Candidate, \r\n\nThank you for taking the time to apply with us for the Chief Information Security Officer (CISO) role at Cape. After careful consideration, we've determined that there isn't a fit at this time, and we will not be moving forward with your candidacy. \r\n\nWe appreciate your interest in Cape and would love to keep in touch as the needs of our business evolve. \r\n\nCheers,\r\n\nCape"
+  },
+  "expected": {
+    "status": "Rejected",
+    "row": 400
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "58b97f87e699052c",
+    "raw": "{\"status\": \"Rejected\", \"row\": 400, \"confidence\": \"high\", \"reason\": \"The email says \\\"we've determined that there isn't a fit at this time, and we will not be moving forward with your candidacy\\\" for the CISO role she applied for at Cape.\"}",
+    "usage": {
+      "input_tokens": 1123,
+      "output_tokens": 85
+    }
+  }
+}

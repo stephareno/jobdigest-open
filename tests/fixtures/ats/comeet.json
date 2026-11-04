@@ -1,0 +1,158 @@
+[
+ {
+  "name": "AI Red Team Researcher",
+  "department": "CTO",
+  "email": "zenity.C5.07D@comeetapply.com",
+  "email_alias": null,
+  "url_comeet_hosted_page": "https://www.comeet.com/jobs/zenity/19.000/ai-red-team-researcher/C5.07D",
+  "url_recruit_hosted_page": "https://www.comeet.com/jobs/zenity/19.000/ai-red-team-researcher/C5.07D",
+  "url_active_page": "https://zenity.io/careers/tel-aviv-jaffa-tel-aviv-district-israel/ai-red-team-researcher/C5.07D",
+  "employment_type": "Full-time",
+  "experience_level": "Intermediate",
+  "uid": "C5.07D",
+  "location": {
+   "name": "Tel Aviv",
+   "country": "IL",
+   "city": "Tel Aviv-Jaffa",
+   "state": "Tel Aviv District",
+   "postal_code": "",
+   "street_name": "121 Derech Menachem Begin",
+   "arrival_instructions": "<p>We are located at the\u00a0<span style=\"font-size: 14px;\">Azrieli Sarona Tower</span></p><p>121 Menachem Begin Road, 45th Floor<br/>Tel Aviv, Israel</p><p>Guests arriving by car\u00a0are welcome to park at the &#34;Azrieli Sarona Tower parking lot.&#34;<br/>From there, walk to the lobby and present your ID to receive a visitor badge and elevator access to the 45th floor. <b>A parking exit card will be provided at the end of your visit.</b></p><p><b style=\"font-size: 14px;\">Please note:\u00a0A valid photo ID is required to enter the building.</b></p><p><br/></p>",
+   "street_number": "121",
+   "timezone": "Asia/Jerusalem",
+   "location_uid": "73.407",
+   "is_remote": false
+  },
+  "internal_use_custom_id": null,
+  "is_consent_needed": true,
+  "is_sms_consent_needed": false,
+  "referrals_reward": null,
+  "is_reward": false,
+  "is_company_reward": true,
+  "company_referrals_reward": "10,000 NIS",
+  "url_detected_page": "https://zenity.io/careers/tel-aviv-jaffa-tel-aviv-district-israel/ai-red-team-researcher/C5.07D",
+  "picture_url": null,
+  "time_updated": "2026-09-13T22:15:48Z",
+  "company_name": "Zenity",
+  "is_internal": false,
+  "linkedin_job_posting_id": "MTVfMjg5NDU4XzQ2MDIzN18xODU5OTcw",
+  "workplace_type": "On-site",
+  "position_url": "https://www.comeet.co/careers-api/2.0/company/19.000/positions/C5.07D?token=9103660519012202D5024401B3091024403660",
+  "details": [
+   {
+    "name": "Description",
+    "value": "<p><strong>About Us:</strong></p><p><strong>\ufeff</strong>Zenity is the leader in AI Agent Security and the first company to bring an agent-centric security platform to market. As enterprises accelerate AI agent adoption, we are establishing the security framework for how AI agents are secured and governed at enterprise scale.</p><p>We deliver full-lifecycle visibility, governance, detection, prevention, and response for AI agents from build time to runtime, across SaaS, home-grown platforms, and end-user devices. Backed by $180M+ in total funding, including a $125M Series C led by Norwest, with p",
+    "order": 1
+   },
+   {
+    "name": "What You\u2019ll Do",
+    "value": "<p><strong>Responsibilities:</strong></p><ul><li>Research emerging agentic technologies and uncover new exploits, attack vectors and risks. From initial exploitation to impact.</li><li>Build tooling, harnesses, and test frameworks to scale attack discovery and make research repeatable. And contribute to internal red team infrastructure.</li><li>Investigate the surrounding ecosystem, not just the model. This includes: plugins, connectors, MCP servers, orchestration frameworks, and different types of infrastructure. Mapping how weaknesses in one component can develop into full compromise.</li><l",
+    "order": 2
+   }
+  ]
+ },
+ {
+  "name": "CTO Office Team Member",
+  "department": "CTO",
+  "email": "zenity.74.270@comeetapply.com",
+  "email_alias": null,
+  "url_comeet_hosted_page": "https://www.comeet.com/jobs/zenity/19.000/cto-office-team-member/74.270",
+  "url_recruit_hosted_page": "https://www.comeet.com/jobs/zenity/19.000/cto-office-team-member/74.270",
+  "url_active_page": "https://zenity.io/careers/tel-aviv-jaffa-tel-aviv-district-israel/cto-office-team-member/74.270",
+  "employment_type": null,
+  "experience_level": null,
+  "uid": "74.270",
+  "location": {
+   "name": "Tel Aviv",
+   "country": "IL",
+   "city": "Tel Aviv-Jaffa",
+   "state": "Tel Aviv District",
+   "postal_code": "",
+   "street_name": "121 Derech Menachem Begin",
+   "arrival_instructions": "<p>We are located at the\u00a0<span style=\"font-size: 14px;\">Azrieli Sarona Tower</span></p><p>121 Menachem Begin Road, 45th Floor<br/>Tel Aviv, Israel</p><p>Guests arriving by car\u00a0are welcome to park at the &#34;Azrieli Sarona Tower parking lot.&#34;<br/>From there, walk to the lobby and present your ID to receive a visitor badge and elevator access to the 45th floor. <b>A parking exit card will be provided at the end of your visit.</b></p><p><b style=\"font-size: 14px;\">Please note:\u00a0A valid photo ID is required to enter the building.</b></p><p><br/></p>",
+   "street_number": "121",
+   "timezone": "Asia/Jerusalem",
+   "location_uid": "73.407",
+   "is_remote": false
+  },
+  "internal_use_custom_id": null,
+  "is_consent_needed": true,
+  "is_sms_consent_needed": false,
+  "referrals_reward": null,
+  "is_reward": false,
+  "is_company_reward": true,
+  "company_referrals_reward": "10,000 NIS",
+  "url_detected_page": "https://zenity.io/careers/tel-aviv-jaffa-tel-aviv-district-israel/cto-office-team-member/74.270",
+  "picture_url": null,
+  "time_updated": "2026-09-16T15:49:17Z",
+  "company_name": "Zenity",
+  "is_internal": false,
+  "linkedin_job_posting_id": "MTVfMjg5NDU4XzQ2ODA4MF8xODc3ODQ3",
+  "workplace_type": "On-site",
+  "position_url": "https://www.comeet.co/careers-api/2.0/company/19.000/positions/74.270?token=9103660519012202D5024401B3091024403660",
+  "details": [
+   {
+    "name": "Description",
+    "value": "<p><strong>About Us</strong></p><p>Zenity is the leader in AI Agent Security and the first company to bring an agent-centric security platform to market. As enterprises accelerate AI agent adoption, we are establishing the security framework for how AI agents are secured and governed at enterprise scale.</p><p>We deliver full-lifecycle visibility, governance, detection, prevention, and response for AI agents from build time to runtime, across SaaS, home-grown platforms, and end-user devices. Backed by $180M+ in total funding, including a $125M Series C led by Norwest, with participation from S",
+    "order": 1
+   },
+   {
+    "name": "What You\u2019ll Do",
+    "value": "<p><strong>Responsibilities: </strong></p><ul><li>Take an ambiguous security challenge from \"this might be possible\" to a working POC that proves the Zenity approach, grounded in technical reality.</li><li>Research the customer need, cybersecurity gap, and technical feasibility behind an idea before and while you build.</li><li>Own the end-to-end execution loop: scope the problem, build the prototype, evaluate it, document the approach, and ship it.</li><li>Partner closely with Product, R&amp;D, and GTM. Don\u2019t just write about emerging problems. POC the solutions so customers see something rea",
+    "order": 2
+   }
+  ]
+ },
+ {
+  "name": "DevOps Team Lead",
+  "department": "Engineering",
+  "email": "zenity.A5.070@comeetapply.com",
+  "email_alias": null,
+  "url_comeet_hosted_page": "https://www.comeet.com/jobs/zenity/19.000/devops-team-lead/A5.070",
+  "url_recruit_hosted_page": "https://www.comeet.com/jobs/zenity/19.000/devops-team-lead/A5.070",
+  "url_active_page": "https://zenity.io/careers/hybrid-tel-aviv-jaffa-tel-aviv-district-israel/devops-team-lead/A5.070",
+  "employment_type": "Full-time",
+  "experience_level": "Management",
+  "uid": "A5.070",
+  "location": {
+   "name": "Tel Aviv",
+   "country": "IL",
+   "city": "Tel Aviv-Jaffa",
+   "state": "Tel Aviv District",
+   "postal_code": "",
+   "street_name": "121 Derech Menachem Begin",
+   "arrival_instructions": "<p>We are located at the\u00a0<span style=\"font-size: 14px;\">Azrieli Sarona Tower</span></p><p>121 Menachem Begin Road, 45th Floor<br/>Tel Aviv, Israel</p><p>Guests arriving by car\u00a0are welcome to park at the &#34;Azrieli Sarona Tower parking lot.&#34;<br/>From there, walk to the lobby and present your ID to receive a visitor badge and elevator access to the 45th floor. <b>A parking exit card will be provided at the end of your visit.</b></p><p><b style=\"font-size: 14px;\">Please note:\u00a0A valid photo ID is required to enter the building.</b></p><p><br/></p>",
+   "street_number": "121",
+   "timezone": "Asia/Jerusalem",
+   "location_uid": "73.407",
+   "is_remote": true
+  },
+  "internal_use_custom_id": null,
+  "is_consent_needed": true,
+  "is_sms_consent_needed": false,
+  "referrals_reward": null,
+  "is_reward": false,
+  "is_company_reward": true,
+  "company_referrals_reward": "10,000 NIS",
+  "url_detected_page": "https://zenity.io/careers/hybrid-tel-aviv-jaffa-tel-aviv-district-israel/devops-team-lead/A5.070",
+  "picture_url": null,
+  "time_updated": "2026-09-16T15:33:05Z",
+  "company_name": "Zenity",
+  "is_internal": false,
+  "linkedin_job_posting_id": "MTVfMjg5NDU4XzQ2MDE5Ml8xODU5ODc5",
+  "workplace_type": "Hybrid",
+  "position_url": "https://www.comeet.co/careers-api/2.0/company/19.000/positions/A5.070?token=9103660519012202D5024401B3091024403660",
+  "details": [
+   {
+    "name": "Description",
+    "value": "<p><strong>About Us:</strong></p><p>Zenity is the leader in AI Agent Security and the first company to bring an agent-centric security platform to market. As enterprises accelerate AI agent adoption, we are establishing the security framework for how AI agents are secured and governed at enterprise scale.</p><p>We deliver full-lifecycle visibility, governance, detection, prevention, and response for AI agents from build time to runtime, across SaaS, home-grown platforms, and end-user devices. Backed by $180M+ in total funding, including a $125M Series C led by Norwest, with participation from ",
+    "order": 1
+   },
+   {
+    "name": "What You\u2019ll Do",
+    "value": "<p><strong>Responsibilities: </strong></p><ul><li>Lead and manage a platform/DevOps engineering team of 6, including hiring, mentorship, performance reviews, and goal-setting.</li><li>Own the architecture, scalability, and reliability of core infrastructure and platform services supporting all products.</li><li>Design and operate large-scale, multi-cloud services (AWS/Azure/GCP), including cost and security ownership.</li><li>Drive Infrastructure as Code, GitOps, CI/CD, and observability practices across the organization.</li><li>Make technical decisions on large-scale data technologies such a",
+    "order": 2
+   }
+  ]
+ }
+]

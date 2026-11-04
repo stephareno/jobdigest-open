@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Welcome to Johns Hopkins University Careers",
+    "from": "Johns Hopkins University Talent Acquisition <noreply@recruiting.jh.edu>",
+    "date": "Mon, 24 Aug 2026 18:36:53 +0000",
+    "body": "Hi, Welcome to Johns Hopkins University (JHU) Jobs!\nHere is a checklist for you\nBuild a rich profile\nAdd all your experiences, education, skills, projects, and courses to fully\r\n                                                represent yourself!\nUpdate Profile\nUnderstand your job matches\nJobs that match \r\n\n                                               your career pathway based on your profile.\nTrack your applications\nView the real-time status of all your submitted applications.\nSet custom alerts\nBe the first to know about new job opportunities. Get meaningful alerts\r\n                                                for recommended jobs directly into your inbox."
+  },
+  "expected": {
+    "status": "none",
+    "row": null
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "0a649853ca640e20",
+    "raw": "{\"status\": \"none\", \"row\": null, \"confidence\": \"high\", \"reason\": \"This is a welcome email from the JHU careers system listing profile-building steps and job alerts, and it does not mention any specific application or decision.\"}",
+    "usage": {
+      "input_tokens": 1359,
+      "output_tokens": 71
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+ "itemID": "9202946933437_1",
+ "postingInstructions": [],
+ "links": [],
+ "additionalProperties": {},
+ "requisitionTitle": "Senior CQV Engineer",
+ "postDate": "2026-09-14T10:50:00.000-04:00",
+ "screeningRequirements": [],
+ "organizationalUnits": [],
+ "payGradeRange": {
+  "minimumRate": {
+   "amountValue": 0.0,
+   "currencyCode": "USD"
+  },
+  "maximumRate": {
+   "amountValue": 80.0,
+   "currencyCode": "USD"
+  }
+ },
+ "sponsoredVisaTypeCodes": [],
+ "customFieldGroup": {
+  "codeFields": [
+   {
+    "codeValue": "HR",
+    "shortName": "Hourly",
+    "nameCode": {
+     "codeValue": "SalaryType"
+    }
+   },
+   {
+    "codeValue": "FIXED",
+    "shortName": "FIXED",
+    "nameCode": {
+     "codeValue": "SalaryRangeType"
+    }
+   }
+  ],
+  "dateFields": [
+   {
+    "dateValue": "2026-09-14T10:50Z",
+    "nameCode": {
+     "codeValue": "PostingDate"
+    }
+   },
+   {
+    "dateValue": "2026-09-16T15:17Z",
+    "nameCode": {
+     "codeValue": "CurrentServerDateTime"
+    }
+   }
+  ],
+  "indicatorFields": [
+   {
+    "indicatorValue": false,
+    "nameCode": {
+     "codeValue": "PriortyStatusFlag"
+    }
+   },
+   {
+    "indicatorValue": false,
+    "nameCode": {
+     "codeValue": "InternalPostingFlag"
+    }
+   },
+   {
+    "indicatorValue": true,
+    "nameCode": {
+     "codeValue": "MinValue"
+    }
+   },
+   {
+    "indicatorValue": true,
+    "nameCode": {
+     "codeValue": "IsVsidApplicable"
+    }
+   },
+   {
+    "indicatorValue": false,
+    "nameCode": {
+     "codeValue": "IsSassDlReqForExtPostFlag"
+    }
+   },
+   {
+    "indicatorValue": false,
+    "nameCode": {
+     "codeValue": "IsSassDlReqForIntPostFlag"
+    }
+   },
+   {
+    "indicatorValue": false,
+    "nameCode": {
+     "codeValue": "IsMonetaryFlag"
+    }
+   },
+   {
+    "indicatorValue": false,
+    "nameCode": {
+     "codeValue": "IsNonMonetaryFlag"
+    }
+   }
+  ],
+  "numberFields": [
+   {
+    "numberValue": 0.0,
+    "categoryCode": {
+     "codeValue": "ApplicantCount"
+    }
+   },
+   {
+    "categoryCode": {
+     "codeValue": "AwardAmount"
+    }
+   }
+  ],
+  "stringFields": [
+   {
+    "stringValue": "598250",
+    "nameCode": {
+     "codeValue": "ExternalJobID"
+    }
+   },
+   {
+    "nameCode": {
+     "codeValue": "CareerCenterRefId"
+    }
+   },
+   {
+    "nameCode": {
+     "codeValue": "GuidelineOid"
+    }
+   },
+   {
+    "nameCode": {
+     "codeValue": "CurrencySymbolOrCode"
+    }
+   },
+   {
+    "stringValue": "",
+    "nameCode": {
+     "codeValue": "HomeDepartment"
+    }
+   },
+   {
+    "nameCode": {
+     "codeValue": "JobClass"
+    }
+   },
+   {
+    "stringValue": " Up to 80 (USD) Hourly",
+    "nameCode": {
+     "codeValue": "SalaryRange"
+    }
+   }
+  ]
+ },
+ "clientRequisitionID": "1338",
+ "requisitionDescription": "<div><p>ELIQUENT Life Sciences is the leading global consulting firm providing solutions to life science companies researching, developing, and manufacturing innovative products to serve patients and respond to public health challenges around the world. ELIQUENT is committed to serving clients\u2019 needs with extensive expertise, unwavering integrity, and strategic insight in a manner that supports availability of safe, effective, and high-quality drugs, biologics, and medical devices. For more information, please visit our website at eliquent.com. We at Eliquent are looking for an experienced Validation </p></div>",
+ "requisitionLocations": [
+  {
+   "aliasNames": [],
+   "address": {
+    "cityName": "",
+    "countrySubdivisionLevel1": {
+     "codeValue": ""
+    },
+    "postalCode": ""
+   },
+   "nameCode": {
+    "shortName": "Marietta, PA"
+   }
+  }
+ ]
+}

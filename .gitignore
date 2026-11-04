@@ -1,0 +1,50 @@
+# Credentials — never commit (see CLAUDE.md)
+service-account.json
+*.env
+.env*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Careers-page fetch cache (tools/resolve_ats.py --careers-fallback)
+.ats_cache/
+
+# large sourcing data (kept local, too big for git). The runner reads the
+# committed five-column slim copy, sourcing/companies_min.csv.gz (OPS-11).
+sourcing/raw/
+sourcing/companies_master.csv
+sourcing/fit_candidates.csv
+
+# personal / chat-context scratch (not project artifacts)
+Claude outputs/
+chat-export-*.md
+job-digest-agent-project-guide.md
+
+# redundant CSV snapshots (git already versions the source files)
+sourcing/backups/
+
+# offline bespoke-analysis intermediates (reproducible, see sourcing/bespoke_analysis.md)
+sourcing/bespoke_js_only.csv
+sourcing/bespoke_pages.csv
+sourcing/bespoke_sample.csv
+sourcing/bespoke_sample_extraction.json
+
+# Per-machine Claude Code permissions (settings.json is the shared one)
+.claude/settings.local.json
+
+# PUB-06: digest --dry-run output
+out/
+
+# PUB-11: SEC submissions cache (tools/build_public_companies.py)
+.sec_cache/
+
+# PUB-12: website ladder caches (Wikidata replies) and resolve --workdir scratch
+.website_cache/
+sourcing/resolve_pending.csv

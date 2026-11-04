@@ -1,0 +1,8 @@
+Sam Testcase, a test candidate, passed on these roles this week and wrote
+a note on each:
+
+{listing}
+
+In two or three plain sentences (no markdown, no list), say what reasons recur
+across the notes. Describe only what the notes say. Give no counts, no scores,
+and no advice or suggested changes.

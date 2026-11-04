@@ -1,0 +1,63 @@
+{
+ "job_requisitions": [
+  {
+   "id": 621244352,
+   "has_questionnaire": true,
+   "job_title": "Research Fellow (Early Career)",
+   "location": {
+    "address_line_1": "1616 P ST NW",
+    "country": "USA",
+    "city": "Washington",
+    "state": "DC",
+    "zip": "20036-1434"
+   },
+   "base_pay_frequency": "YEAR",
+   "job_description": "RFF\u2019s mission is to improve environmental, energy, and natural resource decisions through impartial, evidence-based economic research and policy engagement. We are committed to being the most widely trusted source of research insights and policy solutio...",
+   "reapply_msg": "Thank you for your interest in Resources for the Future. Our records indicate that you have already submitted an application for employment. Should your prior experience match our business needs, you will be contacted by a representative of our company.",
+   "knockout_msg": "The goal of the questions that you have just answered is to help determine if this opportunity would be a good match for you and our company. At this time your qualifications do not match any of our positions. Your application will remain active for 30 days. Please do not reapply during this time period, as your application will register in the system as \"Already Applied\". Thank you for your interest in employment with us.",
+   "allow_quick_apply": false,
+   "is_remote_job": false
+  },
+  {
+   "id": 604492885,
+   "has_questionnaire": true,
+   "job_title": "Publications Associate",
+   "location": {
+    "address_line_1": "1616 P ST NW",
+    "country": "USA",
+    "city": "Washington",
+    "state": "DC",
+    "zip": "20036-1434"
+   },
+   "base_pay_frequency": "YEAR",
+   "job_description": "The Publications Associate is responsible for elevating RFF\u2019s research content by preparing technical publications for digital distribution and coordinated promotion. The Publications Associate deploys an effective mix of project management, layout desi...",
+   "reapply_msg": "Thank you for your interest in Resources for the Future. Our records indicate that you have already submitted an application for employment. Should your prior experience match our business needs, you will be contacted by a representative of our company.",
+   "knockout_msg": "The goal of the questions that you have just answered is to help determine if this opportunity would be a good match for you and our company. At this time your qualifications do not match any of our positions. Your application will remain active for 30 days. Please do not reapply during this time period, as your application will register in the system as \"Already Applied\". Thank you for your interest in employment with us.",
+   "allow_quick_apply": false,
+   "is_remote_job": false
+  },
+  {
+   "id": 587721087,
+   "has_questionnaire": true,
+   "job_title": "Research Fellow (Mid-Career and Senior)",
+   "location": {
+    "address_line_1": "1616 P ST NW",
+    "country": "USA",
+    "city": "Washington",
+    "state": "DC",
+    "zip": "20036-1434"
+   },
+   "base_pay_frequency": "YEAR",
+   "job_description": "RFF\u2019s mission is to improve environmental, energy, and natural resource decisions through impartial, evidence-based economic research and policy engagement. We are committed to being the most widely trusted source of research insights and policy solutio...",
+   "reapply_msg": "Thank you for your interest in Resources for the Future. Our records indicate that you have already submitted an application for employment. Should your prior experience match our business needs, you will be contacted by a representative of our company.",
+   "knockout_msg": "The goal of the questions that you have just answered is to help determine if this opportunity would be a good match for you and our company. At this time your qualifications do not match any of our positions. Your application will remain active for 30 days. Please do not reapply during this time period, as your application will register in the system as \"Already Applied\". Thank you for your interest in employment with us.",
+   "allow_quick_apply": false,
+   "is_remote_job": false
+  }
+ ],
+ "_paging": {
+  "offset": 0,
+  "size": 100,
+  "total": 3
+ }
+}

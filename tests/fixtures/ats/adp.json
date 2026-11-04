@@ -1,0 +1,520 @@
+{
+ "jobRequisitions": [
+  {
+   "itemID": "9202946933437_1",
+   "postingInstructions": [],
+   "links": [],
+   "additionalProperties": {},
+   "requisitionTitle": "Senior CQV Engineer",
+   "postDate": "2026-09-14T10:50:00.000-04:00",
+   "screeningRequirements": [],
+   "organizationalUnits": [],
+   "payGradeRange": {
+    "minimumRate": {
+     "amountValue": 0.0,
+     "currencyCode": "USD"
+    },
+    "maximumRate": {
+     "amountValue": 80.0,
+     "currencyCode": "USD"
+    }
+   },
+   "sponsoredVisaTypeCodes": [],
+   "customFieldGroup": {
+    "codeFields": [
+     {
+      "codeValue": "HR",
+      "shortName": "Hourly",
+      "nameCode": {
+       "codeValue": "SalaryType"
+      }
+     },
+     {
+      "codeValue": "RANGE",
+      "shortName": "RANGE",
+      "nameCode": {
+       "codeValue": "SalaryRangeType"
+      }
+     }
+    ],
+    "dateFields": [
+     {
+      "dateValue": "2026-09-14T10:50Z",
+      "nameCode": {
+       "codeValue": "PostingDate"
+      }
+     },
+     {
+      "dateValue": "2026-09-16T15:17Z",
+      "nameCode": {
+       "codeValue": "CurrentServerDateTime"
+      }
+     }
+    ],
+    "indicatorFields": [
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "PriortyStatusFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "InternalPostingFlag"
+      }
+     },
+     {
+      "indicatorValue": true,
+      "nameCode": {
+       "codeValue": "MinValue"
+      }
+     },
+     {
+      "indicatorValue": true,
+      "nameCode": {
+       "codeValue": "IsVsidApplicable"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsSassDlReqForExtPostFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsSassDlReqForIntPostFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsMonetaryFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsNonMonetaryFlag"
+      }
+     }
+    ],
+    "numberFields": [
+     {
+      "numberValue": 0.0,
+      "categoryCode": {
+       "codeValue": "ApplicantCount"
+      }
+     },
+     {
+      "categoryCode": {
+       "codeValue": "AwardAmount"
+      }
+     }
+    ],
+    "stringFields": [
+     {
+      "stringValue": "598250",
+      "nameCode": {
+       "codeValue": "ExternalJobID"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "CareerCenterRefId"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "GuidelineOid"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "CurrencySymbolOrCode"
+      }
+     },
+     {
+      "stringValue": "",
+      "nameCode": {
+       "codeValue": "HomeDepartment"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "JobClass"
+      }
+     },
+     {
+      "stringValue": " Up to 80 (USD) Hourly",
+      "nameCode": {
+       "codeValue": "SalaryRange"
+      }
+     }
+    ]
+   },
+   "clientRequisitionID": "1338",
+   "requisitionLocations": [
+    {
+     "aliasNames": [],
+     "address": {
+      "cityName": "",
+      "countrySubdivisionLevel1": {
+       "codeValue": ""
+      },
+      "postalCode": ""
+     },
+     "nameCode": {
+      "shortName": "Marietta, PA"
+     }
+    }
+   ]
+  },
+  {
+   "itemID": "9202943396826_1",
+   "postingInstructions": [],
+   "links": [],
+   "additionalProperties": {},
+   "requisitionTitle": "CQV QA Compliance Engineer ",
+   "postDate": "2026-08-31T12:21:00.000-04:00",
+   "screeningRequirements": [],
+   "organizationalUnits": [],
+   "payGradeRange": {
+    "minimumRate": {
+     "amountValue": 0.0,
+     "currencyCode": "USD"
+    },
+    "maximumRate": {
+     "amountValue": 70.0,
+     "currencyCode": "USD"
+    }
+   },
+   "sponsoredVisaTypeCodes": [],
+   "customFieldGroup": {
+    "codeFields": [
+     {
+      "codeValue": "HR",
+      "shortName": "Hourly",
+      "nameCode": {
+       "codeValue": "SalaryType"
+      }
+     },
+     {
+      "codeValue": "RANGE",
+      "shortName": "RANGE",
+      "nameCode": {
+       "codeValue": "SalaryRangeType"
+      }
+     }
+    ],
+    "dateFields": [
+     {
+      "dateValue": "2026-08-31T12:21Z",
+      "nameCode": {
+       "codeValue": "PostingDate"
+      }
+     },
+     {
+      "dateValue": "2026-09-16T15:17Z",
+      "nameCode": {
+       "codeValue": "CurrentServerDateTime"
+      }
+     }
+    ],
+    "indicatorFields": [
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "PriortyStatusFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "InternalPostingFlag"
+      }
+     },
+     {
+      "indicatorValue": true,
+      "nameCode": {
+       "codeValue": "MinValue"
+      }
+     },
+     {
+      "indicatorValue": true,
+      "nameCode": {
+       "codeValue": "IsVsidApplicable"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsSassDlReqForExtPostFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsSassDlReqForIntPostFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsMonetaryFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsNonMonetaryFlag"
+      }
+     }
+    ],
+    "numberFields": [
+     {
+      "numberValue": 0.0,
+      "categoryCode": {
+       "codeValue": "ApplicantCount"
+      }
+     },
+     {
+      "categoryCode": {
+       "codeValue": "AwardAmount"
+      }
+     }
+    ],
+    "stringFields": [
+     {
+      "stringValue": "597798",
+      "nameCode": {
+       "codeValue": "ExternalJobID"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "CareerCenterRefId"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "GuidelineOid"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "CurrencySymbolOrCode"
+      }
+     },
+     {
+      "stringValue": "",
+      "nameCode": {
+       "codeValue": "HomeDepartment"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "JobClass"
+      }
+     },
+     {
+      "stringValue": " Up to 70 (USD) Hourly",
+      "nameCode": {
+       "codeValue": "SalaryRange"
+      }
+     }
+    ]
+   },
+   "clientRequisitionID": "1335",
+   "requisitionLocations": [
+    {
+     "aliasNames": [],
+     "address": {
+      "cityName": "",
+      "countrySubdivisionLevel1": {
+       "codeValue": ""
+      },
+      "postalCode": ""
+     },
+     "nameCode": {
+      "shortName": "Durham, NC"
+     }
+    }
+   ]
+  },
+  {
+   "itemID": "9202940951148_1",
+   "postingInstructions": [],
+   "links": [],
+   "additionalProperties": {},
+   "requisitionTitle": "Quality Assurance Validation Specialist",
+   "postDate": "2026-08-20T14:41:00.000-04:00",
+   "screeningRequirements": [],
+   "organizationalUnits": [],
+   "payGradeRange": {
+    "minimumRate": {
+     "amountValue": 0.0,
+     "currencyCode": "USD"
+    },
+    "maximumRate": {
+     "amountValue": 100000.0,
+     "currencyCode": "USD"
+    }
+   },
+   "sponsoredVisaTypeCodes": [],
+   "customFieldGroup": {
+    "codeFields": [
+     {
+      "codeValue": "AN",
+      "shortName": "Annually",
+      "nameCode": {
+       "codeValue": "SalaryType"
+      }
+     },
+     {
+      "codeValue": "RANGE",
+      "shortName": "RANGE",
+      "nameCode": {
+       "codeValue": "SalaryRangeType"
+      }
+     }
+    ],
+    "dateFields": [
+     {
+      "dateValue": "2026-08-20T14:41Z",
+      "nameCode": {
+       "codeValue": "PostingDate"
+      }
+     },
+     {
+      "dateValue": "2026-09-16T15:17Z",
+      "nameCode": {
+       "codeValue": "CurrentServerDateTime"
+      }
+     }
+    ],
+    "indicatorFields": [
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "PriortyStatusFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "InternalPostingFlag"
+      }
+     },
+     {
+      "indicatorValue": true,
+      "nameCode": {
+       "codeValue": "MinValue"
+      }
+     },
+     {
+      "indicatorValue": true,
+      "nameCode": {
+       "codeValue": "IsVsidApplicable"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsSassDlReqForExtPostFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsSassDlReqForIntPostFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsMonetaryFlag"
+      }
+     },
+     {
+      "indicatorValue": false,
+      "nameCode": {
+       "codeValue": "IsNonMonetaryFlag"
+      }
+     }
+    ],
+    "numberFields": [
+     {
+      "numberValue": 0.0,
+      "categoryCode": {
+       "codeValue": "ApplicantCount"
+      }
+     },
+     {
+      "categoryCode": {
+       "codeValue": "AwardAmount"
+      }
+     }
+    ],
+    "stringFields": [
+     {
+      "stringValue": "597402",
+      "nameCode": {
+       "codeValue": "ExternalJobID"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "CareerCenterRefId"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "GuidelineOid"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "CurrencySymbolOrCode"
+      }
+     },
+     {
+      "stringValue": "",
+      "nameCode": {
+       "codeValue": "HomeDepartment"
+      }
+     },
+     {
+      "nameCode": {
+       "codeValue": "JobClass"
+      }
+     },
+     {
+      "stringValue": " Up to 100000.00 (USD) Annually",
+      "nameCode": {
+       "codeValue": "SalaryRange"
+      }
+     }
+    ]
+   },
+   "clientRequisitionID": "1331",
+   "requisitionLocations": [
+    {
+     "aliasNames": [],
+     "address": {
+      "cityName": "Columbus",
+      "countrySubdivisionLevel1": {
+       "codeValue": "OH"
+      },
+      "postalCode": "43229"
+     },
+     "nameCode": {
+      "shortName": " Columbus, OH, US"
+     }
+    }
+   ]
+  }
+ ]
+}

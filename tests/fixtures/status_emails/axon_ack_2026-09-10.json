@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Thank you for applying to Axon!",
+    "from": "no-reply-talent@axon.com",
+    "date": "Thu, 10 Sep 2026 13:20:04 +0000 (UTC)",
+    "body": "sup { font-size: 100% !important; }\r\n\nURL Update Footer\r\n\nAXON ( [link: www.axon.com] )\r\n\n************\r\nPROTECT LIFE\r\n************\r\n\nHi Candidate,\r\n\nThank you for your interest in Axon! We received your application for Senior Director, IT Business Solutions & Delivery, and are delighted that you are interested in joining our team!\r\n\nWe will review your application and let you know if your qualifications are a match for the role. If you are not selected for this position, we encourage you to keep an eye on our career page as well as follow us on LinkedIn ( [link: www.linkedin.com] ), Facebook ( [link: www.facebook.com] ), or other social media sites as we are growing and continue to add openings.\r\n\nBest,\r\nAxon Talent Acquisition\r\n\n-------------------------------------------------\r\nAXON.COM/CAREERS ( [link: www.axon.com] )\r\n-------------------------------------------------\r\n\n“glassdoor ( [link: www.glassdoor.com] )\r\nLinkedin ( [link: www.linkedin.com] )\r\nYoutube ( [link: www.youtube.com] )"
+  },
+  "expected": {
+    "status": "Applied",
+    "row": 273
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "7aabca6b46b288d3",
+    "raw": "{\"status\": \"Applied\", \"row\": 273, \"confidence\": \"high\", \"reason\": \"The email says \\\"We received your application for Senior Director, IT Business Solutions & Delivery\\\", which confirms receipt of her application for that job, and the later \\\"if you are not selected\\\" line is only hypothetical.\"}",
+    "usage": {
+      "input_tokens": 1412,
+      "output_tokens": 98
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "“Head of Information Technology” and similar jobs",
+    "from": "LinkedIn <jobalerts-noreply@linkedin.com>",
+    "date": "Mon, 19 Oct 2026 13:24:34 +0000 (UTC)",
+    "body": "Jobs similar to your alert\r\n\nThere were no results for your alert, but these similar jobs may be a fit. Manage alert:\r\n[link: www.linkedin.com]\r\n\nExecutive Director, Global Head of Medical AI/Digital Strategy & Enablement\r\nAstraZeneca\r\nGaithersburg\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nInformation Systems Security Manager - Federal Customer\r\nDell Technologies\r\nMcLean\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nInformation Systems Manager\r\nAmentum\r\nMcLean\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nService Center Manager\r\nGovCIO\r\nFairfax\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nEnterprise Architect, Senior Advisor\r\nPeraton\r\nHerndon\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nSystems Engineer\r\nNIRA INC\r\n20024\r\nView job: [link: www.linkedin.com]\r\n\n---------------------------------------------------------\r\n\nSee more jobs: [link: www.linkedin.com]\r\n\n----------------------------------------\r\n\nThis email was intended for Candidate (SVP, IT, InfoSec & People | Builder bringing out the best of People, Process, & Technology 🤝 | Scaling organizations through smart systems, AI-driven automation, and high-performing teams)\r\nLearn why we included this: [link: www.linkedin.com]\r\nYou’re receiving this because you have a job alert.\r\n\nManage alert: [link: www.linkedin.com]\r\n\nUnsubscribe: [link: www.linkedin.com]\r\nHelp: [link: www.linkedin.com]\r\n\n© 2026 LinkedIn Corporation, 1zwnj000 West Maude Avenue, Sunnyvale, CA 94085.\r\nLinkedIn and the LinkedIn logo are registered trademarks of LinkedIn."
+  },
+  "expected": {
+    "status": "none",
+    "row": null
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "696cb59f20cdf108",
+    "raw": "{\"status\": \"none\", \"row\": null, \"confidence\": \"high\", \"reason\": \"This is a LinkedIn job alert listing similar jobs, not an employer decision about the candidate's own application, so it does not change any row's status.\"}",
+    "usage": {
+      "input_tokens": 2087,
+      "output_tokens": 74
+    }
+  }
+}

@@ -1,0 +1,109 @@
+name: Job Fetch (sharded)
+
+# OPS-04. Three runs a day. Each run fetches one slot of the startup tier's
+# two-day cycle (config.FETCH_CYCLE_SLOTS): every vendor's boards once a day
+# while the largest run fits config.STARTUP_RUN_MAX_BOARDS, otherwise vendors
+# move to once every two days in config.TWO_DAY_VENDOR_ORDER (logged as
+# "[Startup] cadence: ..."). Plus the once-a-day sources when due. Scores what
+# is new and queues it in state/pending/ for the digest (daily.yml). No Sheet
+# writes, no email.
+#
+# Daily sources (Adzuna, JSearch, LinkedIn, BuiltIn, dream ATS, Watchlist,
+# Bespoke) run on the 04:17 slot -- the run that feeds the 06:17 digest -- or on
+# a manual dispatch. If the 04:17 run fails, the next slot runs them.
+#
+# Which slot: the one with the oldest last success in shard_state.json. A run
+# that fails, times out, is cancelled, or never starts records no success, so
+# the next run takes that same slot again -- nothing is dropped for the cycle.
+
+on:
+  schedule:
+    # 04:17 / 12:17 / 20:17 UTC, every day. 04:17 must stay the first hour:
+    # config.DAILY_SOURCE_SLOT_UTC anchors the daily sources to it. (Saturday postings feed Sunday's
+    # digest). Off the top of the hour. With the observed 2.5-5.7 h queue delay
+    # the 04:17 run usually lands before the 06:17 UTC digest starts; a batch
+    # that lands after it simply goes out in the next digest. No DST change is
+    # needed: fetch time is not user-facing.
+    - cron: '17 4,12,20 * * *'
+  workflow_dispatch:
+
+# One fetch at a time: seen_jobs.json and shard_state.json are written only
+# here. A different group from the digest -- see daily.yml.
+concurrency:
+  group: fetch-state-writers
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    # Budgets inside the run: config.FETCH_BUDGET_SECS (45 min) for all
+    # sources; the startup shard alone stops at STARTUP_FETCH_BUDGET_SECS.
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    env:
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main  # latest main when the job starts, including the last run's shard state
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch, score and queue one slot
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_API_KEY: ${{ secrets.ADZUNA_API_KEY }}
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          USAJOBS_API_KEY: ${{ secrets.USAJOBS_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        # A manual dispatch always takes the daily sources; scheduled runs take
+        # them only when due (not yet successful since 04:17 UTC today).
+        run: python main.py fetch ${{ github.event_name == 'workflow_dispatch' && '--daily-sources' || '' }}
+
+      - name: Commit queue and fetch state
+        # always(): a run killed after queueing must still commit the queue, or
+        # its scored postings are lost. main.py queues before it marks seen, so
+        # a partial commit can only cause a re-score, never a lost posting.
+        if: always()
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add seen_jobs.json || true
+          git add shard_state.json || true
+          # Without this the bespoke source loses its etags and fingerprints
+          # between runs, every page reads as never-seen, and the change
+          # detection that makes it cheap stops working entirely.
+          git add bespoke_state.json || true
+          # The rolling pass's position; without it every run restarts the pass.
+          git add bespoke_cursor.json || true
+          git add state/pending || true
+          git diff --staged --quiet && exit 0
+          git commit -m "Fetch run: queue scored postings, update fetch state [skip ci]"
+          # main may have moved during the run (the digest may have dequeued);
+          # rebase so the push fast-forwards. Paths never overlap with the
+          # digest's commits. Never "|| true": a lost queue commit loses postings.
+          # Another workflow can push between our rebase and our push; retry the
+          # pair so that race cannot fail the run and drop this state commit.
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "Push attempt $attempt of 3 rejected; retrying in $((attempt * 5))s"
+            sleep $((attempt * 5))
+          done
+          echo "::error::State commit could not be pushed after 3 attempts"
+          exit 1

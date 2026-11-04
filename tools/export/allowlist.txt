@@ -1,0 +1,87 @@
+# PUB-07a: the files the public template ships. One path or glob per line,
+# relative to the repo root, read by tools/export/export_public.py.
+#
+#   path        one file
+#   dir/        every tracked file under dir
+#   *.py        a glob; * never crosses a "/"
+#   !pattern    takes back files an earlier line matched (used only to carve
+#               exceptions out of a glob; there is no separate denylist)
+#
+# Anything not listed does not ship. Files are read from the committed tree
+# (git HEAD), so untracked and gitignored files never ship whatever they match.
+# Skeleton files (empty CSVs with headers, the companies.yaml skeleton) and the
+# public LICENSE, ROADMAP.md, CLAUDE.md, AGENTS.md and README.md are generated
+# by the export tool, not copied, and are not listed here.
+
+# Engine: every top-level module the pipeline imports, including whatever later
+# work adds (websites.py from PUB-12 ships as soon as it is on main).
+*.py
+# backfill_linkedin.py is a one-off maintainer backfill against the real sheet.
+!backfill_linkedin.py
+# connections.py reads the maintainer's LinkedIn export; main.py runs without it.
+!connections.py
+
+# Engine: prompt templates the scorer and weekly summary render from the profile.
+prompts/
+
+# Engine: every source module (wellfound stays, parked).
+sources/
+
+# Company resolution and fetch tools the workflows and README call.
+tools/resolve_ats.py
+tools/probe_parked_boards.py
+tools/build_us_places.py
+tools/build_public_companies.py
+tools/build_starter_boards.py
+# PUB-15: the starter list's public segment and the helpers the board builders share.
+tools/build_starter_companies.py
+tools/fetch_run_outcomes.py
+tools/freshness_dry_run.py
+tools/requirements.txt
+# PUB-12 adds this; it ships once it exists on main.
+tools/build_public_boards.py
+# PUB-16: the sample digest and Sheet snapshot the docs show, and the page embed.
+tools/render_sample_sheet.py
+tools/embed_page_images.py
+# The export tool itself, so a fork can cut its own clean copy.
+tools/export/
+
+# Sourcing code the engine and resolve_ats.yml import. All import without the
+# Crunchbase harvest present (it is read lazily). recheck_dropped.py imports
+# merge_ats_resolved.py, so that ships too. No CSV or CSV.gz from sourcing/
+# ships; the export writes header-only parked_boards.csv, bespoke_dropped.csv
+# and startups_unresolved.csv (the bespoke source list).
+sourcing/harvest.py
+sourcing/categories.py
+sourcing/sector_candidates.py
+sourcing/offdomain_careers.py
+sourcing/recheck_dropped.py
+sourcing/merge_ats_resolved.py
+
+# Data the engine reads at run time: the US places gazetteer (and its country
+# sidecar), every shipped company list, and the example dream-companies file.
+data/us_places.tsv.gz
+data/us_places.tsv.gz.country
+data/company_lists/
+data/dream_companies.example.txt
+
+# Scheduled and manual workflows a fresh install needs. Schedules are
+# regenerated for the example profile's timezone at export.
+.github/workflows/fetch.yml
+.github/workflows/daily.yml
+.github/workflows/weekly_summary.yml
+.github/workflows/resolve_ats.yml
+
+# Root setup files. README.md, AGENTS.md and CLAUDE.md are written by the export.
+requirements.txt
+.gitignore
+.env.example
+profile.example.yaml
+
+# Documentation: everything under docs/ (the sample digest, calibrate samples,
+# and docs/public/ once the docs item lands).
+docs/
+
+# Tests: the whole suite. The export drops any test file that imports a module
+# this list does not ship (computed, not listed).
+tests/

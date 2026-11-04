@@ -1,0 +1,379 @@
+# tests/fixtures/profile_test.yaml: the synthetic candidate the whole test suite
+# runs on (PUB-13). conftest.py points JOB_DIGEST_PROFILE here before anything is
+# imported, so no test depends on the maintainer's profile.yaml. Sam Testcase is
+# not a real person. The numbers are round so a test reads clearly. Keys match
+# profile.yaml (tests/test_pub06_setup_commands.py).
+
+version: 1
+candidate:
+  display_name: Sam Testcase
+  short_name: Sam
+  pronouns: they/them
+  descriptor: a test candidate
+  headline: Test candidate seeking leadership roles in a test department
+  background: '- Twenty years of fictional experience
+
+    - Seeks a fictional leadership role'
+roles:
+  target_titles:
+  - CIO
+  - Deputy CIO
+  - CTO
+  - Chief Information Officer
+  - Chief Technology Officer
+  - Chief Digital Officer
+  target_department: an internal IT, enterprise technology, infrastructure, business systems or digital workplace
+    function
+  function_fit_note: A "Supervisory IT Specialist" who manages a team counts.
+  in_department_examples:
+  - an individual contributor
+  - specialist
+  - analyst
+  - project manager
+  outside_department_examples:
+  - sales
+  - marketing
+  - product
+  - client-facing delivery
+  top_seat_phrase: top seat in its department or reports into one
+  rationale_example: 'Likely the top seat in its department (no one above it). Owns the function end to end: strategy,
+    budget, team, vendors, core systems.'
+  seniority_terms:
+  - Director
+  - VP
+  - V.P.
+  - Vice President
+  - SVP
+  - EVP
+  - Head of
+  - Chief
+  function_terms:
+  - IT
+  - Information Technology
+  - IT Operations
+  - IT Infrastructure
+  - Enterprise Systems
+  - Enterprise Services
+  - Enterprise Technology
+  - Enterprise Applications
+  - Business Systems
+  - Digital Workplace
+  - Digital Transformation
+  - Technology Operations
+  - Corporate Engineering
+  - Business Technology
+  - Workplace Technology
+  - Employee Technology
+  - Internal Tools
+  - Corporate IT
+  - End User Computing
+  - Technology
+  - Information Systems
+  - Infrastructure
+  - Service Delivery
+  - End User Services
+  - People Technology
+  - HR Technology
+  - Security
+  - InfoSec
+  - Information Security
+  function_terms_never_alone:
+  - enterprise
+  - digital
+  - corporate
+  title_gated_sources:
+  - adzuna
+  - jsearch
+  - builtin
+  - ats
+  - startups
+  watchlist_gate_terms:
+    seniority:
+    - director
+    - vp
+    - v.p.
+    - vice president
+    - svp
+    - head of
+    function:
+    - it
+    - information technology
+    - infrastructure
+    - enterprise
+    - business systems
+    - business technology
+    - digital
+    - technology
+    - technology operations
+    - corporate
+    - internal tools
+    - end user computing
+    - workplace
+    - security
+    - infosec
+    - information security
+    workday_search_terms:
+    - director
+    - vice president
+    - head of
+    careers_page_seniority:
+    - 'vp '
+    - v.p.
+    - vice president
+    - director
+    - head of
+    - svp
+    - senior vice
+    careers_page_function:
+    - it
+    - information technology
+    - technology
+    - digital
+    - infrastructure
+    - enterprise
+    - operations
+location:
+  home: Chicago, IL
+  home_bonus_radius_miles: 30
+  home_bonus: 1
+  commutable:
+  - Chicago, IL
+  - Milwaukee, WI
+  - Indianapolis, IN
+  commutable_radius_miles: 60
+  outer_band_miles: 100
+  outer_band_penalty: -2
+  relocate:
+  - Austin, TX
+  - Dallas, TX
+  - Denver, CO
+  - Houston, TX
+  - Los Angeles, CA
+  - Miami, FL
+  - San Diego, CA
+  - San Francisco, CA
+  - Seattle, WA
+  relocate_radius_miles: 40
+  relocate_penalty: -2
+  elsewhere_penalty: -5
+  state_tier_overrides:
+    IN: 0
+  sizeable_place_population: 50000
+  country: US
+  outside_country: disqualify
+  work_models:
+    remote: 0
+    hybrid: 0
+    onsite: 0
+compensation:
+  floor: 100000
+  floor_adjustment: -2
+  stretch: 150000
+  stretch_adjustment: 1
+  unstated: 0
+industries:
+  hard_block:
+    insurance:
+    - insurance
+    gambling/casinos:
+    - casino
+    - gambling
+    - sportsbook
+  deprioritize:
+  - adtech
+  - surveillance
+  - oil & gas
+  - alcohol and other vice-adjacent consumer businesses
+  - primarily B2C companies
+  - staffing/HR services
+  - regional banks
+  - local/boutique real estate
+  - local/regional media
+  - client-facing consulting delivery
+  lowest_interest:
+  - AI infrastructure
+  - frontier labs
+  - data infrastructure
+  neutral:
+  - hospitals and health systems
+  lean_in:
+  - healthcare tech
+  - biotech
+  - pharma
+  - life sciences
+  - climate tech (if substantive)
+  - logistics (if technical)
+  - sports (if good tech culture)
+  - live events
+  - financial services
+  - large national/global banks
+  - corporate/institutional real estate
+  - nonprofits with strong tech and clear outcomes
+  - retail at scale
+  - management consulting
+  strong_yes:
+  - robotics
+  - space and aerospace
+  - materials science and advanced manufacturing
+  - physical sciences
+  - defense tech
+  - critical-infrastructure security
+  - energy (clean/grid/storage)
+  - hardware
+  - quantum computing
+  - data centers
+  - civic tech
+  - government agencies
+  - security SaaS
+  - design and collaboration tools
+  - airlines
+  - hospitality
+  - large media/entertainment
+  - video games
+  - fintech
+  sector_order:
+  - robotics
+  - space/aerospace
+  - materials science
+  - energy (clean/grid/storage)
+  - hardware
+  vice_core_business:
+  - alcohol
+  - vice
+company_fit:
+  enabled: true
+  core_question: Is this company doing something interesting?
+  appeal_signals:
+  - innovating in its field
+  - doing real research
+  - a novel product or approach
+  - mission-driven
+  - doing good for the world
+  - a brand people know and respect
+  operating_values:
+  - curiosity
+  - transparency
+  - people-first culture
+  - building for the long term rather than extracting
+  - benefit to a community beyond the shareholders
+  mission_flavors:
+  - patients
+  - public goods
+  - access
+  - safety
+  - science
+  - civic life
+  - enabling mission-driven organizations
+  exemplars:
+  - Example Robotics
+  - Example Labs
+  b2b_over_b2c: true
+  size_matters: false
+scoring:
+  model: claude-sonnet-4-6
+  max_score: 10
+  min_score_after_penalties: 1
+  role_criteria:
+  - id: owns_decisions
+    points: 3
+    criterion: Owns the decisions in its area (strategy, budget, vendors, team)
+  - id: reports_up
+    points: 1
+    criterion: Reports to a C-level executive
+  - id: no_authority
+    points: -2
+    criterion: Advises only, with no authority of its own
+  mission_values:
+    enabled: true
+    min: -2
+    max: 2
+    mission_alone: 1
+  sector_adjustments:
+    strong_yes: 2
+    lean_in: 1
+    deprioritize: -1
+    vice_core_business: -2
+  thresholds:
+    main_digest: 7
+    worth_a_look: 5
+    dream_company_main: 3
+  function_cap: 4
+  cool_company_wrong_role_cap: 3
+  max_calls_per_run: 100
+dream_companies:
+  file: tests/fixtures/dream_companies_test.txt
+sources:
+  enabled:
+    adzuna: true
+    jsearch: true
+    linkedin_email: true
+    builtin: true
+    ats: true
+    watchlist: true
+    startups: true
+    bespoke: true
+    usajobs: true
+    wellfound: false
+  status_tracking:
+    enabled: true
+  applied_doc:
+    enabled: true
+  company_lists:
+  - file: data/company_lists/starter_companies.csv
+    tier: watch
+    boards: data/company_lists/starter_boards.csv
+    filter:
+      segment:
+      - startup
+  linkedin_label: test-job-alerts
+  adzuna:
+    queries:
+    - VP of IT
+    - Director of IT
+    locations:
+    - Chicago
+    - Milwaukee
+    - Indianapolis
+    - Remote
+  jsearch:
+    queries:
+    - VP of IT
+    - Vice President IT
+    - Senior Director IT
+    - Head of IT
+    - Director of IT
+  builtin:
+    title_queries:
+    - director IT
+    - VP IT
+    search_urls:
+    - https://builtin.com/jobs/chicago?title=director+IT&seniority[]=senior-leader
+    - https://builtin.com/jobs/remote?title=director+IT&seniority[]=senior-leader
+    - https://builtin.com/jobs/chicago?title=VP+IT&seniority[]=senior-leader
+    - https://builtin.com/jobs/remote?title=VP+IT&seniority[]=senior-leader
+  usajobs:
+    series: '2210'
+    hiring_paths:
+    - public
+    - ses
+    title_keywords:
+    - CIO
+    - Deputy CIO
+    - CTO
+    - Chief Information Officer
+    - Chief Technology Officer
+    pay_floor_from: compensation.floor
+delivery:
+  email_to: candidate@example.com
+  timezone: America/Chicago
+  digest_time_local: 08:00
+  digest_days:
+  - Sunday
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  weekly_summary_day: Saturday
+  weekly_summary_time_local: 08:17
+  skip_empty_days: true

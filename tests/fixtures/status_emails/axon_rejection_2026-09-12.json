@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Thank you for your interest in Axon!",
+    "from": "no-reply-talent@axon.com",
+    "date": "Sat, 12 Sep 2026 21:17:26 +0000 (UTC)",
+    "body": "sup { font-size: 100% !important; }\r\n\nURL Update Footer\r\n\nAXON ( [link: www.axon.com] )\r\n\n************\r\nPROTECT LIFE\r\n************\r\n\nHi Candidate,\r\n\nThank you for taking the time to consider Axon as your next employer. We wanted to let you know that our hiring team has reviewed your application for the Senior Director, IT Business Solutions & Delivery role and decided to proceed with other candidates for the position at this time. We will be advertising more positions in the coming months as we continue to grow and we’d encourage you to apply again in the future.\r\n\nWe appreciate your interest in Axon and wish you success in your job search.\r\n\nThank you,\r\nAxon Talent Acquisition Team\r\n\n-------------------------------------------------\r\nAXON.COM/CAREERS ( [link: www.axon.com] )\r\n-------------------------------------------------\r\n\n“glassdoor ( [link: www.glassdoor.com] )\r\nLinkedin ( [link: www.linkedin.com] )\r\nYoutube ( [link: www.youtube.com] )"
+  },
+  "expected": {
+    "status": "Rejected",
+    "row": 273
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "6054c11e4df345d1",
+    "raw": "{\"status\": \"Rejected\", \"row\": 273, \"confidence\": \"high\", \"reason\": \"The email says Axon's hiring team \\\"reviewed your application for the Senior Director, IT Business Solutions & Delivery role and decided to proceed with other candidates for the position at this time.\\\"\"}",
+    "usage": {
+      "input_tokens": 1391,
+      "output_tokens": 94
+    }
+  }
+}

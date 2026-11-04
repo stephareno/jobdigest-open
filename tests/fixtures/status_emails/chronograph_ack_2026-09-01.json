@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Thank you for applying to Chronograph",
+    "from": "no-reply@us.greenhouse-mail.io",
+    "date": "Tue, 01 Sep 2026 01:31:02 +0000",
+    "body": "Candidate,\r\n\nThank you for your interest in joining Chronograph!\r\n\nWe have received your application. Once our team has a chance to review your information, we'll reach out if your experience and profile is a fit for the role.\r\n\nIf we don't move forward with your application for this position, we'll be sure to keep you in mind for future openings as our team continues to grow.\r\n\nAll the best,\r\n\nChronograph Recruiting"
+  },
+  "expected": {
+    "status": "Applied",
+    "row": 314
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "51916c81c74a21ae",
+    "raw": "{\"status\": \"Applied\", \"row\": 314, \"confidence\": \"high\", \"reason\": \"The email says \\\"We have received your application\\\" and only hypothetically mentions \\\"if we don't move forward with your application\\\", so it confirms receipt rather than a decision.\"}",
+    "usage": {
+      "input_tokens": 1104,
+      "output_tokens": 82
+    }
+  }
+}

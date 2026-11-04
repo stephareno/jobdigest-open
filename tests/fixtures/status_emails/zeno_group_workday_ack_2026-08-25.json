@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Thank You For Applying!",
+    "from": "DJE Holdings Workday Notification <djeholdings@myworkday.com>",
+    "date": "Tue, 25 Aug 2026 14:02:52 +0000",
+    "body": "Hi Candidate,\nThank you for your interest in Zeno Group.\nWe wanted to let you know we received your application for Senior Vice President, AI & Technology Programs and we are delighted you would consider joining us.\nOur team will review your application and will be in touch if your experience and qualifications match our needs for the role. If you are not selected for this position, keep an eye on our jobs page as we are growing and adding openings.\nBest,\nThe Zeno Talent Acquisition Team\nThis email was intended for candidate@example.com"
+  },
+  "expected": {
+    "status": "Applied",
+    "row": 521
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "d527733fe632f543",
+    "raw": "{\"status\": \"Applied\", \"row\": 521, \"confidence\": \"high\", \"reason\": \"The email says \\\"we received your application for Senior Vice President, AI & Technology Programs\\\", which confirms receipt, while the \\\"will be in touch if your experience... match\\\" and \\\"If you are not selected\\\" lines are only hypothetical and not a decision.\"}",
+    "usage": {
+      "input_tokens": 1154,
+      "output_tokens": 111
+    }
+  }
+}

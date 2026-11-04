@@ -1,0 +1,11 @@
+# Dependencies for the standalone tools only — the daily pipeline does not use these.
+# Kept separate from the root requirements.txt so the digest install is untouched.
+
+# tools/append_jd.py
+google-api-python-client==2.166.0
+google-auth==2.29.0
+
+# tools/resolve_ats.py (+ tests/test_resolve_ats.py)
+httpx==0.28.1
+PyYAML==6.0.3
+pytest==9.1.1

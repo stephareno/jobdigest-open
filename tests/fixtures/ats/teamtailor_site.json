@@ -1,0 +1,93 @@
+{
+ "version": "https://jsonfeed.org/version/1.1",
+ "title": "Canoe Intelligence",
+ "home_page_url": "https://careers.canoeintelligence.com/jobs",
+ "feed_url": "https://careers.canoeintelligence.com/jobs.json",
+ "items": [
+  {
+   "id": "1191ae2f-9539-438a-9147-6f28386db769",
+   "title": "Director of Engineering - Quality & Reliability",
+   "url": "https://careers.canoeintelligence.com/jobs/699160-director-of-engineering-quality-reliability",
+   "date_published": "2026-09-10T13:54:35-04:00",
+   "content_html": "<p><strong>COMPANY: </strong>Canoe Intelligence</p><p><strong>WEBSITE</strong>: <a target=\"_blank\" href=\"https://canoeintelligence.com/\">https://canoeintelligence.com/</a></p><p><strong>TITLE:&nbsp;</strong><span><strong id=\"docs-internal-guid-52c430ae-7fff-e1c3-0e6b-60b6af49a994\">Director of Engineering - Quality &amp; Reliability</strong></span></p><p><strong>LOCATION:</strong> New York City (hybrid) </p><p><strong>SALARY</strong>:&nbsp;$200,000 - $230,000 base salary</p><p><strong>The Role:</strong></p><p><span>We are seeking an experienced engineering leader to build and lead our Quality a",
+   "_jobposting": {
+    "@context": "http://schema.org/",
+    "@type": "JobPosting",
+    "title": "Director of Engineering - Quality & Reliability",
+    "description": "<p><strong>COMPANY: </strong>Canoe Intelligence</p><p><strong>WEBSITE</strong>: <a target=\"_blank\" href=\"https://canoeintelligence.com/\">https://canoeintelligence.com/</a></p><p><strong>TITLE:&nbsp;</strong><span><strong id=\"docs-internal-guid-52c430ae-7fff-e1c3-0e6b-60b6af49a994\">Director of Engineering - Quality &amp; Reliability</strong></span></p><p><strong>LOCATION:</strong> New York City (hybrid) </p><p><strong>SALARY</strong>:&nbsp;$200,000 - $230,000 base salary</p><p><strong>The Role:</strong></p><p><span>We are seeking an experienced engineering leader to build and lead our Quality and Reliability organization. AI-native development practices have significantly increased our engineering velocity, and this role owns the other half of that equation: ensuring the software we ship is reliable, performant, and trustworthy as we scale. The ideal candidate will have built a reliability or quality engineering practice from the ground up and will bring deep quality expertise to an established QA team. This role is an exciting opportunity to stand up a new Site Reliability Engineering function, take formal ownership of incident management across the company, and lead a talented quality organization. The role reports to the VP of Application Development as a peer of our other engineering guild leads.</span><br></p><p><strong>What You\u2019ll Do:</strong></p><ul><li><p><span>Build Canoe's Site Reliability Engineering practice from the ground up, including SLOs and error budgets on critical services, observability and alerting standards, production readiness reviews, and on-call design.</span></p></li><li><p><span>Own incident management across Canoe end to end, including process, tooling, escalation paths, retrospective quality, and follow-through on corrective actions.</span></p></li><li><p><span>Lead our Quality Engineering organization and build lasting in-house quality leadership and expertise.</span></p></li><li><p><span>Define a risk-based quality strategy, including quality gates in our CI/CD pipelines, and continue our shift from manual verification toward automation-first, AI-assisted testing and specification-driven development.</span></p></li><li><p><span>Define and report executive-level KPIs for quality and reliability, such as escape rates, incident trends, and error-budget consumption, and use them to inform engineering priorities across teams.</span></p></li><li><p><span>Serve as Technical Governance Owner for our testing and incident management topics, bringing a reliability, testability, and operability perspective to technical decisions in partnership with our architects.</span><br></p></li></ul><p><strong>What We\u2019re Looking For:</strong></p><ul><li><p><span>Minimum of 10 years of software engineering experience, including 4 years leading quality, reliability, or platform engineering teams.</span></p></li><li><p><span>Experience building an SRE, reliability, or quality engineering practice from scratch, rather than inheriting a mature one.</span></p></li><li><p><span>Experience formally owning incident management for a company or major platform, from incident response through high-quality retrospectives and follow-through.</span></p></li><li><p><span>Deep quality engineering background, including ownership of quality strategy and experience leading distributed or offshore QA teams.</span></p></li><li><p><span>Demonstrated expertise applying LLMs and agentic tools such as Claude Code to real engineering workflows, with a concrete point of view on how AI reshapes testing and verification.</span></p></li><li><p><span>Fluency with quality and reliability metrics such as escape rate, flake rate, MTTD/MTTR, and SLO attainment, including experience reporting them at the executive level.</span></p></li><li><p><span>Excellent leadership, communication, and interpersonal skills with geographically distributed teams across multiple time zones.</span></p></li><li><p><span>Ability to work effectively with ambiguous or missing information and adapt quickly in a startup-like environment.</span></p></li><li><p><span>Bachelor's degree in Computer Science, Engineering, or a related field (or equivalent experience).</span></p></li></ul><p><strong id=\"docs-internal-guid-8f4d1f10-7fff-b6de-7fb8-68a015242bc2\"><br></strong><span><strong id=\"docs-internal-guid-8f4d1f10-7fff-b6de-7fb8-68a015242bc2\">Preferred Experience</strong></span></p><ul><li><p><span>Hands-on experience with our core technologies or similar stacks: Python, TypeScript, PHP/Laravel, Kafka, AWS, Terraform, PostgreSQL, Redis, ElasticSearch, Datadog.</span></p></li><li><p><span>Fintech or other environments where data integrity and client trust are the product.</span><br></p></li></ul><p><strong>What You\u2019ll Get:</strong></p><ul><li><p>Medical, dental, vision benefits</p></li><li><p>Flexible PTO </p></li><li><p>401(k)</p></li><li><p>Flexible work from home policy </p></li><li><p>Home office stipend</p></li><li><p>Employee Assistance Program</p></li><li><p>Gym/Wifi reimbursement</p></li><li><p>Education assistance</p></li><li><p>Parental Leave<br></p></li></ul><p><strong>Our Values:</strong></p><ul><li><p>Client First \u2014&gt; Listen, and deliver client-centric solutions</p></li><li><p>Be An Owner \u2014&gt; Take initiative, improve situations, drive positive outcomes</p></li><li><p>Excellence \u2014&gt; Always set the highest standard for yourself and others</p></li><li><p>Win Together \u2014&gt; 1 + 1 = 3</p></li></ul><p><strong>Who We Are:</strong></p><p>Canoe is reimagining alternative investment data processes for hundreds of leading institutional investors, capital allocators, asset servicing firms and wealth managers. By combining industry expertise with the most sophisticated data capture technologies, Canoe\u2019s technology automates the highly-frustrating, time-consuming, and costly manual workflows related to alternative investment document and data management, extraction and delivery. With Canoe, clients can refocus capital and human resources on business performance and growth, increase efficiency, and gain deeper access to their data. Canoe\u2019s AI-driven platform was developed in 2013 for Portage Partners LLC, a private investment firm.</p><p>Canoe is an equal opportunity employer. All aspects of employment including the decision to hire, promote, discipline, or discharge, will be based on merit, competence, performance, and business needs. We do not discriminate on the basis of race, color, religion, marital status, age, national origin, ancestry, physical or mental disability, medical condition, pregnancy, genetic information, gender, sexual orientation, gender identity or expression, veteran status, or any other status protected under federal, state, or local law.</p>",
+    "identifier": {
+     "@type": "PropertyValue",
+     "name": "Canoe Intelligence",
+     "value": 699160
+    },
+    "datePosted": "2026-09-10T13:54:35-04:00",
+    "hiringOrganization": {
+     "@type": "Organization",
+     "name": "Canoe Intelligence",
+     "sameAs": "https://careers.canoeintelligence.com"
+    },
+    "jobLocation": [
+     {
+      "@type": "Place",
+      "address": {
+       "@type": "PostalAddress",
+       "streetAddress": "307 Canal St",
+       "addressLocality": "New York",
+       "postalCode": "10013",
+       "addressCountry": "US",
+       "addressRegion": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "8d291044-5d57-43f5-89ab-8635099f9125",
+   "title": "Sr. Project Manager (Enterprise)",
+   "url": "https://careers.canoeintelligence.com/jobs/698576-sr-project-manager-enterprise",
+   "date_published": "2026-09-09T19:08:43-04:00",
+   "content_html": "<p><strong>COMPANY: </strong>Canoe Intelligence</p><p><strong>WEBSITE</strong>: <a target=\"_blank\" href=\"https://canoeintelligence.com/\">https://canoeintelligence.com/</a></p><p><strong>TITLE:&nbsp;</strong><span>Sr. Project Manager (Enterprise)</span></p><p><strong>LOCATION:</strong> <span>Jacksonville, FL or New York City (hybrid)</span></p><p><strong>SALARY</strong>:&nbsp;<span>$115,000 - $130,000 base salary + bonus (based on Jacksonville, will be adjusted for geo)</span></p><p><strong>The Role:</strong></p><p><span>As a Senior Project Manager, you will lead large, enterprise software impl",
+   "_jobposting": {
+    "@context": "http://schema.org/",
+    "@type": "JobPosting",
+    "title": "Sr. Project Manager (Enterprise)",
+    "description": "<p><strong>COMPANY: </strong>Canoe Intelligence</p><p><strong>WEBSITE</strong>: <a target=\"_blank\" href=\"https://canoeintelligence.com/\">https://canoeintelligence.com/</a></p><p><strong>TITLE:&nbsp;</strong><span>Sr. Project Manager (Enterprise)</span></p><p><strong>LOCATION:</strong> <span>Jacksonville, FL or New York City (hybrid)</span></p><p><strong>SALARY</strong>:&nbsp;<span>$115,000 - $130,000 base salary + bonus (based on Jacksonville, will be adjusted for geo)</span></p><p><strong>The Role:</strong></p><p><span>As a Senior Project Manager, you will lead large, enterprise software implementation projects. You will collaborate as a senior member of the Client Operations team to oversee and drive product implementations of the Canoe platform. Your goal is to demonstrate Canoe\u2019s value and guide clients to receive maximum value realization. This will include creating, executing, and managing project plans, schedules, budgets, allocations and a project team delivering value based services to drive their successful adoption of Canoe's technology. Prior experience running large enterprise level projects as part of a Fintech vendor managing budget, schedule and stakeholder management is required.</span><br></p><p><strong>What You\u2019ll Do:</strong></p><ul><li><p><span>Planning and execution: Create and implement project plans, managing resources, and ensuring projects are completed on time and within budget</span></p></li><li><p><span>Leadership: Mentor team members, and providing direction and support to the team while managing project teams</span></p></li><li><p><span>Communication: Proactively communicate with stakeholders, sponsors, and project teams, and establish clear communication with clients, team members, and senior leadership</span></p></li><li><p><span>Project management: Working on multiple projects simultaneously, and being able to balance and prioritize multiple projects and priorities</span></p></li><li><p><span>Teamwork: Be a team player who can effectively interact with staff and management at all levels</span></p></li><li><p><span>Risk assessment: Assess risks and develop/maintain plans for mitigation</span></p></li><li><p><span>Quality control: Ensure quality control of project tasks</span></p></li><li><p><span>Documentation: Document project artifacts (BRD, RAID, Workflow Diagrams, etc.,)</span></p></li><li><p><span>Reporting: Provide regular project status updates and project reporting and feedback to the team, leadership and client stakeholders.</span><br></p></li></ul><p><strong>What We\u2019re Looking For:</strong></p><ul><li><p><span>5+ years experience leading large, enterprise client implementations as a software vendor working with financial institutions.</span></p></li><li><p><span>Analytical, data-driven, detail oriented, and resourceful</span></p></li><li><p><span>Expert communication skills with the ability to communicate at an executive level.</span></p></li><li><p><span>Ownership across a portfolio of deliverables and relationships</span></p></li><li><p><span>Client-centric; a genuine interest to deliver results for customers</span></p></li><li><p><span>Enjoys working in a collaborative environment, sharing best practices, and supporting teammates</span></p></li><li><p><span>Familiarity and experience with Financial Technology (Alts experience preferred)</span></p></li><li><p><span>Bachelor's Degree preferred</span></p></li><li><p><span>CSM, PMP or Prince2 certification preferred</span></p></li><li><p><span>Must reside in either the NYC metro area or Jacksonville, FL</span></p></li><li><p><span>Travel may be required, up to 25%</span></p></li></ul><p><strong>What You\u2019ll Get:</strong></p><ul><li><p>Medical, dental, vision benefits</p></li><li><p>Flexible PTO</p></li><li><p>401(k)</p></li><li><p>Flexible work from home policy</p></li><li><p>Home office stipend</p></li><li><p>Employee Assistance Program</p></li><li><p>Gym/Wifi reimbursement</p></li><li><p>Education assistance</p></li><li><p>Parental Leave</p></li></ul><p><strong>Our Values:</strong></p><ul><li><p>Client First \u2014&gt; Listen, and deliver client-centric solutions</p></li><li><p>Be An Owner \u2014&gt; Take initiative, improve situations, drive positive outcomes</p></li><li><p>Excellence \u2014&gt; Always set the highest standard for yourself and others</p></li><li><p>Win Together \u2014&gt; 1 + 1 = 3</p></li></ul><p><strong>Who We Are:</strong></p><p>Canoe is reimagining alternative investment data processes for hundreds of leading institutional investors, capital allocators, asset servicing firms and wealth managers. By combining industry expertise with the most sophisticated data capture technologies, Canoe\u2019s technology automates the highly-frustrating, time-consuming, and costly manual workflows related to alternative investment document and data management, extraction and delivery. With Canoe, clients can refocus capital and human resources on business performance and growth, increase efficiency, and gain deeper access to their data. Canoe\u2019s AI-driven platform was developed in 2013 for Portage Partners LLC, a private investment firm.</p><p>Canoe is an equal opportunity employer. All aspects of employment including the decision to hire, promote, discipline, or discharge, will be based on merit, competence, performance, and business needs. We do not discriminate on the basis of race, color, religion, marital status, age, national origin, ancestry, physical or mental disability, medical condition, pregnancy, genetic information, gender, sexual orientation, gender identity or expression, veteran status, or any other status protected under federal, state, or local law.</p>",
+    "identifier": {
+     "@type": "PropertyValue",
+     "name": "Canoe Intelligence",
+     "value": 698576
+    },
+    "datePosted": "2026-09-09T19:08:43-04:00",
+    "hiringOrganization": {
+     "@type": "Organization",
+     "name": "Canoe Intelligence",
+     "sameAs": "https://careers.canoeintelligence.com"
+    },
+    "jobLocation": [
+     {
+      "@type": "Place",
+      "address": {
+       "@type": "PostalAddress",
+       "streetAddress": "9995 Gate Pkwy N suite 210",
+       "addressLocality": "Jacksonville",
+       "postalCode": "32246",
+       "addressCountry": "US",
+       "addressRegion": null
+      }
+     },
+     {
+      "@type": "Place",
+      "address": {
+       "@type": "PostalAddress",
+       "streetAddress": "307 Canal St",
+       "addressLocality": "New York",
+       "postalCode": "10013",
+       "addressCountry": "US",
+       "addressRegion": null
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

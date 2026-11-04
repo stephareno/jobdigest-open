@@ -1,0 +1,21 @@
+{
+  "email": {
+    "subject": "Candidate, we've received your resume",
+    "from": "Shatterproof <noreply@applytojob.com>",
+    "date": "Tue, 25 Aug 2026 13:24:47 +0000",
+    "body": "Hello Candidate,\nThank you for your interest in employment at Shatterproof. If your qualifications match our needs, we will contact you to learn more about your fit in this position.\nThanks again for your inquiry.\n- Shatterproof"
+  },
+  "expected": {
+    "status": "Applied",
+    "row": 552
+  },
+  "recorded": {
+    "model": "claude-haiku-5-5",
+    "prompt_hash": "689d514a2a53299d",
+    "raw": "{\"status\": \"Applied\", \"row\": 552, \"confidence\": \"high\", \"reason\": \"The email confirms receipt of her resume with 'we've received your resume' and 'Thank you for your interest in employment at Shatterproof', while the 'we will contact you' line is hypothetical and does not signal a decision.\"}",
+    "usage": {
+      "input_tokens": 1057,
+      "output_tokens": 101
+    }
+  }
+}

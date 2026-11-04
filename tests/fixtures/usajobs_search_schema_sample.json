@@ -1,0 +1,561 @@
+{
+  "LanguageCode": "EN-US",
+  "SearchParameters": {
+    "JobCategoryCode": [
+      "2210"
+    ],
+    "HiringPath": [
+      "public",
+      "ses"
+    ],
+    "DatePosted": "7"
+  },
+  "SearchResult": {
+    "SearchResultCount": 6,
+    "SearchResultCountAll": 6,
+    "SearchResultItems": [
+      {
+        "MatchedObjectId": "845100100",
+        "MatchedObjectDescriptor": {
+          "PositionID": "X-845100100",
+          "PositionTitle": "Deputy Chief Information Officer",
+          "PositionURI": "https://www.usajobs.gov:443/GetJob/ViewDetails/845100100",
+          "ApplyURI": [
+            "https://www.usajobs.gov:443/GetJob/ViewDetails/845100100?PostingChannelID="
+          ],
+          "PositionLocationDisplay": "Washington, District of Columbia",
+          "PositionLocation": [
+            {
+              "LocationName": "Washington, District of Columbia",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "District of Columbia",
+              "CityName": "Washington, District of Columbia",
+              "Longitude": 0,
+              "Latitude": 0
+            }
+          ],
+          "OrganizationName": "Headquarters, NASA",
+          "DepartmentName": "National Aeronautics and Space Administration",
+          "JobCategory": [
+            {
+              "Name": "Information Technology Management",
+              "Code": "2210"
+            }
+          ],
+          "JobGrade": [
+            {
+              "Code": "ES"
+            }
+          ],
+          "PositionSchedule": [
+            {
+              "Name": "Full-time",
+              "Code": "1"
+            }
+          ],
+          "PositionOfferingType": [
+            {
+              "Name": "Permanent",
+              "Code": "15317"
+            }
+          ],
+          "QualificationSummary": "See Qualifications.",
+          "PositionRemuneration": [
+            {
+              "MinimumRange": "150160",
+              "MaximumRange": "225700",
+              "RateIntervalCode": "PA",
+              "Description": "Per Year"
+            }
+          ],
+          "PositionStartDate": "2026-10-01T00:00:00.0000",
+          "PositionEndDate": "2026-10-20T23:59:59.9970",
+          "PublicationStartDate": "2026-10-01T00:00:00.0000",
+          "ApplicationCloseDate": "2026-10-20T23:59:59.9970",
+          "PositionFormattedDescription": [
+            {
+              "Content": "",
+              "Label": "Dynamic Teaser",
+              "LabelDescription": "Hit highlighting"
+            }
+          ],
+          "UserArea": {
+            "Details": {
+              "JobSummary": "Serves as Deputy Chief Information Officer for the National Aeronautics and Space Administration.",
+              "WhoMayApply": {
+                "Name": "",
+                "Code": ""
+              },
+              "LowGrade": "00",
+              "HighGrade": "00",
+              "MajorDuties": [
+                "Leads the National Aeronautics and Space Administration IT portfolio.",
+                "Directs enterprise infrastructure and operations."
+              ],
+              "TeleworkEligible": true,
+              "RemoteIndicator": false,
+              "SubAgencyName": "National Aeronautics and Space Administration",
+              "OrganizationCodes": "XX"
+            }
+          }
+        },
+        "RelevanceRank": 0
+      },
+      {
+        "MatchedObjectId": "845100200",
+        "MatchedObjectDescriptor": {
+          "PositionID": "X-845100200",
+          "PositionTitle": "SUPV IT SPECIALIST (PLCYPLN)",
+          "PositionURI": "https://www.usajobs.gov:443/GetJob/ViewDetails/845100200",
+          "ApplyURI": [
+            "https://www.usajobs.gov:443/GetJob/ViewDetails/845100200?PostingChannelID="
+          ],
+          "PositionLocationDisplay": "Fort George G. Meade, Maryland",
+          "PositionLocation": [
+            {
+              "LocationName": "Fort George G. Meade, Maryland",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "Maryland",
+              "CityName": "Fort George G. Meade, Maryland",
+              "Longitude": 0,
+              "Latitude": 0
+            }
+          ],
+          "OrganizationName": "Defense Information Systems Agency",
+          "DepartmentName": "Department of Defense",
+          "JobCategory": [
+            {
+              "Name": "Information Technology Management",
+              "Code": "2210"
+            }
+          ],
+          "JobGrade": [
+            {
+              "Code": "GS"
+            }
+          ],
+          "PositionSchedule": [
+            {
+              "Name": "Full-time",
+              "Code": "1"
+            }
+          ],
+          "PositionOfferingType": [
+            {
+              "Name": "Permanent",
+              "Code": "15317"
+            }
+          ],
+          "QualificationSummary": "See Qualifications.",
+          "PositionRemuneration": [
+            {
+              "MinimumRange": "163964",
+              "MaximumRange": "195200",
+              "RateIntervalCode": "PA",
+              "Description": "Per Year"
+            }
+          ],
+          "PositionStartDate": "2026-10-01T00:00:00.0000",
+          "PositionEndDate": "2026-10-20T23:59:59.9970",
+          "PublicationStartDate": "2026-10-01T00:00:00.0000",
+          "ApplicationCloseDate": "2026-10-20T23:59:59.9970",
+          "PositionFormattedDescription": [
+            {
+              "Content": "",
+              "Label": "Dynamic Teaser",
+              "LabelDescription": "Hit highlighting"
+            }
+          ],
+          "UserArea": {
+            "Details": {
+              "JobSummary": "Serves as SUPV IT SPECIALIST (PLCYPLN) for the Defense Information Systems Agency.",
+              "WhoMayApply": {
+                "Name": "",
+                "Code": ""
+              },
+              "LowGrade": "15",
+              "HighGrade": "15",
+              "MajorDuties": [
+                "Leads the Defense Information Systems Agency IT portfolio.",
+                "Directs enterprise infrastructure and operations."
+              ],
+              "TeleworkEligible": false,
+              "RemoteIndicator": false,
+              "SubAgencyName": "Defense Information Systems Agency",
+              "OrganizationCodes": "XX"
+            }
+          }
+        },
+        "RelevanceRank": 0
+      },
+      {
+        "MatchedObjectId": "845100300",
+        "MatchedObjectDescriptor": {
+          "PositionID": "X-845100300",
+          "PositionTitle": "IT Specialist (INFOSEC)",
+          "PositionURI": "https://www.usajobs.gov:443/GetJob/ViewDetails/845100300",
+          "ApplyURI": [
+            "https://www.usajobs.gov:443/GetJob/ViewDetails/845100300?PostingChannelID="
+          ],
+          "PositionLocationDisplay": "Multiple Locations",
+          "PositionLocation": [
+            {
+              "LocationName": "Anywhere in the U.S. (remote job)",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "",
+              "CityName": "Anywhere in the U.S. (remote job)",
+              "Longitude": 0,
+              "Latitude": 0
+            },
+            {
+              "LocationName": "Austin, Texas",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "Texas",
+              "CityName": "Austin, Texas",
+              "Longitude": 0,
+              "Latitude": 0
+            }
+          ],
+          "OrganizationName": "Veterans Health Administration",
+          "DepartmentName": "Department of Veterans Affairs",
+          "JobCategory": [
+            {
+              "Name": "Information Technology Management",
+              "Code": "2210"
+            }
+          ],
+          "JobGrade": [
+            {
+              "Code": "GS"
+            }
+          ],
+          "PositionSchedule": [
+            {
+              "Name": "Full-time",
+              "Code": "1"
+            }
+          ],
+          "PositionOfferingType": [
+            {
+              "Name": "Permanent",
+              "Code": "15317"
+            }
+          ],
+          "QualificationSummary": "See Qualifications.",
+          "PositionRemuneration": [
+            {
+              "MinimumRange": "111000",
+              "MaximumRange": "145000",
+              "RateIntervalCode": "PA",
+              "Description": "Per Year"
+            }
+          ],
+          "PositionStartDate": "2026-10-01T00:00:00.0000",
+          "PositionEndDate": "2026-10-20T23:59:59.9970",
+          "PublicationStartDate": "2026-10-01T00:00:00.0000",
+          "ApplicationCloseDate": "2026-10-20T23:59:59.9970",
+          "PositionFormattedDescription": [
+            {
+              "Content": "",
+              "Label": "Dynamic Teaser",
+              "LabelDescription": "Hit highlighting"
+            }
+          ],
+          "UserArea": {
+            "Details": {
+              "JobSummary": "Serves as IT Specialist (INFOSEC) for the Veterans Health Administration.",
+              "WhoMayApply": {
+                "Name": "",
+                "Code": ""
+              },
+              "LowGrade": "13",
+              "HighGrade": "13",
+              "MajorDuties": [
+                "Leads the Veterans Health Administration IT portfolio.",
+                "Directs enterprise infrastructure and operations."
+              ],
+              "TeleworkEligible": false,
+              "RemoteIndicator": false,
+              "SubAgencyName": "Veterans Health Administration",
+              "OrganizationCodes": "XX"
+            }
+          }
+        },
+        "RelevanceRank": 0
+      },
+      {
+        "MatchedObjectId": "845100400",
+        "MatchedObjectDescriptor": {
+          "PositionID": "X-845100400",
+          "PositionTitle": "Information Technology Technician",
+          "PositionURI": "https://www.usajobs.gov:443/GetJob/ViewDetails/845100400",
+          "ApplyURI": [
+            "https://www.usajobs.gov:443/GetJob/ViewDetails/845100400?PostingChannelID="
+          ],
+          "PositionLocationDisplay": "Omaha, Nebraska",
+          "PositionLocation": [
+            {
+              "LocationName": "Omaha, Nebraska",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "Nebraska",
+              "CityName": "Omaha, Nebraska",
+              "Longitude": 0,
+              "Latitude": 0
+            }
+          ],
+          "OrganizationName": "U.S. Army Corps of Engineers",
+          "DepartmentName": "Department of the Army",
+          "JobCategory": [
+            {
+              "Name": "Information Technology Management",
+              "Code": "2210"
+            }
+          ],
+          "JobGrade": [
+            {
+              "Code": "GS"
+            }
+          ],
+          "PositionSchedule": [
+            {
+              "Name": "Full-time",
+              "Code": "1"
+            }
+          ],
+          "PositionOfferingType": [
+            {
+              "Name": "Permanent",
+              "Code": "15317"
+            }
+          ],
+          "QualificationSummary": "See Qualifications.",
+          "PositionRemuneration": [
+            {
+              "MinimumRange": "28",
+              "MaximumRange": "36",
+              "RateIntervalCode": "PH",
+              "Description": "Per Hour"
+            }
+          ],
+          "PositionStartDate": "2026-10-01T00:00:00.0000",
+          "PositionEndDate": "2026-10-20T23:59:59.9970",
+          "PublicationStartDate": "2026-10-01T00:00:00.0000",
+          "ApplicationCloseDate": "2026-10-20T23:59:59.9970",
+          "PositionFormattedDescription": [
+            {
+              "Content": "",
+              "Label": "Dynamic Teaser",
+              "LabelDescription": "Hit highlighting"
+            }
+          ],
+          "UserArea": {
+            "Details": {
+              "JobSummary": "Serves as Information Technology Technician for the U.S. Army Corps of Engineers.",
+              "WhoMayApply": {
+                "Name": "",
+                "Code": ""
+              },
+              "LowGrade": "07",
+              "HighGrade": "07",
+              "MajorDuties": [
+                "Leads the U.S. Army Corps of Engineers IT portfolio.",
+                "Directs enterprise infrastructure and operations."
+              ],
+              "TeleworkEligible": false,
+              "RemoteIndicator": false,
+              "SubAgencyName": "U.S. Army Corps of Engineers",
+              "OrganizationCodes": "XX"
+            }
+          }
+        },
+        "RelevanceRank": 0
+      },
+      {
+        "MatchedObjectId": "845100500",
+        "MatchedObjectDescriptor": {
+          "PositionID": "X-845100500",
+          "PositionTitle": "Chief Information Officer",
+          "PositionURI": "https://www.usajobs.gov:443/GetJob/ViewDetails/845100500",
+          "ApplyURI": [
+            "https://www.usajobs.gov:443/GetJob/ViewDetails/845100500?PostingChannelID="
+          ],
+          "PositionLocationDisplay": "Multiple Locations",
+          "PositionLocation": [
+            {
+              "LocationName": "Washington, District of Columbia",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "District of Columbia",
+              "CityName": "Washington, District of Columbia",
+              "Longitude": 0,
+              "Latitude": 0
+            },
+            {
+              "LocationName": "Denver, Colorado",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "Colorado",
+              "CityName": "Denver, Colorado",
+              "Longitude": 0,
+              "Latitude": 0
+            }
+          ],
+          "OrganizationName": "Office of the Chief Information Officer",
+          "DepartmentName": "Department of Education",
+          "JobCategory": [
+            {
+              "Name": "Information Technology Management",
+              "Code": "2210"
+            }
+          ],
+          "JobGrade": [
+            {
+              "Code": "ES"
+            }
+          ],
+          "PositionSchedule": [
+            {
+              "Name": "Full-time",
+              "Code": "1"
+            }
+          ],
+          "PositionOfferingType": [
+            {
+              "Name": "Permanent",
+              "Code": "15317"
+            }
+          ],
+          "QualificationSummary": "See Qualifications.",
+          "PositionRemuneration": [
+            {
+              "MinimumRange": "160000",
+              "MaximumRange": "225700",
+              "RateIntervalCode": "PA",
+              "Description": "Per Year"
+            }
+          ],
+          "PositionStartDate": "2026-10-01T00:00:00.0000",
+          "PositionEndDate": "2026-10-20T23:59:59.9970",
+          "PublicationStartDate": "2026-10-01T00:00:00.0000",
+          "ApplicationCloseDate": "2026-10-20T23:59:59.9970",
+          "PositionFormattedDescription": [
+            {
+              "Content": "",
+              "Label": "Dynamic Teaser",
+              "LabelDescription": "Hit highlighting"
+            }
+          ],
+          "UserArea": {
+            "Details": {
+              "JobSummary": "Serves as Chief Information Officer for the Office of the Chief Information Officer.",
+              "WhoMayApply": {
+                "Name": "",
+                "Code": ""
+              },
+              "LowGrade": "00",
+              "HighGrade": "00",
+              "MajorDuties": [
+                "Leads the Office of the Chief Information Officer IT portfolio.",
+                "Directs enterprise infrastructure and operations."
+              ],
+              "TeleworkEligible": false,
+              "RemoteIndicator": true,
+              "SubAgencyName": "Office of the Chief Information Officer",
+              "OrganizationCodes": "XX"
+            }
+          }
+        },
+        "RelevanceRank": 0
+      },
+      {
+        "MatchedObjectId": "845100100",
+        "MatchedObjectDescriptor": {
+          "PositionID": "X-845100100",
+          "PositionTitle": "Deputy Chief Information Officer",
+          "PositionURI": "https://www.usajobs.gov:443/GetJob/ViewDetails/845100100",
+          "ApplyURI": [
+            "https://www.usajobs.gov:443/GetJob/ViewDetails/845100100?PostingChannelID="
+          ],
+          "PositionLocationDisplay": "Washington, District of Columbia",
+          "PositionLocation": [
+            {
+              "LocationName": "Washington, District of Columbia",
+              "CountryCode": "United States",
+              "CountrySubDivisionCode": "District of Columbia",
+              "CityName": "Washington, District of Columbia",
+              "Longitude": 0,
+              "Latitude": 0
+            }
+          ],
+          "OrganizationName": "Headquarters, NASA",
+          "DepartmentName": "National Aeronautics and Space Administration",
+          "JobCategory": [
+            {
+              "Name": "Information Technology Management",
+              "Code": "2210"
+            }
+          ],
+          "JobGrade": [
+            {
+              "Code": "ES"
+            }
+          ],
+          "PositionSchedule": [
+            {
+              "Name": "Full-time",
+              "Code": "1"
+            }
+          ],
+          "PositionOfferingType": [
+            {
+              "Name": "Permanent",
+              "Code": "15317"
+            }
+          ],
+          "QualificationSummary": "See Qualifications.",
+          "PositionRemuneration": [
+            {
+              "MinimumRange": "150160",
+              "MaximumRange": "225700",
+              "RateIntervalCode": "PA",
+              "Description": "Per Year"
+            }
+          ],
+          "PositionStartDate": "2026-10-01T00:00:00.0000",
+          "PositionEndDate": "2026-10-20T23:59:59.9970",
+          "PublicationStartDate": "2026-10-01T00:00:00.0000",
+          "ApplicationCloseDate": "2026-10-20T23:59:59.9970",
+          "PositionFormattedDescription": [
+            {
+              "Content": "",
+              "Label": "Dynamic Teaser",
+              "LabelDescription": "Hit highlighting"
+            }
+          ],
+          "UserArea": {
+            "Details": {
+              "JobSummary": "Serves as Deputy Chief Information Officer for the National Aeronautics and Space Administration.",
+              "WhoMayApply": {
+                "Name": "",
+                "Code": ""
+              },
+              "LowGrade": "00",
+              "HighGrade": "00",
+              "MajorDuties": [
+                "Leads the National Aeronautics and Space Administration IT portfolio.",
+                "Directs enterprise infrastructure and operations."
+              ],
+              "TeleworkEligible": true,
+              "RemoteIndicator": false,
+              "SubAgencyName": "National Aeronautics and Space Administration",
+              "OrganizationCodes": "XX"
+            }
+          }
+        },
+        "RelevanceRank": 0
+      }
+    ],
+    "UserArea": {
+      "NumberOfPages": "1",
+      "IsRadialSearch": false
+    }
+  }
+}

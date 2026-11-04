@@ -1,0 +1,651 @@
+# profile.example.yaml — a complete example profile
+#
+# Copy this to profile.yaml and edit it, or run `python main.py setup`, which
+# interviews you in the terminal and writes profile.yaml for you. The
+# candidate, location, delivery and dream-company entries below are
+# placeholders. The roles, industries, company_fit, scoring and compensation
+# sections are a fictional persona's settings (a Director of FP&A in Chicago),
+# kept as a worked example of a complete configuration: the setup interview
+# replaces them with yours.
+#
+# Everything personal about this job search lives here: who the candidate is,
+# which roles they want, where they will work, what they need to be paid,
+# which industries and companies they like, which sources to search and how
+# the digest is delivered. The code is the engine and reads this file;
+# a different job seeker edits this file and nothing else.
+#
+# Three homes, no overlap:
+#   profile.yaml           identity and preferences (this file)
+#   environment variables  secrets and per-user resource IDs: ANTHROPIC_API_KEY,
+#                          GMAIL_ADDRESS, GMAIL_APP_PASSWORD, ADZUNA_APP_ID,
+#                          ADZUNA_API_KEY, RAPIDAPI_KEY, USAJOBS_API_KEY,
+#                          GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_SHEET_ID, GOOGLE_DOC_ID
+#   code                   mechanism: how distance is measured, how duplicates
+#                          are found, how the scoring prompt is assembled
+#
+# Check this file with:  python main.py profile-check
+#
+# Another profile file can be used for a whole run by setting
+# JOB_DIGEST_PROFILE to its path.
+
+version: 1   # schema version of this file; the loader rejects any other value
+
+
+# --- Candidate -----------------------------------------------------------------
+# Who the digest is for. The scoring prompt (scorer.py SYSTEM_PROMPT) opens with
+# these words, so they shape how Claude reads every posting.
+candidate:
+  # Replace every value in this section with your own.
+  # Full name. The scoring prompt says it is "helping <display_name>".
+  display_name: Your Name
+  # The name the prompts use on second mention ("About <short_name>:", the
+  # declined-roles feedback block and the weekly summary).
+  short_name: Your
+  # Pronouns the scoring prompt uses for the candidate. One of: she/her,
+  # he/him, they/them.
+  pronouns: they/them
+  # The short description after the name in the scoring prompt and the weekly
+  # summary prompt: "Your Name, a finance leader, ...".
+  descriptor: a finance leader
+  # One line: who you are and what you seek. Shown by profile-check; not yet
+  # sent to any prompt. Replace it.
+  headline: Director of FP&A at a mid-size company, owning the plan, the forecast and a team
+  # The "About" block of the scoring prompt, verbatim. Claude reads it before
+  # every posting; changing it changes how every role is scored. Replace these
+  # lines with your own background, one "- " line per point.
+  background: |-
+    - Ten years in FP&A, from financial analyst to director
+    - Led annual planning and forecasting at a 2,000-person consumer products company
+    - Manages a team of six analysts and managers
+    - Prepares the monthly board and executive reporting package
+
+
+# --- Roles -----------------------------------------------------------------------
+# Example: a finance leader's settings. `python main.py setup` replaces them.
+# The title gate (config.title_gate, PRD §3). A cost control, not a quality
+# filter: it runs after fetching and before scoring, and only stops titles that
+# are plainly not the target role from spending a scoring call. The job
+# description decides fit. A title passes when it contains one of
+# target_titles, or one of seniority_terms AND one of function_terms.
+# Matching is whole-word and case-insensitive.
+roles:
+  # What each field is matched against:
+  #   target_titles, seniority_terms, function_terms and
+  #   function_terms_never_alone are matched against the posting's TITLE only:
+  #   whole words or phrases, case-insensitive. A title passes the gate when it
+  #   contains any target_titles entry, or one word from seniority_terms AND
+  #   one from function_terms. The gate only saves scoring calls; the job
+  #   description decides fit.
+  #   target_department is judged by the model from the job DESCRIPTION.
+  #
+  # TITLE: an entry here passes on its own, whatever else the title says
+  # ("Chief Financial Officer", "CFO").
+  target_titles:
+    - Director of FP&A
+    - Head of FP&A
+    - VP of FP&A
+    - Director of Financial Planning and Analysis
+  # DESCRIPTION: judged by the model from the job description, not the
+  # title. The department or function the role must sit in, as one line the
+  # scoring prompt finishes "leads ... and owns a team or a budget" with.
+  # Roles outside it are capped at scoring.function_cap.
+  target_department: financial planning and analysis (FP&A), within corporate finance
+  # Optional: one sentence added after that line, for a case the model gets
+  # wrong without it (a title that hides a leadership role). Empty: left out.
+  function_fit_note: ""
+  # DESCRIPTION: examples the prompt gives for the two lower function-fit
+  # values: roles in the department that lead nothing ("in that department or
+  # function, but <these>, with no team or budget"), and functions outside it.
+  in_department_examples:
+    - financial analyst
+    - FP&A manager
+    - finance business partner
+  outside_department_examples:
+    - accounting and controllership
+    - treasury
+    - tax
+    - audit
+    - finance systems
+    - investor relations
+    - sales operations
+  # The digest blurb's role line starts by saying whether the role is this
+  # ("first whether it is the <phrase>").
+  top_seat_phrase: "top FP&A seat (no VP of FP&A above it) or reports into one"
+  # One line: the example the scoring prompt gives for the blurb's role line
+  # (what kind of seat, then what it owns as keywords).
+  rationale_example: "Likely the top FP&A seat (no VP of FP&A above it). Owns planning end to end: annual plan, rolling forecast, board reporting, a team of analysts."
+  # TITLE: seniority words. A title needs one of these plus a function term.
+  # Adding "Manager" here would let manager-level roles reach scoring (and
+  # cost calls).
+  seniority_terms:
+    - Director
+    - Senior Director
+    - VP
+    - Vice President
+    - Head of
+  # TITLE: function words, the field the role leads. Wider = more postings
+  # scored (more cost, more matches); narrower = cheaper, with a risk of
+  # missing roles.
+  function_terms:
+    - FP&A
+    - Financial Planning
+    - Financial Planning and Analysis
+    - Finance
+    - Corporate Finance
+    - Planning and Analysis
+    - Budgeting
+    - Forecasting
+  # TITLE: words that never count as a function term on their own, only inside a
+  # longer phrase above ("Financial Planning", "Planning and Analysis").
+  # Keeps "Director of Business Development" and "Head of Data Analysis" out.
+  # Validation rejects function_terms that list one of these bare.
+  function_terms_never_alone:
+    - planning
+    - analysis
+    - business
+  # Sources whose postings go through the title gate before scoring (keys of
+  # sources.enabled). An ungated source sends every posting to scoring, which
+  # costs more but misses nothing a strict title gate would drop: LinkedIn
+  # alerts and USAJOBS are already narrowed by your alert and job series, and
+  # the watchlist has its own gate below. `python main.py calibrate --titles`
+  # shows which live titles pass.
+  title_gated_sources:
+    - adzuna
+    - jsearch
+    - builtin
+    - ats
+    - startups
+  # The wider gate the watchlist keeps for dream companies' Workday and
+  # careers pages, so a role there is not lost to a strict function list.
+  watchlist_gate_terms:
+    # sources/ats.py _legacy_title_passes: a Workday title needs one of
+    # seniority AND one of function.
+    seniority:
+      - director
+      - vp
+      - v.p.
+      - vice president
+      - svp
+      - head of
+    function:
+      - fp&a
+      - financial planning
+      - planning and analysis
+      - finance
+      - corporate finance
+      - budgeting
+      - forecasting
+    # sources/watchlist.py: search terms sent to each Workday tenant's job search.
+    workday_search_terms:
+      - director
+      - vice president
+      - head of
+    # sources/watchlist.py: substring tests on the link text of a scraped
+    # careers page. A link containing one of careers_page_seniority is kept;
+    # careers_page_function only tags it as a role in the target function or "other".
+    careers_page_seniority:
+      - "vp "
+      - v.p.
+      - vice president
+      - director
+      - head of
+      - svp
+      - senior vice
+    careers_page_function:
+      - finance
+      - fp&a
+      - financial planning
+      - planning
+      - budget
+
+# --- Location ------------------------------------------------------------------
+# Location tiers (location.py). Applied
+# after scoring to hybrid and in-office roles only, by straight-line distance
+# from the posting's resolved location; remote US roles are never adjusted. A
+# location penalty never takes a score below scoring.min_score_after_penalties.
+#
+# Metros (home, commutable, relocate) are "City, ST" names, resolved once per
+# run against data/us_places.tsv.gz; a name that matches no place, or several,
+# fails profile-check. To pin a metro's centre yourself, write it as a mapping
+# instead, and the coordinates win over the places file:
+#     - {name: "Springfield", lat: 39.7817, lon: -89.6501}
+# The name is what the digest and the Sheet show in the tier reason
+# ("commutable (Springfield, 12 mi)").
+location:
+  # Home metro. Hybrid/in-office roles within home_bonus_radius_miles of it
+  # get home_bonus, after the tier and before the cap. Must also be
+  # listed in commutable.
+  home: Chicago, IL
+  home_bonus_radius_miles: 30
+  # Positive. Added to the final score; remote roles never get it.
+  home_bonus: 1
+  # Metros the candidate can commute to. Hybrid/in-office roles within
+  # commutable_radius_miles of any of them: no penalty, no "relo" tag.
+  commutable:
+    - Chicago, IL
+    - Milwaukee, WI
+    - Indianapolis, IN
+  commutable_radius_miles: 60
+  # From commutable_radius_miles out to this distance of a commutable metro:
+  # outer_band_penalty and the "relo" tag.
+  outer_band_miles: 100
+  # Negative, or "disqualify". Applied after scoring to hybrid/in-office roles
+  # in the outer band.
+  outer_band_penalty: -2
+  # Metros the candidate would relocate to. Hybrid/in-office roles within
+  # relocate_radius_miles of one: relocate_penalty and the "relo" tag. Adding a
+  # metro softens the penalty there from elsewhere_penalty to relocate_penalty.
+  relocate:
+    - Austin, TX
+    - Denver, CO
+    - Seattle, WA
+  relocate_radius_miles: 40
+  # Negative, or "disqualify". Applied after scoring near a relocate metro.
+  relocate_penalty: -2
+  # Negative, or "disqualify". Applied after scoring to hybrid/in-office roles
+  # anywhere else in the country.
+  elsewhere_penalty: -5
+  # A posting that names only a state ("Maryland") takes the penalty most of
+  # that state's population falls under. An entry here overrides that with a
+  # fixed penalty (0 or negative), keyed by two-letter state code.
+  # Example: {IN: 0} would treat a posting that names only Indiana as commutable.
+  state_tier_overrides: {}
+  # A bare town name ("Arlington") is resolved to the most favourable tier
+  # among same-named places with at least this many people, so a big namesake
+  # elsewhere does not count against a home-metro town.
+  sizeable_place_population: 50000
+  # The country you search in, as an ISO code. It must be the country the
+  # places file covers (data/us_places.tsv.gz.country): "US". A location string
+  # naming one of its states ("Paris, TX") always counts as in-country.
+  country: US
+  # Roles pinned outside the country, any work model: "disqualify" (dropped
+  # before scoring, never emailed) or a number added to the score.
+  outside_country: disqualify
+  # Outcome by work model, applied first, before the distance tiers: a number
+  # (bonus or penalty) or "disqualify". With 0 for all three, remote roles are
+  # checked only for the country, and hybrid and onsite roles go on to the
+  # distance tiers above. "onsite: disqualify" drops every in-office role,
+  # whatever its distance; a "disqualify" skips every adjustment after it.
+  work_models:
+    remote: 0
+    hybrid: 0
+    onsite: 0
+
+
+# --- Compensation ---------------------------------------------------------------
+# Example: a finance leader's settings. `python main.py setup` replaces them.
+# comp.py. Judged on the top of the posted range, in code after the
+# scoring call, with the location tier. Only stated pay counts (the source's
+# comp field or a figure in the JD), never an estimate. No stated top: the
+# unstated outcome. Pay disqualifies only where an outcome says "disqualify".
+compensation:
+  # Annual USD. A stated top below this gets floor_adjustment.
+  floor: 140000
+  # Negative, or "disqualify" (score 0: a stated top below the floor is a
+  # dealbreaker). A number never takes a score below
+  # scoring.min_score_after_penalties.
+  floor_adjustment: -2
+  # Annual USD. A stated top at or above this gets stretch_adjustment.
+  stretch: 190000
+  # Positive. Capped at scoring.max_score.
+  stretch_adjustment: 1
+  # No stated pay (or a minimum with no top): a number or "disqualify".
+  unstated: 0
+
+
+# --- Industries ----------------------------------------------------------------
+# Example: a finance leader's settings. `python main.py setup` replaces them.
+# Sector preferences. The tier lists below are the scoring prompt's own wording
+# (prompts/scoring_system.txt, "COMPANY FIT"); Claude reads them and judges the
+# industry from the job description. Points per tier are in
+# scoring.sector_adjustments.
+industries:
+  # Score 0, never emailed, routed to the Disqualified tab. Each entry is a
+  # tier the prompt's "Hard disqualify" list names, with the words that block
+  # it before any scoring call: whole words matched against the company name
+  # and title only, never the description, where "health insurance" in a
+  # benefits list would block almost every posting. A name hit scores 0
+  # without calling Claude. Either way the role's hard_block_industry is the
+  # entry ("gambling/casinos"), never the word that matched.
+  hard_block:
+    gambling/casinos: [casino, gambling, sportsbook]
+    tobacco: [tobacco, vape]
+  # scoring.sector_adjustments.deprioritize, never disqualifying.
+  deprioritize:
+    - multi-level marketing
+    - payday lending
+    - crypto
+  # No bonus, no penalty, and the candidate's least interesting sectors: the
+  # prompt names them as the LOWEST interest.
+  lowest_interest: []
+  # No bonus, no penalty, with no lower interest implied.
+  neutral:
+    - professional services
+  # scoring.sector_adjustments.lean_in.
+  lean_in:
+    - software
+    - healthcare
+    - manufacturing
+  # scoring.sector_adjustments.strong_yes.
+  strong_yes:
+    - consumer products
+    - food and beverage
+    - large retailers
+    - diversified industrials
+  # Tie-break inside strong_yes, strongest first. The prompt states it as
+  # "consumer products > food and beverage > ...".
+  sector_order:
+    - consumer products
+    - food and beverage
+    - manufacturing
+  # Businesses that take scoring.sector_adjustments.vice_core_business instead
+  # of the deprioritize points when they are the company's core business. The
+  # prompt joins them with "/" ("Alcohol/vice can reach -2 ...").
+  vice_core_business:
+    - alcohol
+
+# --- Company fit ---------------------------------------------------------------
+# Example: a finance leader's settings. `python main.py setup` replaces them.
+# The company-appeal question and the mission and values factor in the
+# scoring prompt. Appeal points are scoring.sector_adjustments; mission and
+# values points are scoring.mission_values.
+company_fit:
+  # false: the prompt keeps only the industry tiers below and drops the
+  # appeal question and signals.
+  enabled: true
+  # The question the prompt asks of every company, heading its COMPANY FIT
+  # section.
+  core_question: Is this company doing something interesting?
+  # What makes the answer yes. The prompt lists these as the signals that earn
+  # the sector/company bonus alongside the industries tiers.
+  appeal_signals:
+    - innovating in its field
+    - doing real research
+    - a novel product or approach
+    - mission-driven
+    - doing good for the world
+    - a brand people know and respect
+  # Evidence of how a company operates; each counts toward the mission and
+  # values factor up to its maximum.
+  operating_values:
+    - curiosity
+    - transparency
+    - people-first culture
+    - building for the long term rather than extracting
+    - benefit to a community beyond the shareholders
+  # Missions that "do good" and earn scoring.mission_values.mission_alone on
+  # their own, even with no evidence of how the company operates.
+  mission_flavors:
+    - patients
+    - public goods
+    - access
+    - safety
+    - science
+    - civic life
+    - enabling mission-driven organizations
+  # Companies named in the prompt as examples of the fit the candidate admires.
+  exemplars:
+    - Wayne Enterprises
+    - Stark Industries
+  # true: the prompt says B2B and government/public sector fit and B2C is not
+  # the target (primarily-B2C companies are in industries.deprioritize).
+  b2b_over_b2c: false
+  # false: the prompt says company size is not a factor, startup to enterprise.
+  size_matters: false
+
+
+# --- Scoring -------------------------------------------------------------------
+# Example: a finance leader's settings. `python main.py setup` keeps them; tune
+# them once `python main.py calibrate` shows how your profile ranks postings
+# (--dir docs/samples for the samples, no flag for live postings).
+# Every fixed point value. "Prompt" values are applied by Claude inside the
+# scoring call (prompts/scoring_system.txt); "code" values are applied
+# afterwards in location.apply_location_tier. Bonuses are positive, penalties
+# negative.
+scoring:
+  # The Claude model that scores every posting (scorer.py) and rewrites the
+  # digest blurb (profiles.py). A larger model scores more consistently and
+  # costs more per posting; a smaller one is cheaper and reads the JD less
+  # carefully. Changing it changes every score, so compare a sample first
+  # (tools/rescore_dry_run.py). The weekly summary uses the same model unless
+  # summary_model is set. ANTHROPIC_API_KEY stays in the environment.
+  model: claude-sonnet-4-6
+  # Optional: a different model for the weekly summary's reading of declined
+  # roles (weekly_summary.py).
+  # summary_model: claude-sonnet-4-6
+  # Code: the final score never goes above this.
+  max_score: 10
+  # Code: location and comp penalties never take a score below this. A 0
+  # (hard block, international) stays 0.
+  min_score_after_penalties: 1
+  # Prompt: what makes a role a good fit, the SCORING block of the prompt.
+  # The scoring call adds up the criteria a posting meets (there is no
+  # baseline) and names them in criteria_hits. Each entry: id (snake_case,
+  # unique; the digest and calibrate show it), points (non-zero, -5 to +5)
+  # and criterion (one line the model can recognise in a posting). Positives
+  # are rendered first, then negatives. Judge role fit only: pay and place
+  # are modifiers applied in code (compensation, location).
+  # An entry may instead be a dealbreaker: id, dealbreaker: true and
+  # criterion, with no points. The scoring call only reports whether it
+  # applies; the code then sets the score to 0 and files the role on the
+  # Disqualified tab ("Dealbreaker: <id>."), never emailed.
+  # Example: five criteria and one dealbreaker for a finance leader. Write your own.
+  role_criteria:
+    - id: owns_plan
+      points: 3
+      criterion: Owns the annual plan, rolling forecast and long-range plan
+    - id: cfo_line
+      points: 1
+      criterion: Reports to the CFO or VP of Finance
+    - id: team
+      points: 1
+      criterion: Manages a team of three or more
+    - id: board_reporting
+      points: 1
+      criterion: Prepares board and executive reporting
+    - id: travel
+      points: -2
+      criterion: Travel above 25 percent
+    - id: no_team
+      dealbreaker: true
+      criterion: Individual contributor role with no team
+  # Prompt: mission and values factor, applied on top of the criteria above.
+  # enabled false drops the whole block from the prompt.
+  mission_values:
+    enabled: true
+    min: -2           # strong misfit
+    max: 2            # strong fit
+    mission_alone: 1  # a mission that does good, with no evidence of how it operates
+  # Prompt: points per industries tier. The prompt's "+2: Company appeal"
+  # line is strong_yes.
+  sector_adjustments:
+    strong_yes: 2
+    lean_in: 1
+    deprioritize: -1
+    # industries.vice_core_business when it is the company's core business.
+    vice_core_business: -2
+  # Code: digest sections by final score. main >= main_digest; worth a look
+  # >= worth_a_look; dream companies (dream_companies.file) reach the main
+  # section from dream_company_main up.
+  thresholds:
+    main_digest: 7
+    worth_a_look: 5
+    dream_company_main: 3
+  # Code: a role the scoring call says does not lead roles.target_department
+  # is capped at this score, after every other adjustment. Must stay below
+  # thresholds.worth_a_look so a capped role is logged, never emailed in the
+  # main sections.
+  function_cap: 4
+  # Code: at most this many "Cool company, wrong role" entries in the digest;
+  # the rest are logged to the Sheet only.
+  cool_company_wrong_role_cap: 3
+  # Code: at most this many scoring calls in one fetch run (three runs a day).
+  # Postings past the cap are left unseen and unqueued, and the next run
+  # scores them; dream-company postings are scored first, so the cap falls on
+  # the rest. Every call costs money: `python main.py calibrate` prints what
+  # one costs at your scoring.model, and this caps a run at 150 times that
+  # (at claude-sonnet-4-6, measured at about $0.013 a call: under $2 a run).
+  max_calls_per_run: 150
+
+
+# --- Dream companies -----------------------------------------------------------
+# Companies the candidate most wants to work for. Their boards are fetched
+# directly (sources/ats.py, sources/watchlist.py) and a dream-company role
+# reaches the main digest from scoring.thresholds.dream_company_main.
+dream_companies:
+  # The canonical list, one company per line; edit the file, not this entry.
+  # tools/resolve_ats.py maps each name to its ATS board in
+  # data/companies.yaml. For "my company uses Workday tenant X" or "my
+  # company's jobs are on careers page Y", add it under pinned: in
+  # data/companies.yaml (workday: or careers_pages:, keyed by the name exactly
+  # as it appears in this file); the monthly re-resolve never touches pinned:.
+  file: data/dream_companies.example.txt
+
+
+# --- Sources -------------------------------------------------------------------
+# Which job sources run and what they search for. API keys stay in env vars.
+sources:
+  # One entry per module in sources/ that fetches postings. false = not called.
+  enabled:
+    adzuna: true            # Adzuna API (ADZUNA_APP_ID, ADZUNA_API_KEY)
+    jsearch: true           # JSearch on RapidAPI (RAPIDAPI_KEY)
+    linkedin_email: true    # LinkedIn job-alert emails, read from Gmail
+    builtin: true           # Built In listings
+    ats: true               # dream-company ATS boards
+    watchlist: true         # dream companies with no ATS board: Workday or careers page
+    startups: true          # startup-tier ATS boards (sourcing/startups_ats_resolved.csv)
+    bespoke: true           # careers pages with no fetchable board (sourcing/startups_unresolved.csv)
+    usajobs: true           # USAJOBS federal postings (USAJOBS_API_KEY)
+    wellfound: false        # parked: zero postings from GitHub runner IPs
+  # Inbox readers. They find no postings; they update rows already in the Sheet.
+  status_tracking:
+    # Reads the Gmail inbox of GMAIL_ADDRESS (IMAP, last 14 days) for emails
+    # about applications -- confirmations, rejections, interview invites --
+    # from companies that have a row in the Sheet, sends each such email's
+    # text to Claude to classify it, and updates that row's Status.
+    enabled: false
+  applied_doc:
+    # Reads the Google Doc in GOOGLE_DOC_ID (your own list of jobs applied to,
+    # one heading per job) and marks those jobs Applied in the Sheet, adding a
+    # row for any it cannot find. Needs GOOGLE_DOC_ID and the Doc shared with
+    # the service account.
+    enabled: false
+  # Company lists (data/company_lists/*.csv; format in its README.md), in
+  # order. tier dream: the dream-company threshold and the ATS/watchlist path;
+  # tier watch: the board tier. A company in several lists takes the first
+  # file's tier. filter (optional): segment (public, startup), sic codes or
+  # ranges ("7370-7379"; they narrow the public companies only, startups have
+  # none), states (two-letter, where the company is based), names (only
+  # these), exclude_names. `python main.py resolve` finds boards for listed
+  # companies that do not carry one yet (it probes each company's site; a
+  # first run over a big list takes a while: try --max 50).
+  company_lists:
+    # The starter list: about 4,700 US public companies (SEC EDGAR) and about
+    # 6,000 startups and growth companies, a dated snapshot. Here: every
+    # startup, and the public companies whose SIC code is in the industries
+    # above: food and beverage, apparel and textiles, furniture, household
+    # and personal care, footwear, hardware and fabricated metal, industrial
+    # machinery, appliances, motor vehicles and parts, other consumer goods
+    # (sporting goods, toys), and retail.
+    # boards: the boards the maintainer already found for the list; they are
+    # read first, and resolve only tries the companies that have no
+    # `outcome` yet (new additions).
+    - file: data/company_lists/starter_companies.csv
+      tier: watch
+      boards: data/company_lists/starter_boards.csv
+      filter:
+        segment: [public, startup]
+        sic: ["2000-2099", "2200-2399", "2510-2599", "2840-2844", "3140-3199", "3420-3499", "3500-3569",
+              "3580-3599", "3630-3639", "3710-3716", "3900-3999", "5200-5999"]
+    # Your own companies, one per row (name, website, notes): dream companies
+    # whose roles reach the digest at a lower score.
+    - file: data/company_lists/my_companies.csv
+      tier: dream
+  # Gmail label the LinkedIn alert emails are filed under.
+  linkedin_label: li-job-alerts
+  adzuna:
+    # One API call per query per location per run, so length is a cost.
+    queries:
+      - Director of FP&A
+      - Director Financial Planning and Analysis
+      - Head of FP&A
+      - VP FP&A
+      - Director of Finance
+    # Leave out to derive [home city, each commutable city, "Remote"] from the
+    # location section (these are exactly that derivation for this example).
+    locations:
+      - Chicago
+      - Milwaukee
+      - Indianapolis
+      - Remote
+  jsearch:
+    # One RapidAPI call per query per run; each is searched with "United States".
+    queries:
+      - Director of FP&A
+      - Director Financial Planning and Analysis
+      - Head of FP&A
+      - VP FP&A
+      - Director of Finance
+  builtin:
+    # Title searches run on Built In. Used to build search_urls when that is
+    # left out: each query on the home metro's Built In site (config.py
+    # BUILTIN_METRO_SLUGS; a home metro Built In does not cover gets remote
+    # only) and on Built In remote.
+    title_queries:
+      - director FP&A
+      - director finance
+    # Built In search pages scraped each run (sources/builtin.py). Leave out to
+    # derive them from title_queries as above; these are exactly what that
+    # derivation gives for this example.
+    search_urls:
+      - https://builtin.com/jobs/chicago?title=director+FP%26A&seniority[]=senior-leader
+      - https://builtin.com/jobs/remote?title=director+FP%26A&seniority[]=senior-leader
+      - https://builtin.com/jobs/chicago?title=director+finance&seniority[]=senior-leader
+      - https://builtin.com/jobs/remote?title=director+finance&seniority[]=senior-leader
+  usajobs:
+    # OPM job series searched; 0501 is Financial Administration and Program.
+    series: "0501"
+    # Who may apply: public = open to the public, ses = Senior Executive Service.
+    hiring_paths:
+      - public
+      - ses
+    # Keyword searches, one per entry (in addition to the series).
+    title_keywords:
+      - Budget Officer
+      - Director of Financial Management
+    # A federal posting is kept only when the top of its annual pay range is
+    # at or above this. "compensation.floor" reuses the comp floor; an integer
+    # sets a separate annual USD floor.
+    pay_floor_from: compensation.floor
+
+
+# --- Delivery ------------------------------------------------------------------
+# When and where the digest and the weekly summary go. The GitHub Actions cron
+# lines follow from these: run `python main.py cron --write` after a change.
+delivery:
+  # Where the digest and weekly summary are sent. Sent from GMAIL_ADDRESS (env).
+  email_to: you@example.com
+  # IANA time zone the schedule below is read in; also the zone used for
+  # "today" in digest dates and the fresh flag.
+  timezone: America/Chicago
+  # The digest should be in the inbox by this local time (24-hour HH:MM). The
+  # cron fires hours earlier to absorb GitHub's queue delay.
+  digest_time_local: "08:00"
+  # Days a digest is sent. A day left out has its postings carried to the next.
+  digest_days:
+    - Sunday
+    - Monday
+    - Tuesday
+    - Wednesday
+    - Thursday
+    - Friday
+  # Day the weekly summary is sent (the no-digest day, so Friday's digest lands first).
+  weekly_summary_day: Saturday
+  # Local time (24-hour HH:MM) the weekly summary runs; "08:00" if left out.
+  # It runs the day after the last digest, so even a digest held hours in
+  # GitHub's queue has written its rows before the summary reads the Sheet.
+  weekly_summary_time_local: "08:00"
+  # true: a digest day with 0 new postings sends no email and counts as a
+  # skipped day in the weekly summary. (A day with new postings but no matches
+  # still sends a "resurface list" of earlier unactioned roles.)
+  skip_empty_days: true

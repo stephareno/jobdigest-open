@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="1000" height="620" font-family="Public Sans, Segoe UI, system-ui, sans-serif">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5d6470"/></marker></defs>
+  <rect x="0" y="0" width="1000" height="620" fill="#f6f5f1"/>
+  <rect x="20" y="16" width="960" height="54" rx="9" fill="#fbe7d6" stroke="#b4581b"/>
+  <text x="36" y="38" font-size="15" font-weight="700" fill="#b4581b">profile.yaml, the one file about you</text>
+  <text x="36" y="58" font-size="12.5" fill="#1f2328">target titles and department · what the role must have · where you'll work · pay · industries · mission and appeal · company lists · delivery time</text>
+  <rect x="20" y="82" width="960" height="34" rx="9" fill="#f8dde1" stroke="#a52a3c"/>
+  <text x="36" y="104" font-size="13" font-weight="700" fill="#a52a3c">secrets, environment only</text>
+  <text x="250" y="104" font-size="12.5" fill="#1f2328">model API key · Gmail app password · Google service account · Sheet ID · optional Adzuna, RapidAPI, USAJOBS keys</text>
+  <text x="500" y="135" font-size="12" fill="#5d6470" text-anchor="middle">Each stage below names what it reads from the profile. Nothing is stored in two places.</text>
+  <rect x="20" y="150" width="300" height="150" rx="9" fill="#ffffff" stroke="#d6d3ca"/>
+  <text x="32" y="174" font-size="14" font-weight="700" fill="#1f2328">1 · Sources</text>
+  <text x="32" y="196" font-size="12.5" fill="#5d6470">company career boards, from your lists</text>
+  <text x="32" y="213" font-size="12.5" fill="#5d6470">plain career pages, from your lists</text>
+  <text x="32" y="230" font-size="12.5" fill="#5d6470">LinkedIn alert emails</text>
+  <text x="32" y="247" font-size="12.5" fill="#5d6470">Adzuna, JSearch, USAJOBS, Built In</text>
+  <text x="32" y="270" font-size="11.5" fill="#b4581b">profile: which sources, which lists</text>
+  <text x="32" y="289" font-size="11.5" fill="#3b556e">3× a day, a slice of the boards each run</text>
+  <rect x="350" y="150" width="300" height="150" rx="9" fill="#ffffff" stroke="#d6d3ca"/>
+  <text x="362" y="174" font-size="14" font-weight="700" fill="#1f2328">2 · Filters</text>
+  <text x="362" y="196" font-size="12.5" fill="#5d6470">title gate: words in the title only</text>
+  <text x="362" y="213" font-size="12.5" fill="#5d6470">already seen: two duplicate checks</text>
+  <text x="362" y="230" font-size="12.5" fill="#5d6470">outside your country</text>
+  <text x="362" y="247" font-size="12.5" fill="#5d6470">blocked industries, by name</text>
+  <text x="362" y="270" font-size="11.5" fill="#b4581b">profile: title words, country, hard blocks</text>
+  <text x="362" y="289" font-size="11.5" fill="#3b556e">free; this is where cost is controlled</text>
+  <rect x="680" y="150" width="300" height="150" rx="9" fill="#e7e2f5" stroke="#5b4b9e"/>
+  <text x="692" y="174" font-size="14" font-weight="700" fill="#1f2328">3 · Scoring</text>
+  <text x="692" y="196" font-size="12.5" fill="#5d6470">one model call per posting</text>
+  <text x="692" y="213" font-size="12.5" fill="#5d6470">role fit only, scored 1 to 10</text>
+  <text x="692" y="230" font-size="12.5" fill="#5d6470">your criteria, in your words</text>
+  <text x="692" y="247" font-size="12.5" fill="#5d6470">industry tier, appeal, mission</text>
+  <text x="692" y="270" font-size="11.5" fill="#b4581b">profile: role criteria, industries, mission</text>
+  <text x="692" y="289" font-size="11.5" fill="#5b4b9e">the only paid stage</text>
+  <rect x="20" y="350" width="300" height="150" rx="9" fill="#ffffff" stroke="#d6d3ca"/>
+  <text x="32" y="374" font-size="14" font-weight="700" fill="#1f2328">4 · Modifiers</text>
+  <text x="32" y="396" font-size="12.5" fill="#5d6470">work model: keep, bonus, penalty or dealbreaker</text>
+  <text x="32" y="413" font-size="12.5" fill="#5d6470">distance from home and commutable metros</text>
+  <text x="32" y="430" font-size="12.5" fill="#5d6470">pay against your floor and stretch</text>
+  <text x="32" y="447" font-size="12.5" fill="#5d6470">dealbreakers send the score to 0</text>
+  <text x="32" y="470" font-size="11.5" fill="#b4581b">profile: work models, metros, pay</text>
+  <text x="32" y="489" font-size="11.5" fill="#3b556e">in code: deterministic, free, visible in the Sheet</text>
+  <rect x="350" y="350" width="300" height="150" rx="9" fill="#ffffff" stroke="#d6d3ca"/>
+  <text x="362" y="374" font-size="14" font-weight="700" fill="#1f2328">5 · Queue</text>
+  <text x="362" y="396" font-size="12.5" fill="#5d6470">scored postings wait in the repository</text>
+  <text x="362" y="413" font-size="12.5" fill="#5d6470">fetch adds batches, the digest removes them</text>
+  <text x="362" y="430" font-size="12.5" fill="#5d6470">the two never write the same file</text>
+  <text x="362" y="447" font-size="12.5" fill="#5d6470">a per-run cap spreads a big list over days</text>
+  <text x="362" y="470" font-size="11.5" fill="#b4581b">profile: calls per run</text>
+  <text x="362" y="489" font-size="11.5" fill="#3b556e">state files, written only by the workflows</text>
+  <rect x="680" y="350" width="300" height="150" rx="9" fill="#ffffff" stroke="#d6d3ca"/>
+  <text x="692" y="374" font-size="14" font-weight="700" fill="#1f2328">6 · Delivery</text>
+  <text x="692" y="396" font-size="12.5" fill="#5d6470">the daily run builds the email</text>
+  <text x="692" y="413" font-size="12.5" fill="#5d6470">main matches, worth a look, cool company</text>
+  <text x="692" y="430" font-size="12.5" fill="#5d6470">every posting written to the Sheet</text>
+  <text x="692" y="447" font-size="12.5" fill="#5d6470">weekly summary on the off day</text>
+  <text x="692" y="470" font-size="11.5" fill="#b4581b">profile: email, timezone, time, days</text>
+  <text x="692" y="489" font-size="11.5" fill="#3b556e">timed hours early to absorb GitHub's queue</text>
+  <g stroke="#5d6470" stroke-width="1.6" fill="none" marker-end="url(#arr)">
+    <path d="M322 225 L346 225"/><path d="M652 225 L676 225"/>
+    <path d="M830 300 L830 322 L170 322 L170 348"/>
+    <path d="M322 425 L346 425"/><path d="M652 425 L676 425"/>
+    <path d="M720 500 L720 522"/><path d="M896 500 L896 522"/>
+  </g>
+  <rect x="640" y="524" width="160" height="56" rx="9" fill="#e4ebf2" stroke="#3b556e"/>
+  <text x="652" y="547" font-size="13" font-weight="700" fill="#3b556e">Digest email</text>
+  <text x="652" y="566" font-size="12.5" fill="#5d6470">daily, by your hour</text>
+  <rect x="812" y="524" width="168" height="56" rx="9" fill="#e4ebf2" stroke="#3b556e"/>
+  <text x="824" y="547" font-size="13" font-weight="700" fill="#3b556e">Google Sheet</text>
+  <text x="824" y="566" font-size="12.5" fill="#5d6470">every posting, with status</text>
+  <rect x="20" y="524" width="400" height="56" rx="9" fill="#edebe4" stroke="#d6d3ca"/>
+  <text x="32" y="547" font-size="13" font-weight="700" fill="#1f2328">Weekly summary</text>
+  <text x="32" y="566" font-size="12.5" fill="#5d6470">what scored well, what you passed on, which sources produced</text>
+  <text x="500" y="608" font-size="12" fill="#5d6470" text-anchor="middle">Runs as GitHub Actions in your own private repository. Nothing runs on your computer after setup.</text>
+</svg>
