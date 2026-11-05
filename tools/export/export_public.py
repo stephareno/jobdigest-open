@@ -122,6 +122,7 @@ PLACEHOLDER = "# {name}\n\nTo be written (PUB-07: the public docs item owes this
 
 # PUB-15: the public repository's address in the docs until it exists.
 REPO_PLACEHOLDER = "OWNER/REPO"
+PAGES_PLACEHOLDER = "OWNER.github.io/REPO"   # PUB-22: the project page address
 GUIDE = "docs/SETUP_GUIDE.md"      # the setup guide (PUB-15), with docs/public/ the docs a label example may appear in
 REPO_RE = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?/[A-Za-z0-9._-]+")
 
@@ -339,14 +340,29 @@ def _placeholder_files(out: Path) -> list[str]:
 
 
 def fill_repo(out: Path, repo: str) -> int:
-    """Replace OWNER/REPO with the public repository in every non-Python file; returns the count."""
+    """Replace OWNER/REPO with the public repository, and OWNER.github.io/REPO with
+    its project page, in every non-Python file; returns the count."""
+    owner, name = repo.split("/")
+    pairs = [(PAGES_PLACEHOLDER, f"{owner}.github.io/{name}"), (REPO_PLACEHOLDER, repo)]
     n = 0
     for rel in _placeholder_files(out):
         data = (out / rel).read_bytes()
-        if REPO_PLACEHOLDER.encode() in data:
-            n += data.count(REPO_PLACEHOLDER.encode())
-            (out / rel).write_bytes(data.replace(REPO_PLACEHOLDER.encode(), repo.encode()))
+        new = data
+        for old, value in pairs:
+            n += new.count(old.encode())
+            new = new.replace(old.encode(), value.encode())
+        if new != data:
+            (out / rel).write_bytes(new)
     return n
+
+
+def repo_addresses(repo: str | None) -> tuple[str, ...]:
+    """The text fill_repo writes, which the scrub does not count: the repository
+    and its project page."""
+    if not repo:
+        return ()
+    owner, name = repo.split("/")
+    return (f"{owner}.github.io/{name}", repo)
 
 
 def check_placeholders(out: Path, repo: str | None) -> list[str]:
@@ -361,12 +377,12 @@ def check_placeholders(out: Path, repo: str | None) -> list[str]:
 
 
 def placeholder_hits(out: Path) -> list[str]:
-    """file:line for every OWNER/REPO left in the export's non-Python files."""
+    """file:line for every OWNER/REPO or OWNER.github.io/REPO left in the export's non-Python files."""
     hits = []
     for rel in _placeholder_files(out):
         text = (out / rel).read_bytes().decode("utf-8", errors="replace")
         for n, line in enumerate(text.splitlines(), 1):
-            if REPO_PLACEHOLDER in line:
+            if REPO_PLACEHOLDER in line or PAGES_PLACEHOLDER in line:
                 hits.append(f"{rel}:{n}")
     return hits
 
@@ -692,7 +708,7 @@ def main(argv=None) -> int:
     items = denylist(args.deny)
     log(f"check: scrub for {len(items)} values ({', '.join(sorted({l for l, _, _ in items}))})")
     failures += check_placeholders(out, args.repo)
-    hits = scrub(out, items, (args.repo,) if args.repo else ())
+    hits = scrub(out, items, repo_addresses(args.repo))
     for hit in hits:
         print(f"  {hit}")
     log(f"check: scrub: {len(hits)} hit(s)")

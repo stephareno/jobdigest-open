@@ -123,3 +123,24 @@ def test_the_exemption_covers_the_name_only_not_other_denylisted_values(tmp_path
     readme = README.replace("I'm Pat Example.", "I'm Pat Example at Acme.")
     items = NAME + [("employer", "Acme", frozenset())]
     assert ep.scrub(_tree(tmp_path, readme), items) == ["README.md:7: employer 'Acme'"]
+
+
+# --- The project page link (PUB-22 follow-up) ------------------------------------------
+
+
+def test_the_project_page_placeholder_is_filled_and_checked(tmp_path):
+    (tmp_path / "README.md").write_text("[page](https://OWNER.github.io/REPO/) and github.com/OWNER/REPO\n")
+    (tmp_path / "tool.py").write_text('PAGE = "OWNER.github.io/REPO"\n')      # code naming it stays as it is
+    assert ep.fill_repo(tmp_path, "someone/job-agent") == 2
+    assert (tmp_path / "README.md").read_text() == ("[page](https://someone.github.io/job-agent/) and "
+                                                    "github.com/someone/job-agent\n")
+    assert (tmp_path / "tool.py").read_text() == 'PAGE = "OWNER.github.io/REPO"\n'
+    (tmp_path / "late.md").write_text("see https://OWNER.github.io/REPO/\n")
+    assert ep.placeholder_hits(tmp_path) == ["late.md:1"]
+
+
+def test_the_scrub_does_not_count_the_filled_project_page(tmp_path):
+    (tmp_path / "README.md").write_text("https://someone.github.io/job-agent/ and someone elsewhere\n")
+    items = [("repo owner", "someone", frozenset({"LICENSE"}))]
+    assert ep.scrub(tmp_path, items, ep.repo_addresses("someone/job-agent")) == ["README.md:1: repo owner 'someone'"]
+    assert ep.repo_addresses(None) == ()
