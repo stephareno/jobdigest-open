@@ -55,5 +55,5 @@ def test_the_page_keeps_its_skeleton_sections_and_new_tab_links():
     sections = [re.sub(r"\s+", " ", h).strip() for h in re.findall(r"<h2[^>]*>([^<]*)", page)]
     assert [s.split(" each")[0] for s in sections] == ["What arrives", "How to Set Up", "Cost and limits",
                                                        "How it works"]
-    links = re.findall(r'<a [^>]*target="_blank"[^>]*>', page)
-    assert len(links) == 6 and all('rel="noopener"' in a for a in links)
+    links = re.findall(r'<a [^>]*target="_blank"[^>]*>', page)  # PUB-22: +1, the From the author LinkedIn link
+    assert len(links) == 7 and all('rel="noopener"' in a for a in links)

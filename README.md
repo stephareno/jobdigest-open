@@ -19,7 +19,7 @@ A job search agent that runs on your own GitHub account and emails you one ranke
 
 ![Pipeline: profile.yaml and secrets at the top; six stages from sources through filters, scoring, modifiers and queue to delivery; outputs are the daily digest, the Google Sheet and a weekly summary](docs/assets/architecture.svg)
 
-Postings are fetched three times a day, a slice of the boards each run, so every board is read at least daily without long runs. Cheap filters (title gate, already seen, country, blocked industries) decide what is worth a model call; that is where cost is controlled. One model call scores each remaining posting for role fit, modifiers in code adjust for work model, distance and pay, and the daily run emails the digest and writes the Sheet. The visual walkthrough at **[the project page](https://stephareno.github.io/jobdigest-open/)** has the same diagram with the sample digest and the setup phases.
+Postings are fetched three times a day, a slice of the boards each run, so every board is read at least daily without long runs. Cheap filters (title gate, already seen, country, blocked industries) decide what is worth a model call; that is where cost is controlled. One model call scores each remaining posting for role fit, modifiers in code adjust for work model, distance and pay, and the daily run emails the digest and writes the Sheet. The visual walkthrough at **[the project page](https://OWNER.github.io/REPO/)** has the same diagram with the sample digest and the setup phases.
 
 Three separate parts, and nothing is stored in two of them: `profile.yaml`, your secrets, and the code. Everything about you lives in `profile.yaml`: the titles and department you want, what the role must have and must not, where you will work, what you need to be paid, which industries are in and out, how much mission and culture matter, your dream companies, and when the email should arrive. Secrets live only in your `.env` file and GitHub secrets. The code is the engine and does not change from person to person. `docs/PRD.md` is the full description of the rules.
 
@@ -110,6 +110,10 @@ AGENTS.md           the brief for any coding agent working on this code
 ## Changing things later
 
 Edit `profile.yaml` (every field is commented), run `python main.py profile-check`, commit and push. Timezone or digest time changed: `python main.py cron --write` too. New companies: add them to a list in `data/company_lists/` and run `python main.py resolve`. Prompt wording lives in `prompts/`; every change shows up as a diff of the rendered prompt in `tests/golden/`, which is how changes are reviewed. Or ask your coding agent; `AGENTS.md` tells it how this code is put together.
+
+## About
+
+I'm Stephanie Carter, an IT executive between roles. I built this for my own search and then made it public because the problem isn't unique. If it helps you find something good, I'd love to hear about it on [LinkedIn](https://www.linkedin.com/in/stephanie-carter-665737b2/). And if you're hiring, feel free to say hello, too :)
 
 ## License
 

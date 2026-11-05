@@ -516,10 +516,38 @@ def unscanned(environ) -> list[str]:
     return [var for var in ("GOOGLE_DOC_ID", "GOOGLE_SHEET_ID") if not environ.get(var)]
 
 
+# PUB-22: the maintainer's name may appear in LICENSE and in exactly two blocks:
+# the README's "## About" section (up to, not including, "## License") and the
+# page's "From the author" card. The exemption matches the blocks, not the files,
+# so the name anywhere else in README.md or docs/index.html is still a hit.
+AUTHOR_LABELS = frozenset({"candidate name", "short name"})
+AUTHOR_BLOCKS = {
+    # path: (start line, end line, end line is part of the block)
+    "README.md": (re.compile(r"^## About\s*$"), re.compile(r"^## License\b"), False),
+    "docs/index.html": (re.compile(r'^<section id="from-the-author">\s*$'), re.compile(r"^</section>\s*$"), True),
+}
+
+
+def author_block(rel: str, lines: list[str]) -> set[int]:
+    """1-based line numbers of rel's About block; empty when rel has none or the
+    block is not closed (then the name in it is a hit, as it should be)."""
+    if rel not in AUTHOR_BLOCKS:
+        return set()
+    start_rx, end_rx, inclusive = AUTHOR_BLOCKS[rel]
+    start = next((n for n, line in enumerate(lines, 1) if start_rx.search(line)), None)
+    if start is None:
+        return set()
+    end = next((n for n, line in enumerate(lines, 1) if n > start and end_rx.search(line)), None)
+    if end is None:
+        return set()
+    return set(range(start, end + 1 if inclusive else end))
+
+
 def scrub(out: Path, items, allowed: tuple[str, ...] = ()) -> list[str]:
     """file:line: label 'value' for every hit. Whole-word, any case. The guide
     (docs/public/ and docs/SETUP_GUIDE.md) may name the LinkedIn label as an example. Text in
-    `allowed` (the --repo address) is removed from a line before it is scanned."""
+    `allowed` (the --repo address) is removed from a line before it is scanned. The
+    maintainer's name is allowed inside author_block() (PUB-22)."""
     hits = []
     regexes = [(label, value, exempt,
                 re.compile(rf"(?<![A-Za-z0-9]){re.escape(value)}(?![A-Za-z0-9])", re.I))
@@ -529,12 +557,15 @@ def scrub(out: Path, items, allowed: tuple[str, ...] = ()) -> list[str]:
         lines = text.splitlines()
         for allow in allowed:
             lines = [line.replace(allow, "") for line in lines]
+        about = author_block(rel, lines)
         for label, value, exempt, rx in regexes:
             if rel in exempt or (label == "LinkedIn label" and (rel.startswith("docs/public/") or rel == GUIDE)):
                 continue
             if rx.search(rel):
                 hits.append(f"{rel}: {label} '{value}' in the path")
             for n, line in enumerate(lines, 1):
+                if label in AUTHOR_LABELS and n in about:
+                    continue
                 if rx.search(line):
                     hits.append(f"{rel}:{n}: {label} '{value}'")
     return hits
