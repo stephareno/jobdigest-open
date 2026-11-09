@@ -23,5 +23,37 @@ DISQUALIFIED_COLUMNS = [
     "Tier", "Posted Date",
 ]
 
+# REV-04: the headers each tab cannot do without. Row 1 must carry every one,
+# in any order (exact text after trimming), or a write stops before it writes
+# anything. Every other column is optional: written when present, reported
+# when absent ("optional column missing: <name>"), never created. Only
+# sheet-init, on an empty tab, lays out a header row.
+REQUIRED_HEADERS = {
+    SHEET_NAME: ("Job Title", "Company", "Apply Link", "Status", "Date First Seen", "Score"),
+    DISQUALIFIED_SHEET_NAME: ("Job Title", "Company", "Apply Link", "Date First Seen", "Score",
+                              "Disqualify Reason"),
+}
+
+
+def header_problems(title, row1):
+    """(missing required headers, repeated headers) for a tab's row 1, compared
+    by exact text after trimming. Pure: doctor and sheets.py share it."""
+    names = [str(h).strip() for h in row1]
+    seen, repeated = set(), []
+    for name in names:
+        if name and name in seen and name not in repeated:
+            repeated.append(name)
+        seen.add(name)
+    missing = [h for h in REQUIRED_HEADERS.get(title, ()) if h not in seen]
+    return missing, repeated
+
+
+def optional_missing(title, row1):
+    """The layout's optional columns for this tab that row 1 lacks."""
+    names = {str(h).strip() for h in row1}
+    layout = dict(TABS)[title]
+    return [h for h in layout if h not in REQUIRED_HEADERS[title] and h not in names]
+
+
 # (tab, the header row sheet-init writes)
 TABS = ((SHEET_NAME, SHEET_COLUMNS + OPTIONAL_COLUMNS), (DISQUALIFIED_SHEET_NAME, DISQUALIFIED_COLUMNS))

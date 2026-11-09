@@ -30,7 +30,7 @@ Setup and checks (no secrets needed unless noted):
                    --titles [--sources a,b] [--max N]  live postings through the title gate and country filter; no model calls
                    [--sources a,b] [--max N]           live postings, scored (default 15); needs ANTHROPIC_API_KEY
                    --dir examples/postings                  the sample postings (or any folder); needs ANTHROPIC_API_KEY
-  digest --dry-run  render the digest to out/digest_dry_run.html; changes no state (--from-calibrate, --send)
+  digest --dry-run  render the digest to out/digest_dry_run.html; changes no state (--from-calibrate, --send, --with-failed-runs FILE)
 
 Workflow internals:
   slot digest|weekly  is this scheduled run the intended slot? (the workflows' first job)

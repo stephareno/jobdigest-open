@@ -203,7 +203,7 @@ def test_a_malformed_scoring_reply_is_asked_once_more_and_both_calls_are_counted
     stub = llm_stub(["Sure! Here is the score.", "```json\n" + json.dumps(GOOD) + "\n```"])
     assert scorer._score_single({"title": "Director of IT", "company": "Acme"})["score"] == 7
     assert len(stub.calls) == 2 and stub.calls[0] == stub.calls[1]
-    assert scorer.USAGE == {"calls": 2, "input": 200, "output": 40}
+    assert scorer.USAGE == {"calls": 2, "input": 200, "output": 40, "cache_write": 0, "cache_read": 0}
 
 
 def test_a_second_malformed_reply_is_a_scoring_error_not_a_deferral(llm_stub):

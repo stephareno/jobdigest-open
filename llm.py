@@ -27,6 +27,21 @@
 #   - the Anthropic-only options (thinking, output_config) dropped or refused;
 #   - classify_error() taught its error types (401/403/402 abort, 429/5xx
 #     and connection errors transient), and config.MODEL_PRICES its models.
+#   - nothing for prompt caching: cache_system (REV-06) is an Anthropic
+#     cache_control block. complete() passes it only to a provider whose
+#     supports_cache is true, so an OpenAI-compatible seam ignores it (those
+#     APIs cache long prefixes on their own, or not at all).
+#
+# Prompt caching (REV-06)
+# -----------------------
+# complete(..., cache_system=True) sends a string system prompt as one system
+# block with cache_control {"type": "ephemeral"} (Anthropic's 5-minute cache),
+# so calls that repeat it within five minutes read it at a tenth of the input
+# price. The scoring, status-email and Bespoke extraction prompts use it. The
+# reply's cache_creation_input_tokens and cache_read_input_tokens land on
+# Usage; input_tokens stays the uncached part, as the API reports it. A
+# prompt shorter than the model's minimum cacheable length is simply not
+# cached (both cache fields 0).
 # Every model name comes from profile.yaml or config.py, so changing provider
 # is this module plus those values.
 #
@@ -68,6 +83,14 @@ class Usage:
     output_tokens: int = 0
     stop_reason: str = ""
     refusal_category: str | None = None
+    # REV-06: prompt-cache tokens, billed apart from input_tokens (which is
+    # the uncached part only). Total input = all three.
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
+
+    @property
+    def total_input_tokens(self):
+        return self.input_tokens + self.cache_creation_input_tokens + self.cache_read_input_tokens
 
 
 # --- error classification ------------------------------------------------------------
@@ -124,8 +147,14 @@ def _credentials():
     return os.environ.get("ANTHROPIC_API_KEY", "").strip() or os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
 
 
+def system_blocks(system):
+    """REV-06: a string system prompt as one cached Anthropic system block."""
+    return [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
+
+
 class AnthropicProvider:
     name = "anthropic"
+    supports_cache = True
 
     def __init__(self, client=None):
         self._client = client
@@ -145,14 +174,14 @@ class AnthropicProvider:
             return self._client
 
     def complete(self, model, system, messages, max_tokens, json_mode=False, attachments=None,
-                 timeout=None, max_retries=None, **options):
+                 timeout=None, max_retries=None, cache_system=False, **options):
         # json_mode changes nothing here: the prompts ask for JSON themselves.
         client = self.client()
         if max_retries is not None:
             client = client.with_options(max_retries=max_retries)
         kwargs = {"model": model, "max_tokens": max_tokens, "messages": _with_attachments(messages, attachments)}
         if system is not None:
-            kwargs["system"] = system
+            kwargs["system"] = system_blocks(system) if cache_system and isinstance(system, str) else system
         if timeout is not None:
             kwargs["timeout"] = timeout
         msg = client.messages.create(**kwargs, **options)
@@ -164,7 +193,9 @@ class AnthropicProvider:
                            input_tokens=getattr(usage, "input_tokens", 0) or 0,
                            output_tokens=getattr(usage, "output_tokens", 0) or 0,
                            stop_reason=getattr(msg, "stop_reason", "") or "",
-                           refusal_category=getattr(details, "category", None))
+                           refusal_category=getattr(details, "category", None),
+                           cache_creation_input_tokens=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                           cache_read_input_tokens=getattr(usage, "cache_read_input_tokens", 0) or 0)
 
 
 def _with_attachments(messages, attachments):
@@ -215,7 +246,11 @@ def complete(model, system, messages, max_tokens, json_mode=False, attachments=N
 
     A billing/auth/permission error, or missing credentials, raises
     ApiAccessError ("<purpose> failed: <cause>" when a purpose is given); any
-    other error is re-raised as it came."""
+    other error is re-raised as it came. cache_system=True asks for the
+    system prompt to be cached (REV-06); a provider without supports_cache
+    never sees the option."""
+    if not getattr(_provider, "supports_cache", False):
+        options.pop("cache_system", None)
     try:
         return _provider.complete(model, system, messages, max_tokens, json_mode=json_mode,
                                   attachments=attachments, **options)
@@ -236,10 +271,12 @@ def parse_json(text):
 
 
 def complete_json(model, system, messages, max_tokens, attachments=None, purpose=None,
-                  retries=1, on_usage=None, **options):
+                  retries=1, on_usage=None, validate=None, **options):
     """complete() in JSON mode, parsed by parse_json -> (object, Usage of the
     last call). A malformed reply is asked again, `retries` times, before its
-    ValueError reaches the caller. on_usage(usage) sees every call, retries
+    ValueError reaches the caller. validate(obj), when given, returns the
+    object to use or raises ValueError: a reply it rejects counts as
+    malformed too (REV-05). on_usage(usage) sees every call, retries
     included, so token counts stay true."""
     for attempt in range(retries + 1):
         text, usage = complete(model, system, messages, max_tokens, json_mode=True,
@@ -247,8 +284,9 @@ def complete_json(model, system, messages, max_tokens, attachments=None, purpose
         if on_usage:
             on_usage(usage)
         try:
-            return parse_json(text), usage
-        except ValueError:
+            obj = parse_json(text)
+            return (validate(obj) if validate else obj), usage
+        except ValueError as e:
             if attempt == retries:
                 raise
-            print(f"[LLM] {purpose or 'model call'}: malformed JSON reply, asking once more")
+            print(f"[LLM] {purpose or 'model call'}: malformed JSON reply ({e}), asking once more")

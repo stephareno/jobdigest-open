@@ -384,8 +384,9 @@ def test_banner_lists_each_failed_run_with_its_link():
     html = emailer._build_html([], [], [], [], False, False, failed_fetch_runs=failed)
     assert ("Fetch run Mon Oct 5, 11:17 PM CT failed: Anthropic API access failed. "
             "Postings from that run were not scored.") in html
-    assert "Fetch run Mon Oct 5, 7:17 AM CT failed: The operation was canceled." in html
-    assert "Fetch run Mon Oct 5, 3:17 AM CT failed: failure, no error message." in html
+    # REV-02: each line names the run's conclusion.
+    assert "Fetch run Mon Oct 5, 7:17 AM CT was cancelled: The operation was canceled. Postings" in html
+    assert "Fetch run Mon Oct 5, 3:17 AM CT failed: no error message." in html
     assert html.count("Postings from that run were not scored.") == 3
     assert f'href="https://github.com/{REPO}/actions/runs/104"' in html
     assert "No matches found today." in html                              # banner doesn't hide it

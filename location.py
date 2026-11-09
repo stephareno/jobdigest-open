@@ -579,7 +579,11 @@ def apply_location_tier(job, base_score, record=True):
     fit = function_fit_value(job.get("function_fit"))      # PUB-10: an old name reads as its new one
     if fit is not None:
         job["function_fit"] = fit
-    job["function_capped"] = fit is not None and fit != FUNCTION_FIT_LEADERSHIP and score > 0
+    # REV-08: a title-only LinkedIn posting's "unknown" is not capped: no
+    # description was read, so nothing says the role is outside the department.
+    title_only_unknown = fit == "unknown" and bool(job.get("title_only"))
+    job["function_capped"] = (fit is not None and fit != FUNCTION_FIT_LEADERSHIP and score > 0
+                              and not title_only_unknown)
     if job["function_capped"]:
         score = min(score, CONFIG.function_cap)
         notes.append(function_note(fit))

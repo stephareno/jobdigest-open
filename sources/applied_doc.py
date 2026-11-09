@@ -243,6 +243,12 @@ def seed_from_doc(dry_run=False):
 
     applied_rank = _RANK[STATUS_RECEIVED]
     appended = promoted = dated = skipped = 0
+    # REV-03: postings still waiting in state/sheet_retry/ have no row yet.
+    # An entry for one waits too, so the replay's row is the only one.
+    import sheet_retry
+    from config import SHEET_NAME
+    retry_rows = [{"company": str(i["row"].get("Company", "")), "title": str(i["row"].get("Job Title", ""))}
+                  for i in sheet_retry.waiting_rows() if i["tab"] == SHEET_NAME]
 
     for e in entries:
         company, title = cheap_parse(e["heading"])
@@ -293,6 +299,10 @@ def seed_from_doc(dry_run=False):
         else:
             if not company:
                 print(f"[AppliedDoc] SKIPPED unparseable entry: {e['heading'][:80]!r}")
+                continue
+            if _find_row(retry_rows, company, title):
+                print(f"[AppliedDoc] SKIPPED {company} — {title[:50]}: its row is waiting in "
+                      f"state/sheet_retry/; Applied is set once the row is written (REV-03)")
                 continue
             new_row = 0 if dry_run else sheets.append_applied_row(company, title, date)
             rows.append({"row": new_row, "company": company, "title": title,

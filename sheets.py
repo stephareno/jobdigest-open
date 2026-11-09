@@ -10,7 +10,7 @@ import profile_loader
 from config import (SHEET_NAME, SHEET_COLUMNS, STATUS_NEW, DISQUALIFIED_SHEET_NAME, SOURCE_DISPLAY_NAMES,
                     source_display, source_key)
 from sheet_dates import posted_date_cell, to_sheet_serial
-from sheet_layout import DISQUALIFIED_COLUMNS
+from sheet_layout import DISQUALIFIED_COLUMNS, REQUIRED_HEADERS, header_problems  # noqa: F401
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -28,18 +28,88 @@ def _get_spreadsheet():
     return gc.open_by_key(SHEET_ID)
 
 
+# REV-04: REQUIRED_HEADERS (per tab) and header_problems live in sheet_layout,
+# shared with doctor. Every column not required is optional: written when its
+# header is there, reported when it is not, never created.
+_REPORTED_OPTIONAL = set()      # (tab, header) already logged this run
+
+
+class SheetHeaderError(RuntimeError):
+    """Row 1 of a tab is missing a required header or repeats one (REV-04).
+    Raised before any write; the digest keeps the rows in state/sheet_retry/."""
+
+
+def header_error(title, headers):
+    """The SheetHeaderError message for this row 1, or None when it passes."""
+    missing, repeated = header_problems(title, headers)
+    problems = []
+    if missing:
+        problems.append(f"required header{'s' if len(missing) != 1 else ''} missing from row 1: "
+                        f"{', '.join(missing)}")
+    if repeated:
+        problems.append(f"header{'s' if len(repeated) != 1 else ''} repeated in row 1: {', '.join(repeated)}")
+    if not problems:
+        return None
+    return (f"'{title}' tab: {'; '.join(problems)}. Nothing was written. Restore the header text "
+            f"(columns may be in any order; extra columns are fine) or run python main.py doctor.")
+
+
+def checked_headers(sheet, title=None):
+    """Row 1 of the tab, each header trimmed, after the REV-04 checks: every
+    required header present, none repeated. Raises SheetHeaderError naming the
+    tab and the headers; never writes."""
+    title = title or sheet.title
+    headers = [str(h).strip() for h in sheet.row_values(1)]
+    message = header_error(title, headers)
+    if message:
+        raise SheetHeaderError(message)
+    return headers
+
+
+def check_tabs():
+    """REV-04: the header problem of each tab, read only, as messages. A tab
+    that does not exist yet, or a Sheet that cannot be opened, is not a header
+    problem: the write reports those (logged here as a warning)."""
+    try:
+        book = _get_spreadsheet()
+    except Exception as e:                               # noqa: BLE001 -- the write path reports outages
+        print(f"[Sheets] header check skipped: the Sheet did not open ({type(e).__name__}: {e})")
+        return []
+    problems = []
+    for title in (SHEET_NAME, DISQUALIFIED_SHEET_NAME):
+        try:
+            row1 = book.worksheet(title).row_values(1)
+        except gspread.WorksheetNotFound:
+            continue
+        except Exception as e:                           # noqa: BLE001
+            print(f"[Sheets] header check skipped for '{title}': {type(e).__name__}: {e}")
+            continue
+        if not any(str(c).strip() for c in row1):
+            continue                                     # an empty tab gets its header on the first write
+        message = header_error(title, row1)
+        if message:
+            print(f"::error title=Sheet header problem::{message}")
+            problems.append(message)
+    return problems
+
+
 def _get_or_create_sheet(spreadsheet, title, headers):
+    """The tab, checked (REV-04). A new tab, or one whose row 1 is completely
+    empty, gets `headers` written into row 1; any other row 1 must pass
+    checked_headers. Never inserts a row or a column."""
     try:
         sheet = spreadsheet.worksheet(title)
     except gspread.WorksheetNotFound:
         sheet = spreadsheet.add_worksheet(title=title, rows=1000, cols=len(headers) + 2)
     existing = sheet.row_values(1)
-    if not existing or existing[0] != headers[0]:
-        sheet.insert_row(headers, 1)
+    if not any(str(c).strip() for c in existing):
+        sheet.update([list(headers)], "A1", value_input_option="RAW")
+        print(f"[Sheets] '{title}': row 1 was empty; wrote the {len(headers)} headers")
         try:
             sheet.format("1:1", {"textFormat": {"bold": True}})
         except Exception as fmt_err:
             print(f"[Sheets] Warning: could not bold header row for '{title}': {fmt_err}")
+    checked_headers(sheet, title)
     return sheet
 
 
@@ -48,13 +118,16 @@ def _get_sheet():
     return _get_or_create_sheet(spreadsheet, SHEET_NAME, SHEET_COLUMNS)
 
 
-def _ensure_header(sheet, headers, name):
-    """Append a missing header to the end of row 1 (never moves columns)."""
-    if name not in headers:
-        sheet.update_cell(1, len(headers) + 1, name)
-        headers.append(name)
-        print(f"[Sheets] Added missing column '{name}'")
-    return headers
+def report_missing_optional(title, headers, names):
+    """Log each optional column in `names` the tab does not have, once per run
+    per tab (REV-04). Never creates it. Returns the missing names."""
+    missing = [n for n in names if n not in headers]
+    for name in missing:
+        if (title, name) not in _REPORTED_OPTIONAL:
+            _REPORTED_OPTIONAL.add((title, name))
+            print(f"[Sheets] '{title}': optional column missing: {name} (not created; add the header "
+                  f"to have it written)")
+    return missing
 
 
 def _col_index(headers, name):
@@ -191,31 +264,77 @@ def main_row_data(job):
     }
 
 
-def append_jobs(jobs):
-    """Write score 1+ jobs to the main index. Raises on any Sheet failure (TRK-06):
-    the digest catches it, still emails and dequeues, then fails the run."""
-    if not jobs:
-        return 0
-    sheet = _get_sheet()
-    headers = _ensure_header(sheet, sheet.row_values(1), "Relo")
-    headers = _ensure_header(sheet, headers, "Tier")
-    headers = _ensure_header(sheet, headers, "Posted Date")
-    existing_urls = _get_existing_urls(sheet, headers)
-    rows = []
-    for job in jobs:
-        url = job.get("apply_link", "").strip()
-        if not url or url in existing_urls:
-            continue
-        # Build row keyed by header name — safe even if columns are reordered
-        job_data = main_row_data(job)
-        rows.append(_row_values(job_data, headers))
-        existing_urls.add(url)
-    _append_at_end(sheet, rows, headers)
-    print(f"[Sheets] Added {len(rows)} new jobs to index")
-    return len(rows)
+def disqualified_row_data(job):
+    """{header: value} for one Disqualified-tab row (score 0 or hard block)."""
+    return {
+        "Job Title": job.get("title", ""),
+        "Company": job.get("company", ""),
+        "Location": job.get("location", ""),
+        "Work Model": job.get("work_model", ""),
+        "Comp": job.get("comp", ""),
+        "Score": 0,
+        "Disqualify Reason": job.get("rationale", ""),
+        "Source": source_display(job.get("source", "")),
+        "Date First Seen": _first_seen(job),
+        "Apply Link": job.get("apply_link", "").strip(),
+        "Relo": "Y" if job.get("relo") else "",
+        # PUB-16: only if the candidate adds the column; never created
+        "Dream": "Y" if job.get("is_dream_company") else "",
+        "Tier": job.get("tier", "dream" if job.get("is_dream_company") else ""),
+        "Posted Date": posted_date_cell(job),
+    }
 
 
 _DISQ_COLUMNS = DISQUALIFIED_COLUMNS
+# REV-03: the two tabs a digest writes, by name, with the row builder for each.
+ROW_BUILDERS = {SHEET_NAME: main_row_data, DISQUALIFIED_SHEET_NAME: disqualified_row_data}
+
+
+def row_dicts(tab, jobs):
+    """The {header: value} rows `write_rows(tab, ...)` would write for these
+    jobs: one per posting with an Apply Link. Pure; no Sheet access."""
+    build = ROW_BUILDERS[tab]
+    return [build(job) for job in jobs if job.get("apply_link", "").strip()]
+
+
+def write_rows(tab, rows):
+    """Write {header: value} rows to one tab, skipping any whose Apply Link is
+    already on that tab (main index or Disqualified alike) or repeated in
+    `rows`. Raises on any Sheet failure (TRK-06). REV-03: the one writer for
+    the digest's rows and for state/sheet_retry/ replays, so a replay of rows
+    a failed write had partly written adds only the missing ones."""
+    if not rows:
+        return 0
+    if tab == SHEET_NAME:
+        sheet = _get_sheet()
+    elif tab == DISQUALIFIED_SHEET_NAME:
+        sheet = _get_or_create_sheet(_get_spreadsheet(), DISQUALIFIED_SHEET_NAME, _DISQ_COLUMNS)
+    else:
+        raise ValueError(f"[Sheets] unknown tab {tab!r}: expected {SHEET_NAME!r} or {DISQUALIFIED_SHEET_NAME!r}")
+    headers = checked_headers(sheet, tab)
+    report_missing_optional(tab, headers, [k for k in rows[0] if k not in REQUIRED_HEADERS[tab]])
+    existing_urls = _get_existing_urls(sheet, headers)
+    values = []
+    for row in rows:
+        url = str(row.get("Apply Link", "")).strip()
+        if not url or url in existing_urls:
+            continue
+        # Built by header name — safe even if columns are reordered
+        values.append(_row_values(row, headers))
+        existing_urls.add(url)
+    _append_at_end(sheet, values, headers)
+    return len(values)
+
+
+def append_jobs(jobs):
+    """Write score 1+ jobs to the main index. Raises on any Sheet failure (TRK-06):
+    the digest catches it, keeps the rows in state/sheet_retry/ (REV-03), still
+    emails and dequeues, then fails the run."""
+    if not jobs:
+        return 0
+    n = write_rows(SHEET_NAME, row_dicts(SHEET_NAME, jobs))
+    print(f"[Sheets] Added {n} new jobs to index")
+    return n
 
 
 def append_disqualified_jobs(jobs):
@@ -223,39 +342,9 @@ def append_disqualified_jobs(jobs):
     Raises on any Sheet failure, like append_jobs (TRK-06)."""
     if not jobs:
         return 0
-    spreadsheet = _get_spreadsheet()
-    sheet = _get_or_create_sheet(spreadsheet, DISQUALIFIED_SHEET_NAME, _DISQ_COLUMNS)
-    headers = _ensure_header(sheet, sheet.row_values(1), "Relo")
-    headers = _ensure_header(sheet, headers, "Tier")
-    headers = _ensure_header(sheet, headers, "Posted Date")
-    existing_urls = _get_existing_urls(sheet, headers)
-    rows = []
-    for job in jobs:
-        url = job.get("apply_link", "").strip()
-        if not url or url in existing_urls:
-            continue
-        job_data = {
-            "Job Title": job.get("title", ""),
-            "Company": job.get("company", ""),
-            "Location": job.get("location", ""),
-            "Work Model": job.get("work_model", ""),
-            "Comp": job.get("comp", ""),
-            "Score": 0,
-            "Disqualify Reason": job.get("rationale", ""),
-            "Source": source_display(job.get("source", "")),
-            "Date First Seen": _first_seen(job),
-            "Apply Link": url,
-            "Relo": "Y" if job.get("relo") else "",
-            # PUB-16: only if the candidate adds the column; never created
-            "Dream": "Y" if job.get("is_dream_company") else "",
-            "Tier": job.get("tier", "dream" if job.get("is_dream_company") else ""),
-            "Posted Date": posted_date_cell(job),
-        }
-        rows.append(_row_values(job_data, headers))
-        existing_urls.add(url)
-    _append_at_end(sheet, rows, headers)
-    print(f"[Sheets] Added {len(rows)} disqualified jobs to Disqualified tab")
-    return len(rows)
+    n = write_rows(DISQUALIFIED_SHEET_NAME, row_dicts(DISQUALIFIED_SHEET_NAME, jobs))
+    print(f"[Sheets] Added {n} disqualified jobs to Disqualified tab")
+    return n
 
 
 def append_jobs_batched(jobs, batch_size=100, sleep_secs=5.0):
@@ -264,9 +353,7 @@ def append_jobs_batched(jobs, batch_size=100, sleep_secs=5.0):
         return 0
     try:
         sheet = _get_sheet()
-        headers = _ensure_header(sheet, sheet.row_values(1), "Relo")
-        headers = _ensure_header(sheet, headers, "Tier")
-        headers = _ensure_header(sheet, headers, "Posted Date")
+        headers = checked_headers(sheet, SHEET_NAME)
         existing_urls = _get_existing_urls(sheet, headers)
         today = datetime.utcnow().strftime("%Y-%m-%d")
         rows = []
@@ -326,9 +413,7 @@ def append_disqualified_jobs_batched(jobs, batch_size=100, sleep_secs=5.0):
     try:
         spreadsheet = _get_spreadsheet()
         sheet = _get_or_create_sheet(spreadsheet, DISQUALIFIED_SHEET_NAME, _DISQ_COLUMNS)
-        headers = _ensure_header(sheet, sheet.row_values(1), "Relo")
-        headers = _ensure_header(sheet, headers, "Tier")
-        headers = _ensure_header(sheet, headers, "Posted Date")
+        headers = checked_headers(sheet, DISQUALIFIED_SHEET_NAME)
         existing_urls = _get_existing_urls(sheet, headers)
         today = datetime.utcnow().strftime("%Y-%m-%d")
         rows = []
@@ -459,19 +544,14 @@ def get_recent_index_rows(days):
 
 
 def ensure_columns(names):
-    """Append any missing header names to the end of the header row.
-    Existing columns are never moved — lookup stays by header name."""
+    """The main tab's checked header row, with any of `names` it lacks reported
+    (REV-04: never created; AGENTS.md rule 4). Returns [] if the tab cannot be read."""
     try:
-        sheet = _get_sheet()
-        headers = sheet.row_values(1)
-        for name in names:
-            if name not in headers:
-                sheet.update_cell(1, len(headers) + 1, name)
-                headers.append(name)
-                print(f"[Sheets] Added missing column '{name}'")
+        headers = checked_headers(_get_sheet(), SHEET_NAME)
+        report_missing_optional(SHEET_NAME, headers, names)
         return headers
     except Exception as e:
-        print(f"[Sheets] Error ensuring columns: {e}")
+        print(f"[Sheets] Error reading the header row: {e}")
         return []
 
 
@@ -479,7 +559,9 @@ def update_row_fields(row_number, fields):
     """Write {header_name: value} onto one existing row. Never creates rows."""
     try:
         sheet = _get_sheet()
-        headers = sheet.row_values(1)
+        headers = checked_headers(sheet, SHEET_NAME)
+        skip = report_missing_optional(SHEET_NAME, headers, list(fields))   # REV-04: never created
+        fields = {k: v for k, v in fields.items() if k not in skip}
         for name, value in fields.items():
             sheet.update_cell(row_number, _col_index(headers, name), cell_value(name, value))
         if any(name in DATE_COLUMNS for name in fields):
@@ -504,7 +586,8 @@ def append_applied_row(company, title, applied_date=""):
     Returns the new row number, or 0 on failure."""
     try:
         sheet = _get_sheet()
-        headers = _ensure_header(sheet, sheet.row_values(1), "Status Date")
+        headers = checked_headers(sheet, SHEET_NAME)
+        report_missing_optional(SHEET_NAME, headers, ["Status Date", "Applied Date", "Source"])
         job_data = {
             "Job Title": title,
             "Company": company,
@@ -522,22 +605,24 @@ def append_applied_row(company, title, applied_date=""):
 
 def update_statuses(updates):
     """Write Status values onto existing rows. updates: [(row_number, status)].
-    Each row also gets Status Date (DEL-12), a real date cell, created at the
-    end of the header row if missing.
+    Each row also gets Status Date (DEL-12), a real date cell, when the tab
+    has that column (REV-04: reported, never created, when it does not).
     Column located by header name per non-negotiable #4. Never creates rows."""
     if not updates:
         return 0
     try:
         sheet = _get_sheet()
-        headers = _ensure_header(sheet, sheet.row_values(1), "Status Date")
+        headers = checked_headers(sheet, SHEET_NAME)
         col = _col_index(headers, "Status")
-        date_col = _col_index(headers, "Status Date")
+        date_col = None if report_missing_optional(SHEET_NAME, headers, ["Status Date"]) \
+            else _col_index(headers, "Status Date")
         today = date_cell(status_date())
         written = 0
         for row, status in updates:
             sheet.update_cell(row, col, status)
-            sheet.update_cell(row, date_col, today)
-            format_date_cells(sheet, [h if h == "Status Date" else "" for h in headers], row, row)
+            if date_col:
+                sheet.update_cell(row, date_col, today)
+                format_date_cells(sheet, [h if h == "Status Date" else "" for h in headers], row, row)
             written += 1
         return written
     except Exception as e:

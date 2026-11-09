@@ -152,9 +152,10 @@ def _in(d, start, end):
 
 # --- the summary -------------------------------------------------------------
 
-def build_summary(rows, run_date, skip_stats=(0, 0), read_declines=None):
+def build_summary(rows, run_date, skip_stats=(0, 0), read_declines=None, alert_emails=0):
     """The email body as plain text. rows: main-index records (get_all_records).
-    skip_stats: (skipped, run_days) from state.get_skip_stats. read_declines:
+    skip_stats: (skipped, run_days) from state.get_skip_stats. alert_emails:
+    alert-only emails sent for failed fetch runs (REV-02). read_declines:
     called with [{company, title, notes}] only when a Declined row in the week
     has Notes; returns the paragraph. Nothing else here calls Claude."""
     start, end = week_bounds(run_date)
@@ -169,6 +170,10 @@ def build_summary(rows, run_date, skip_stats=(0, 0), read_declines=None):
     line = f"{len(new)} new postings logged."
     if run_days:
         line += f" {skipped} of {run_days} run days quiet."
+        # REV-02: quiet days include alert-only ones (fetch runs failed, no
+        # postings went out); say how many.
+        line += (f" {alert_emails} alert email{'s' if alert_emails != 1 else ''} sent for failed "
+                 f"fetch runs.")
     out.append(line)
     out.append(
         f"Score 7+: {sum(1 for s in scores if s is not None and s >= 7)}"
@@ -321,7 +326,8 @@ def main(argv=None):
     print(f"[WeeklySummary] {len(rows)} main-index rows; week {start} to {end}; "
           f"new postings from {postings_cutoff(run_date)}")
     skip_stats = state.get_skip_stats()
-    summary = build_summary(rows, run_date, skip_stats, read_declines=read_declines_with_claude)
+    summary = build_summary(rows, run_date, skip_stats, read_declines=read_declines_with_claude,
+                            alert_emails=state.get_alert_email_count())
     heading = week_label(start, end)
     subject = f"Weekly job search summary — {heading}"
 

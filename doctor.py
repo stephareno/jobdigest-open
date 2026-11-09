@@ -1,7 +1,7 @@
 # doctor.py — `python main.py doctor`: is this install ready to run? (PUB-06)
 #
-#   python main.py doctor              # all three phases, plus the state files
-#   python main.py doctor --phase 1    # Python, dependencies, repo files, git remote
+#   python main.py doctor              # all three phases, plus the state files and Sheet retry files
+#   python main.py doctor --phase 1    # Python, dependencies, repo files, git remote, repository visibility
 #   python main.py doctor --phase 2    # one line per credential (makes one small call each)
 #   python main.py doctor --phase 3    # profile, dream companies, pinned boards, schedule
 #   python main.py doctor --json       # the same results as a JSON list
@@ -51,7 +51,7 @@ REPO_FILES = ("profile.example.yaml", "prompts/scoring_system.txt", "prompts/wee
               "data/us_places.tsv.gz")
 
 STATE_FILES = ("seen_jobs.json", "skip_state.json", "bespoke_state.json", "bespoke_cursor.json",
-               "shard_state.json", "status_email_cache.json", "company_profiles.json")
+               "shard_state.json", "status_email_cache.json", "company_profiles.json", "fetch_budget.json")
 
 # The cheapest Claude model, for the one-token key check.
 CHEAPEST_MODEL = "claude-haiku-4-5"
@@ -129,6 +129,50 @@ def _git_remote():
     return FAIL, f"origin {_scrub(url.stdout.strip())} refused git ls-remote: check the URL and your git credentials ({_scrub(out.stderr)[:80]})."
 
 
+# REV-01: the same words the workflows' guard prints (without its "Nothing was written.").
+PUBLIC_REPO_MESSAGE = ("This repository is public or a fork. The agent commits your profile and job history to it; "
+                       "make the repository private (Settings > General > Danger Zone) or use 'Use this template' "
+                       "instead of Fork.")
+
+
+def _allow_public_repo():
+    """delivery.allow_public_repo from the profile; false when there is no
+    valid profile yet (phase 3 reports why)."""
+    profile = _profile_or_none()
+    return bool(profile) and (profile.get("delivery") or {}).get("allow_public_repo") is True
+
+
+def _repo_visibility(run=subprocess.run, allow=None):
+    """(status, reason) for `gh repo view --json isPrivate,isFork` (REV-01):
+    PASS private and not a fork; FAIL public or a fork, WARN instead when
+    delivery.allow_public_repo is true; WARN when gh cannot tell."""
+    try:
+        out = run(["gh", "repo", "view", "--json", "isPrivate,isFork"], cwd=ROOT, capture_output=True,
+                  text=True, timeout=TIMEOUT, env=dict(os.environ, GH_PROMPT_DISABLED="1"))
+    except FileNotFoundError:
+        return WARN, ("gh (the GitHub CLI) is not installed, so the repository's visibility was not checked: "
+                      "install it (https://cli.github.com) or confirm on GitHub that the repository is private. "
+                      "The workflows refuse to run in a public repository.")
+    except subprocess.TimeoutExpired:
+        return WARN, "gh repo view did not answer within 15 s (offline?); visibility not checked."
+    if out.returncode != 0:
+        return WARN, (f"gh could not read the repository ({_scrub(out.stderr.strip())[:120] or 'no output'}); "
+                      f"run gh auth login, or confirm on GitHub that the repository is private.")
+    try:
+        info = json.loads(out.stdout)
+        private, fork = info["isPrivate"], info["isFork"]
+    except (ValueError, KeyError, TypeError):
+        return WARN, f"gh repo view gave an answer doctor cannot read ({_scrub(out.stdout)[:80]}); visibility not checked."
+    if private is True and fork is not True:
+        return PASS, "private, not a fork."
+    allow = _allow_public_repo() if allow is None else allow
+    what = "public" if private is not True else "a fork"
+    if allow:
+        return WARN, (f"the repository is {what} and delivery.allow_public_repo is true: everything the agent "
+                      f"commits (your profile and job history) is readable by anyone.")
+    return FAIL, PUBLIC_REPO_MESSAGE
+
+
 def phase1():
     out = []
     need = required_python()
@@ -151,6 +195,8 @@ def phase1():
                           "present." if ok else "missing from the checkout: pull the repository again."))
     status, reason = _git_remote()
     out.append(result(1, "git remote", status, reason))
+    status, reason = _repo_visibility()
+    out.append(result(1, "repository visibility", status, reason))
     return out
 
 
@@ -256,7 +302,34 @@ def check_google(profile):
     access = (f"the service account is {role}" if role else
               "read OK, write not verified (enabling the Google Drive API in the same Cloud project lets this "
               "check read the service account's role)")
-    return result(2, "GOOGLE sheet", PASS, f"Sheet opened; both tabs found; header row has {len(header)} columns; {access}.")
+    out = [result(2, "GOOGLE sheet", PASS, f"Sheet opened; both tabs found; header row has {len(header)} columns; {access}.")]
+    for title in (sheet_layout.SHEET_NAME, sheet_layout.DISQUALIFIED_SHEET_NAME):
+        row1 = header if title == sheet_layout.SHEET_NAME else book.worksheet(title).row_values(1)
+        out.append(header_check(title, row1))
+    return out
+
+
+def header_check(title, row1):
+    """REV-04: one tab's row 1 against its required headers (any order) and
+    the layout's optional ones."""
+    import sheet_layout
+    name = f"GOOGLE headers {title!r}"
+    if not any(str(c).strip() for c in row1):
+        return result(2, name, WARN, "row 1 is empty: the first write lays out the header row "
+                                     "(or run python main.py sheet-init).")
+    missing, repeated = sheet_layout.header_problems(title, row1)
+    required = sheet_layout.REQUIRED_HEADERS[title]
+    if missing or repeated:
+        parts = ([f"required header missing: {', '.join(missing)}"] if missing else []) + \
+                ([f"header repeated: {', '.join(repeated)}"] if repeated else [])
+        return result(2, name, FAIL, f"{'; '.join(parts)}. Every write to this tab stops until row 1 is "
+                                     f"fixed (any order; exact text).")
+    optional = sheet_layout.optional_missing(title, row1)
+    if optional:
+        return result(2, name, WARN, f"all {len(required)} required present; "
+                                     + "; ".join(f"optional column missing: {o}" for o in optional)
+                                     + " (written only if you add the header; never created).")
+    return result(2, name, PASS, f"all {len(required)} required present; no optional column missing.")
 
 
 def _drive_role(creds, file_id, email):
@@ -371,7 +444,8 @@ def phase2():
     out = []
     for check in PHASE2:
         try:
-            out.append(check(profile))
+            got = check(profile)
+            out.extend(got if isinstance(got, list) else [got])   # REV-04: the Sheet check adds header rows
         except Exception as e:                         # noqa: BLE001 -- one broken check never hides the rest
             out.append(result(2, check.__name__.removeprefix("check_").upper(), FAIL, f"check crashed: {_error(e)}"))
     return out
@@ -479,6 +553,27 @@ def state_files():
     return out
 
 
+# --- Sheet retry files (no --phase; REV-03) -------------------------------------------
+
+def sheet_retry_files():
+    """Rows a digest could not write to the Sheet, waiting in state/sheet_retry/."""
+    import sheet_retry
+    count, oldest, bad = sheet_retry.summary()
+    out = []
+    if bad:
+        out.append(result(0, "sheet retry", FAIL,
+                          f"{len(bad)} unreadable retry file(s) renamed .bad ({', '.join(bad[:3])}): their "
+                          f"postings are not on the Sheet; fix the JSON and rename back to .json."))
+    if count:
+        rows = len(sheet_retry.waiting_rows())
+        out.append(result(0, "sheet retry", WARN,
+                          f"{count} file(s) waiting ({rows} postings), oldest {oldest}: the next digest "
+                          f"retries them; the digest log says why the last write failed."))
+    if not out:
+        out.append(result(0, "sheet retry", PASS, "no Sheet rows waiting in state/sheet_retry/."))
+    return out
+
+
 # --- Scoring cost (no --phase; PUB-12) ------------------------------------------------
 
 def scoring_cost():
@@ -492,14 +587,67 @@ def scoring_cost():
     except Exception:                                  # noqa: BLE001 -- phase 3 reports why
         return []
     model, cap = scoring["model"], scoring["max_calls_per_run"]
-    per_call = config.model_cost(model, *config.SCORING_TOKENS_PER_CALL)
+    per_call, how = scoring_call_estimate(model)
     if per_call is None:
         return [result(0, "scoring cost", WARN, f"model {model}, at most {cap} scoring calls a fetch run; cost "
                                                 f"unknown ({model} is not in config.MODEL_PRICES).")]
+    day = scoring.get("max_calls_per_day")
     return [result(0, "scoring cost", PASS, f"model {model}, at most {cap} scoring calls a fetch run; about "
-                                            f"{config.format_cost(per_call)} a call, so at most "
-                                            f"{config.format_cost(per_call * cap)} a run (estimate; "
-                                            f"calibrate measures it).")]
+                                            f"{config.format_cost(per_call)} a call ({how}), so at most "
+                                            f"{config.format_cost(per_call * cap)} a run"
+                                            + (f" and {config.format_cost(per_call * day)} a day" if day else "")
+                                            + " (estimate; calibrate measures it).")]
+
+
+# REV-06/07: the uncached share of a scoring call's input with the prompt
+# cached: 3,584 of 24,257 input tokens in the 9 Nov calibrate run (15%).
+DEFAULT_UNCACHED_SHARE = 0.15
+
+
+def scoring_call_estimate(model, usage_file=None):
+    """(US$ a scoring call, how it was estimated). With a cache price for the
+    model, the input is split by the last calibrate run's uncached share
+    (out/calibrate_usage.json) or DEFAULT_UNCACHED_SHARE, and the cached part
+    priced as cache reads; without one, all input at the input price."""
+    import config
+    tokens_in, tokens_out = config.SCORING_TOKENS_PER_CALL
+    if model not in config.MODEL_CACHE_PRICES:
+        return config.model_cost(model, tokens_in, tokens_out), "uncached"
+    share, source = DEFAULT_UNCACHED_SHARE, "assumed 15% uncached input"
+    try:
+        import calibrate
+        with open(usage_file or calibrate.USAGE_FILE) as fh:
+            last = json.load(fh)
+        total = (last.get("uncached") or 0) + (last.get("cache_write") or 0) + (last.get("cache_read") or 0)
+        if total and last.get("model") == model:
+            share = (last.get("uncached") or 0) / total
+            source = f"{share:.0%} uncached input in the last calibrate run"
+    except (OSError, ValueError, ImportError):
+        pass
+    uncached = round(tokens_in * share)
+    return config.model_cost(model, uncached, tokens_out, 0, tokens_in - uncached), f"prompt cached, {source}"
+
+
+# --- LinkedIn pages (no --phase; REV-07) -------------------------------------------
+
+def linkedin_pages():
+    """WARN when LinkedIn failed more than half its job pages over the last
+    three fetch runs that tried any (fetch_budget.json, committed by fetch)."""
+    import fetch_budget
+    try:
+        failed, tried, runs = fetch_budget.linkedin_blocked_share(runs=3)
+    except (OSError, ValueError) as e:
+        return [result(0, "linkedin pages", WARN, f"fetch_budget.json does not parse ({type(e).__name__}).")]
+    if not runs:
+        return [result(0, "linkedin pages", PASS, "no fetch run has tried a LinkedIn job page yet.")]
+    if failed * 2 > tried:
+        return [result(0, "linkedin pages", WARN,
+                       f"LinkedIn blocked or hid {failed} of {tried} job pages over the last {runs} fetch "
+                       f"run(s). LinkedIn blocks GitHub runner IPs: the alert-label reader still works, the "
+                       f"page reader may not, so those jobs are retried and then recorded as \"LinkedIn page "
+                       f"unavailable\".")]
+    return [result(0, "linkedin pages", PASS, f"{tried - failed} of {tried} job pages read over the last "
+                                              f"{runs} fetch run(s).")]
 
 
 # --- Output ----------------------------------------------------------------------------
@@ -511,7 +659,7 @@ def run(phase=None):
         return phase2()
     if phase == 3:
         return phase3()
-    return phase1() + phase2() + phase3() + state_files() + scoring_cost()
+    return phase1() + phase2() + phase3() + state_files() + sheet_retry_files() + linkedin_pages() + scoring_cost()
 
 
 def summary(results, phase=None):

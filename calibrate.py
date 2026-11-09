@@ -134,14 +134,39 @@ def cost_summary(usage, per_day=None):
            "run": None, "per_call": None, "per_100": None, "per_day": per_day, "per_month": None}
     if not calls:
         return out
-    out["avg_input"] = round(usage["input"] / calls)
+    write, read = usage.get("cache_write", 0), usage.get("cache_read", 0)
+    # REV-06: avg_input is all input (uncached + cache write + cache read);
+    # the three parts are kept apart because they are priced apart.
+    out["avg_input"] = round((usage["input"] + write + read) / calls)
     out["avg_output"] = round(usage["output"] / calls)
-    run_cost = config.model_cost(out["model"], usage["input"], usage["output"])
+    out.update(uncached=usage["input"], cache_write=write, cache_read=read,
+               uncached_cost=config.model_cost(out["model"], usage["input"] + write + read, usage["output"]))
+    run_cost = config.model_cost(out["model"], usage["input"], usage["output"], write, read)
     if run_cost is not None:
         out.update(run=run_cost, per_call=run_cost / calls, per_100=run_cost / calls * 100)
         if per_day:
             out["per_month"] = run_cost / calls * per_day * 30
     return out
+
+
+# REV-07: the last calibrate run's input split, for doctor's cost estimate.
+# Local only: out/ is gitignored and never exported, and it is no state file.
+USAGE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "calibrate_usage.json")
+
+
+def save_usage(cost, path=None):
+    """Write the run's model and input split (uncached, cache write, cache
+    read) when any call was answered. Never fails calibrate."""
+    if not cost.get("calls"):
+        return
+    path = path or USAGE_FILE
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as fh:
+            json.dump({k: cost.get(k) for k in ("model", "calls", "uncached", "cache_write", "cache_read",
+                                                "avg_input", "avg_output", "per_call")}, fh, indent=2)
+    except OSError as e:
+        print(f"[Calibrate] could not save {path}: {e}")
 
 
 def cost_lines(cost):
@@ -154,13 +179,23 @@ def cost_lines(cost):
              f"({format_cost(cost['per_call'])} a call)."]
     if cost["per_call"] is None:
         lines.append(f"  {cost['model']} is not in config.MODEL_PRICES, so its cost is unknown.")
+        lines.append(_cache_line(cost))
         return lines
     rate = f"At this rate, 100 scored postings ≈ {format_cost(cost['per_100'])}"
     if cost["per_day"]:
         rate += (f"; a typical month at {cost['per_day']} a day ≈ {format_cost(cost['per_month'])} "
                  f"({cost['per_day']} = the postings this live fetch passed)")
     lines.append(rate + ". Prices change; config.MODEL_PRICES is dated.")
+    lines.append(_cache_line(cost))
     return lines
+
+
+def _cache_line(cost):
+    """REV-06: the input split by prompt cache, and the run's cost without it."""
+    from config import format_cost
+    return (f"  Input tokens this run: uncached {cost.get('uncached', 0):,}, cache write "
+            f"{cost.get('cache_write', 0):,}, cache read {cost.get('cache_read', 0):,} (REV-06 prompt cache); "
+            f"without the cache this run would cost {format_cost(cost.get('uncached_cost'))}.")
 
 
 # --- Live postings (PUB-10) ------------------------------------------------------
@@ -179,7 +214,8 @@ EXTRA_KEYS = {"usajobs": ("GMAIL_ADDRESS",), "bespoke": ("ANTHROPIC_API_KEY",)}
 DEFAULT_MAX = 15
 # The state files and the queue: a live calibrate never opens any for writing.
 STATE_NAMES = ("seen_jobs.json", "skip_state.json", "bespoke_state.json", "bespoke_cursor.json",
-               "shard_state.json", "status_email_cache.json", "company_profiles.json")
+               "shard_state.json", "status_email_cache.json", "company_profiles.json",
+               "fetch_budget.json")
 
 
 def _protected(path):
@@ -542,6 +578,7 @@ def _live(args):
     for r, job in zip(table, ranked):
         r["source"] = job.get("source", "")
     cost = cost_summary(LAST_USAGE, per_day=len(passed))
+    save_usage(cost)
     if args.json:
         print(json.dumps({"results": table, "claude_calls": cost["calls"], "postings_scored": calls, "cost": cost,
                           "not_run": skipped}, indent=2))
@@ -583,6 +620,7 @@ def main(argv=None):
         ranked, calls = run(args.dir)
     table = rows(ranked, profile_loader.active())
     cost = cost_summary(LAST_USAGE)
+    save_usage(cost)
     if args.json:
         print(json.dumps({"results": table, "claude_calls": cost["calls"], "postings_scored": calls, "cost": cost},
                          indent=2))

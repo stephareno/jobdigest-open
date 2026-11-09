@@ -18,6 +18,7 @@ area, never the status, so an ID never changes when work ships.
 | `OPS` | workflows and state |
 | `GAP` | known gap, not yet on a lane |
 | `PUB` | public engine / profile-driven refactor |
+| `REV` | review fixes, Nov 2026: fixes from the outside code review (November 2026) |
 | `SET` | settled: rejected, retired or not planned |
 | `BATCH` | one chat that produced several features |
 

@@ -3,13 +3,20 @@
 #   python main.py digest --dry-run                    # from the queue in state/pending/
 #   python main.py digest --dry-run --from-calibrate   # from a calibrate run (a fresh install has no queue)
 #   python main.py digest --dry-run --send             # also email it, subject prefixed "[DRY RUN]"
+#   python main.py digest --dry-run --with-failed-runs runs.json   # with the failed-fetch-run banner (REV-02)
 #
 # Builds the digest HTML the real digest would send and writes it to
 # out/digest_dry_run.html. It deletes nothing from the queue, writes nothing
 # to the Sheet, skip_state.json or any cache, and runs no Applied-seed or
 # status pass. Differences from the real digest: no Sheet read, so the FIL-13
 # collapse sees only this batch; no company-profile blurb rewrite (DEL-14,
-# which calls Claude and writes company_profiles.json); no fetch-failure banner.
+# which calls Claude and writes company_profiles.json); the fetch-failure
+# banner only with --with-failed-runs, which takes a file in the shape
+# tools/fetch_run_outcomes.py writes. With failures and an empty queue it
+# renders the alert-only email the real digest would send (REV-02). It shows
+# every failed run in the file, including runs an earlier email reported.
+# Sheet rows waiting in state/sheet_retry/ show as banner lines; the dry run
+# never retries them (REV-03).
 
 import argparse
 import os
@@ -56,13 +63,21 @@ def sections_from_calibrate(folder=None):
     return filter_jobs(jobs), False, f"{len(jobs)} calibrate postings ({calls} scored, {api} Claude calls)"
 
 
-def build(sections, first_run=False):
-    """(subject, html) exactly as emailer.send_digest would build them."""
+def build(sections, first_run=False, failed_fetch_runs=None):
+    """(subject, html) exactly as emailer.send_digest would build them, or as
+    emailer.build_alert_only when fetch runs failed and nothing is queued."""
     import emailer
     main, worth = sections.get("main", []), sections.get("worth_a_look", [])
+    cool = sections.get("cool_wrong_role", [])
+    # REV-03: the Sheet retry banner lines, read only (no replay, nothing renamed).
+    import sheet_retry
+    notices = sheet_retry.banner_lines()
+    if (failed_fetch_runs or notices) and not first_run and not sections.get("all_scored"):
+        return emailer.build_alert_only(failed_fetch_runs, subject_prefix=SUBJECT_PREFIX, notices=notices)
     total = len(main) + len(worth)
     subject = f"{SUBJECT_PREFIX}Job digest — {total} match{'es' if total != 1 else ''} · {emailer._today()}"
-    html = emailer._build_html(main, worth, sections.get("cool_wrong_role", []), [], first_run, False)
+    html = emailer._build_html(main, worth, cool, [], first_run, False,
+                               failed_fetch_runs=failed_fetch_runs, notices=notices)
     return subject, html
 
 
@@ -73,6 +88,9 @@ def main(argv=None):
                         help="render the calibrate results instead of the queue (makes Claude calls)")
     parser.add_argument("--send", action="store_true",
                         help="also email the file to delivery.email_to, subject prefixed [DRY RUN]")
+    parser.add_argument("--with-failed-runs", metavar="FILE",
+                        help="a fetch-run outcomes file (tools/fetch_run_outcomes.py's format): "
+                             "render the failed-run banner, or the alert-only email if nothing is queued")
     args = parser.parse_args(argv)
 
     if args.send:
@@ -85,8 +103,15 @@ def main(argv=None):
         return 1
     _allow_import_without("ANTHROPIC_API_KEY", "GMAIL_ADDRESS", "GMAIL_APP_PASSWORD")
 
+    failed_runs = None
+    if args.with_failed_runs:
+        if not os.path.isfile(args.with_failed_runs):
+            print(f"--with-failed-runs: no such file: {args.with_failed_runs}")
+            return 1
+        import state
+        failed_runs = state.load_failed_fetch_runs(args.with_failed_runs)
     sections, first_run, note = sections_from_calibrate() if args.from_calibrate else sections_from_queue()
-    subject, html = build(sections, first_run)
+    subject, html = build(sections, first_run, failed_fetch_runs=failed_runs)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w") as fh:
         fh.write(html)
@@ -94,6 +119,7 @@ def main(argv=None):
               f"cool company/wrong role {len(sections['cool_wrong_role'])}")
     print(f"[DryRun] {note}")
     print(f"[DryRun] {counts}")
+    print(f"[DryRun] subject: {subject}")
     print(f"[DryRun] wrote {os.path.relpath(OUT, ROOT)}; queue, Sheet and state files untouched")
     if args.send:
         import emailer

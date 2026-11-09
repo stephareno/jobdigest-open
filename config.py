@@ -470,13 +470,31 @@ BESPOKE_HOST_DELAY = 1.0        # seconds between requests to the same host
 BESPOKE_TIMEOUT = 8.0
 BESPOKE_MAX_PAGE_BYTES = 2_000_000
 
+# --- LinkedIn job pages (REV-07) --------------------------------------------------
+# LinkedIn often blocks GitHub's runners (HTTP 999) or shows a login wall. A job
+# whose page does not load is dropped from the run, unseen, and retried on a
+# later run (the alert stays in the label; the 7-day lookback covers it).
+# True keeps such a job anyway, with an empty description, when the alert
+# email itself gives its title, company and location. Off by default: the
+# scorer then sees no description, so keeping it is a deliberate choice.
+LINKEDIN_KEEP_ALERT_ONLY_ROWS = False
+# After this many runs in a row with a failed page, the job is recorded at
+# score 0 (Disqualified tab) with this reason, so it stops costing fetches.
+LINKEDIN_MAX_PAGE_FAILURES = 3
+LINKEDIN_UNAVAILABLE_REASON = "LinkedIn page unavailable"
+
 # Extraction is the only paid step and runs only on a changed page.
 BESPOKE_EXTRACT_MODEL = "claude-haiku-4-5"
 BESPOKE_MAX_DIGEST_CHARS = 24_000
 BESPOKE_MAX_ANCHORS = 120
-# Extractions run this many at a time. There is no per-run count cap:
-# BESPOKE_RUN_BUDGET_SECS is the only limit on how much a run reads.
+# Extractions run this many at a time.
 BESPOKE_EXTRACT_CONCURRENCY = 4
+# REV-06: at most this many extraction calls in one fetch run, unless the
+# profile's sources.bespoke.max_extractions_per_run says otherwise. Pages past
+# it are left for the next pass, the cursor unchanged. About $0.003 each at
+# BESPOKE_EXTRACT_MODEL (SRC-18), so 60 is under $0.20 a run. Extractions
+# also count toward scoring.max_calls_per_day (fetch_budget.py).
+BESPOKE_MAX_EXTRACTIONS_PER_RUN = 60
 
 # --- Cost reporting (PUB-12) -------------------------------------------------------------
 # Anthropic first-party API prices, US$ per million tokens (input, output), as
@@ -500,12 +518,39 @@ MODEL_PRICES = {
 }
 
 
-def model_cost(model, input_tokens, output_tokens):
-    """US$ for this many tokens on `model`, or None when the table does not know it."""
+# REV-06: prompt-cache prices, US$ per million tokens (5-minute cache write,
+# cache hit), from the same Anthropic pricing page as MODEL_PRICES, read on
+# 2026-11-09. Most models write at 1.25x and read at 0.1x their input price,
+# but not all (Fable 5.1 reads at 0.025x, Opus 5.5 and Sonnet 5.5 at 0.05x),
+# so each model's figures are listed rather than derived.
+MODEL_CACHE_PRICES = {
+    "claude-fable-5-1": (12.50, 0.25),
+    "claude-fable-5": (12.50, 1.00),
+    "claude-opus-5-5": (5.00, 0.20),
+    "claude-opus-5": (6.25, 0.50),
+    "claude-opus-4-8": (6.25, 0.50),
+    "claude-opus-4-7": (6.25, 0.50),
+    "claude-opus-4-6": (6.25, 0.50),
+    "claude-sonnet-5-5": (2.50, 0.10),
+    "claude-sonnet-5": (2.50, 0.20),
+    "claude-sonnet-4-6": (3.75, 0.30),
+    "claude-haiku-5-5": (0.125, 0.01),
+    "claude-haiku-4-5": (1.25, 0.10),
+}
+
+
+def model_cost(model, input_tokens, output_tokens, cache_write_tokens=0, cache_read_tokens=0):
+    """US$ for this many tokens on `model`, or None when the table does not know it.
+    input_tokens is the uncached input (the API's input_tokens); cache writes
+    and reads are priced from MODEL_CACHE_PRICES (REV-06)."""
     price = MODEL_PRICES.get(model)
     if price is None:
         return None
-    return input_tokens / 1e6 * price[0] + output_tokens / 1e6 * price[1]
+    write, read = MODEL_CACHE_PRICES.get(model, (None, None))
+    if (cache_write_tokens and write is None) or (cache_read_tokens and read is None):
+        return None
+    return (input_tokens / 1e6 * price[0] + output_tokens / 1e6 * price[1]
+            + cache_write_tokens / 1e6 * (write or 0) + cache_read_tokens / 1e6 * (read or 0))
 
 
 def format_cost(dollars):

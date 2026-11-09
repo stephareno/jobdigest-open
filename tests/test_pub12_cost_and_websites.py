@@ -807,16 +807,17 @@ def test_calibrate_counts_tokens_from_the_api_usage(monkeypatch):
     jobs = [{"title": "Director of IT", "company": f"C{i}", "location": "Remote, US", "work_model": "remote",
              "description": "d", "file": f"f{i}"} for i in range(2)]
     calibrate.score(jobs)
-    assert calibrate.LAST_USAGE == {"calls": 2, "input": 10_000, "output": 600, "model": scorer.MODEL}
+    assert calibrate.LAST_USAGE == {"calls": 2, "input": 10_000, "output": 600, "model": scorer.MODEL,
+                                    "cache_write": 0, "cache_read": 0}       # REV-06
 
 
 def test_doctor_prints_model_cap_and_per_call_cost():
     import doctor
     [line] = doctor.scoring_cost()
-    per_call = config.model_cost("claude-sonnet-4-6", *config.SCORING_TOKENS_PER_CALL)
+    per_call, how = doctor.scoring_call_estimate("claude-sonnet-4-6")      # REV-07: prompt cached
     assert line["status"] == "PASS"
     assert line["reason"].startswith("model claude-sonnet-4-6, at most 100 scoring calls a fetch run; about "
-                                     f"{config.format_cost(per_call)} a call")
+                                     f"{config.format_cost(per_call)} a call ({how})")
 
 
 # --- STEP 5: rationale example ---------------------------------------------------------------

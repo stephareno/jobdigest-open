@@ -27,7 +27,7 @@ Three separate parts, and nothing is stored in two of them: `profile.yaml`, your
 
 This project is designed to be set up with an AI assistant. You do not need coding experience.
 
-1. On this repository's GitHub page, click the green **Use this template** button (next to **Code**), choose **Create a new repository**, and make it private. Not Fork: a template copy has a clean history and no link back here, and GitHub Actions will run in your repository with your secrets. Your copy's scheduled workflows start out active; [the setup guide](docs/SETUP_GUIDE.md)'s first phase turns them off until your keys are in place.
+1. On this repository's GitHub page, click the green **Use this template** button (next to **Code**), choose **Create a new repository**, and make it private. Not Fork: a template copy has a clean history and no link back here, and GitHub Actions will run in your repository with your secrets. The agent refuses to run in a public repository or a fork, because every run commits your profile and job history to it. Your copy's scheduled workflows start out active; [the setup guide](docs/SETUP_GUIDE.md)'s first phase turns them off until your keys are in place.
 2. Open your new repository in a coding agent such as Claude Code or Codex, or start a chat with Claude or ChatGPT and attach three files from it: `README.md`, [`docs/PRD.md`](docs/PRD.md) and [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md).
 3. Say "help me set this up". The assistant walks you through five phases: GitHub setup, accounts and keys, an interview about the roles you want that becomes your `profile.yaml`, calibration on real postings, and a dry run. Plan on 60 to 90 minutes if you have none of the accounts, 20 if you have most.
 
@@ -48,7 +48,7 @@ Every phase ends with `python main.py doctor`, which checks what has been set up
 |---|---|---|
 | Company career boards on Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Rippling, Recruitee, BambooHR, Breezy, Teamtailor, Personio, Oracle HCM, ADP, UKG Ready, Gem, Comeet, Manatal, JobScore and Workday | a list of companies | The best source: fresh, complete, direct apply links |
 | Plain career pages with no board | a list of companies | A slower crawler reads each page and has the model extract new postings when it changes. The first read of each page is a model call, so keep this to companies you care about |
-| LinkedIn job alerts | a Gmail label | Reads only the alert emails LinkedIn sends you; never touches linkedin.com |
+| LinkedIn job alerts | a Gmail label | Reads the job-alert emails LinkedIn sends you from one Gmail label. Opening each job's public page to read the description is a separate switch, off by default: LinkedIn's user agreement prohibits automated access to its site and it blocks many such requests, so turn it on only if you accept that; off, jobs are scored from the alert alone and marked 'title only'. |
 | Adzuna, JSearch | free keys | Wide but noisier; apply links go through an intermediary |
 | USAJOBS | free key | US federal roles by job series |
 | Built In | nothing | Tech roles in a handful of metros |
@@ -59,7 +59,7 @@ The repository ships one starter list: about 4,700 US public companies from SEC 
 
 ## Cost
 
-- Model API: about $7 to $21 a month at a typical 20 to 60 scored postings a day, about 1 cent a posting. Conservative high: about $45 in the first month if you load the entire starter list unfiltered, because every board's existing postings get scored once; after that it settles to the typical range.
+- Model API: about $4 to $11 a month at a typical 20 to 60 scored postings a day, a little over half a cent a posting (the scoring prompt is cached between calls). Conservative high: about $24 in the first month if you load the entire starter list unfiltered, because every board's existing postings get scored once; a daily ceiling on model calls spreads that over the first weeks, and after that it settles to the typical range.
 - GitHub Actions: three short fetch runs and one digest run a day; within the free tier for a private repository.
 - Adzuna, RapidAPI's free tier, USAJOBS, Gmail and Google Sheets: free at this volume.
 
@@ -78,7 +78,7 @@ The repository ships one starter list: about 4,700 US public companies from SEC 
 Everything runs in your own GitHub repository and on your own computer; there is no server, analytics or telemetry of this project's. What leaves it:
 
 - **To the model provider (Anthropic):** your profile's scoring text and each posting's text, once per posting scored. Also: text from the website of each company on a digest card (to rewrite its blurb), careers-page text when the bespoke crawler sees a page change, once a week the notes you wrote on rows you marked Declined, and, if you use `setup --from-document`, the resume or job description you give it.
-- **Your own accounts:** the Google Sheet is yours, written through a service account you create. Gmail is yours: the digest is sent from it to you, and the LinkedIn reader opens one label you name, read-only, for alert emails from at least the last 7 days.
+- **Your own accounts:** the Google Sheet is yours, written through a service account you create. Gmail is yours: the digest is sent from it to you, and the LinkedIn reader opens one label you name, read-only, for alert emails from at least the last 7 days, and, if page fetching is on, LinkedIn receives requests for each job page from the runner's address.
 - **Status tracking, off by default:** once a day it opens your inbox read-only and reads each message from the last 14 days, skipping mail sent from your own address. Only a message whose subject or body names a company that has a row on the main tab of your Sheet goes to the model: its sender, date, subject and body (up to 20,000 characters, links cut to their host), with up to 30 matching rows (company, title, status). No other message is sent. The model's replies are cached in `status_email_cache.json` in your repository.
 - **Index Doc, off by default:** each entry of your applications Doc goes to the model to read the company, title and date.
 - **Job sources:** the searches you configure (titles, places) go to the sources you turn on: Adzuna, JSearch, Built In and USAJOBS, which requires your Gmail address as its User-Agent. Company career boards are read directly.

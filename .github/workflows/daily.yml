@@ -117,6 +117,42 @@ jobs:
       - name: Install dependencies
         run: pip install --require-hashes -r requirements.lock
 
+      - name: Refuse to commit state to a public repository
+        id: public-guard
+        # REV-01: this job commits profile.yaml's owner's job history and state
+        # to the repository. A public repository (or a fork of the public
+        # template, public by construction) would publish it. Runs before any
+        # step that touches a state file. Fails closed: if the API call fails,
+        # the event's own repository fields decide; if neither says private,
+        # it stops. delivery.allow_public_repo: true in profile.yaml turns the
+        # failure into a warning, deliberately.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_PRIVATE: ${{ github.event.repository.private }}
+          EVENT_FORK: ${{ github.event.repository.fork }}
+        run: |
+          private=$(gh api "repos/$GITHUB_REPOSITORY" --jq .private) || private=""
+          fork=$(gh api "repos/$GITHUB_REPOSITORY" --jq .fork) || fork=""
+          public=no
+          if [ "$EVENT_PRIVATE" = "false" ] || [ "$EVENT_FORK" = "true" ]; then public=yes; fi
+          if [ -n "$private" ]; then
+            if [ "$private" != "true" ] || [ "$fork" = "true" ]; then public=yes; fi
+          elif [ "$EVENT_PRIVATE" != "true" ]; then
+            echo "::warning::Could not read this repository's visibility from the GitHub API; treating it as public."
+            public=yes
+          fi
+          if [ "$public" = "no" ]; then
+            echo "Repository is private and not a fork."
+            exit 0
+          fi
+          allow=$(python -c 'import yaml; d = yaml.safe_load(open("profile.yaml")) or {}; print("true" if (d.get("delivery") or {}).get("allow_public_repo") is True else "false")')
+          if [ "$allow" = "true" ]; then
+            echo "::warning::This repository is public or a fork, and delivery.allow_public_repo is true: the agent commits your profile and job history to it, where anyone can read them."
+            exit 0
+          fi
+          echo "::error::This repository is public or a fork. The agent commits your profile and job history to it; make the repository private (Settings > General > Danger Zone) or use 'Use this template' instead of Fork. Nothing was written."
+          exit 1
+
       - name: Collect fetch run outcomes since the last digest
         # OPS-12: every fetch.yml run since the previous digest, with its
         # conclusion and ::error:: title. The digest shows a red banner per
@@ -147,7 +183,8 @@ jobs:
         # always(): a digest that failed after sending must still commit the
         # dequeue, or the next digest re-sends. A digest that failed before
         # sending never dequeued, so its batches stay queued either way.
-        if: always()
+        # REV-01: never after the public-repository guard refused the run.
+        if: always() && steps.public-guard.outcome == 'success'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -158,8 +195,12 @@ jobs:
           git add status_email_cache.json || true
           # -A stages the deletions of the batches this digest sent.
           git add -A state/pending || true
+          # REV-03: Sheet rows a write failed on, and the files a replay
+          # finished (deleted) or renamed .bad. Digest-owned; fetch never
+          # touches state/sheet_retry/.
+          git add -A state/sheet_retry || true
           git diff --staged --quiet && exit 0
-          git commit -m "Digest sent: dequeue batches, update skip counter, profiles and status cache [skip ci]"
+          git commit -m "Digest sent: dequeue batches, update skip counter, Sheet retry files, profiles and status cache [skip ci]"
           # main may have moved during the run; rebase so the push fast-forwards.
           # Never "|| true": a lost state commit means tomorrow re-sends today's
           # jobs, so it must fail the run visibly.

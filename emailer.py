@@ -24,7 +24,7 @@ GMAIL_ADDRESS = os.environ["GMAIL_ADDRESS"].strip()
 GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"].strip()
 
 
-def send_digest(sections, is_first_run=False, is_fallback=False, failed_fetch_runs=None):
+def send_digest(sections, is_first_run=False, is_fallback=False, failed_fetch_runs=None, notices=None):
     main = sections.get("main", [])
     worth_a_look = sections.get("worth_a_look", [])
     cool_wrong_role = sections.get("cool_wrong_role", [])
@@ -37,9 +37,51 @@ def send_digest(sections, is_first_run=False, is_fallback=False, failed_fetch_ru
         subject = f"Job digest — {total} match{'es' if total != 1 else ''} · {_today()}"
 
     html = _build_html(main, worth_a_look, cool_wrong_role, fallback_jobs, is_first_run, is_fallback,
-                       failed_fetch_runs=failed_fetch_runs)
+                       failed_fetch_runs=failed_fetch_runs, notices=notices)
     _send(subject, html)
     print(f"[Emailer] Sent: {subject}")
+
+
+# REV-02: the subject and the one sentence of an alert-only email -- failed or
+# cancelled fetch runs since the last digest and no new postings to send.
+ALERT_ONLY_SUBJECT = "Job digest: fetch runs failed"
+ALERT_ONLY_NOTE = ("No new postings were scored since the last digest, most likely because the "
+                   "fetch runs above stopped before scoring anything (a scoring API key that is "
+                   "out of credit or revoked stops every run).")
+# REV-04: the same alert-only form when the problem is the Sheet (rows waiting
+# in state/sheet_retry/, or a header row the writer refuses) on a day with
+# nothing new.
+SHEET_ALERT_SUBJECT = "Job digest: Sheet write failed"
+BOTH_ALERT_SUBJECT = "Job digest: fetch runs and Sheet write failed"
+SHEET_ALERT_NOTE = ("No new postings since the last digest; this email is about the Sheet problem "
+                    "above, which keeps postings off the tracker until it is fixed.")
+SHEET_NO_MATCHES_NOTE = ("New postings were scored since the last digest, but none cleared the digest "
+                         "thresholds; this email is about the Sheet problem above.")
+ALERT_NO_MATCHES_NOTE = ("New postings were scored since the last digest, but none cleared the digest "
+                         "thresholds and there was nothing to resurface; the fetch runs above did not "
+                         "score theirs.")
+
+
+def send_alert_only(failed_fetch_runs, note=None, notices=None):
+    """REV-02: the alert-only digest, sent when fetch runs failed and the queue
+    is empty, whatever delivery.skip_empty_days says."""
+    subject, html = build_alert_only(failed_fetch_runs, note=note, notices=notices)
+    _send(subject, html)
+    print(f"[Emailer] Sent: {subject}")
+
+
+def build_alert_only(failed_fetch_runs, subject_prefix="", note=None, notices=None):
+    """(subject, html) of the alert-only digest: the normal header, the
+    banner (failed runs, then Sheet notices), one sentence, the footer. The
+    subject names what failed (REV-04)."""
+    if failed_fetch_runs:
+        subject = BOTH_ALERT_SUBJECT if notices else ALERT_ONLY_SUBJECT
+        note = note or ALERT_ONLY_NOTE
+    else:
+        subject, note = SHEET_ALERT_SUBJECT, note or SHEET_ALERT_NOTE
+    body = (_fetch_failure_banner(failed_fetch_runs, notices)
+            + f'<div style="font-size:14px;color:#555;margin:0 0 24px;">{_text(note)}</div>')
+    return f"{subject_prefix}{subject}", _wrap(body)
 
 
 def _send(subject, html_body):
@@ -114,6 +156,15 @@ def _source_badge(source):
     }
     color, bg = colors.get(source, ("#888780", "#F1EFE8"))
     return f'<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:{bg};color:{color};font-size:11px;">{_text(source)}</span>'
+
+
+def _title_only_badge(job):
+    """REV-08: grey 'title only' pill beside the score: scored from the LinkedIn
+    alert alone, with no description (sources.linkedin_email.fetch_pages false)."""
+    if not job.get("title_only"):
+        return ""
+    return ('<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:#F1EFE8;'
+            'color:#5F5E5A;font-size:11px;margin-left:6px;">title only</span>')
 
 
 def _startup_badge(job):
@@ -220,7 +271,7 @@ def _job_card(job, show_status=False):
 
     return f"""
 <div style="background:#ffffff;border:1px solid #e8e8e8;border-radius:10px;padding:16px 20px;margin-bottom:12px;">
-  <div style="margin-bottom:6px;">{_score_badge(score)}{_dream_badge(job)}{_fresh_badge(job)}{_warm_badge(warm_contact)}{_relo_badge(job)}{_startup_badge(job)}{_age_html(job)}{status_html}</div>
+  <div style="margin-bottom:6px;">{_score_badge(score)}{_title_only_badge(job)}{_dream_badge(job)}{_fresh_badge(job)}{_warm_badge(warm_contact)}{_relo_badge(job)}{_startup_badge(job)}{_age_html(job)}{status_html}</div>
   <div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">{_text(title)}</div>
   <div style="font-size:14px;color:#444;margin-bottom:4px;">{_text(company)}</div>
   <div style="font-size:13px;color:#888;margin-bottom:8px;">{_text(location_line)}</div>
@@ -281,28 +332,42 @@ def _fetch_failure_cause(run):
     message = (run.get("error_message") or "").strip().splitlines()
     if message:
         return message[0][:160]
-    if run.get("conclusion") == "cancelled":
-        return "the run was cancelled"
-    return f"{run.get('conclusion') or 'unknown'}, no error message"
+    return "no error message"
 
 
-def _fetch_failure_banner(failed_fetch_runs):
-    """OPS-12: one red line per fetch run that failed since the last digest."""
-    if not failed_fetch_runs:
+# REV-02: the banner line names each run's conclusion.
+_FETCH_CONCLUSION_TEXT = {"failure": "failed", "cancelled": "was cancelled",
+                          "timed_out": "timed out", "startup_failure": "failed to start"}
+
+
+def _fetch_conclusion_text(run):
+    conclusion = run.get("conclusion") or "unknown"
+    return _FETCH_CONCLUSION_TEXT.get(conclusion, f"ended {conclusion}")
+
+
+def _fetch_failure_banner(failed_fetch_runs, notices=None):
+    """OPS-12: one red line per fetch run that failed since the last digest:
+    start time, conclusion (REV-02), ::error:: title, link. REV-03: then one
+    line per notice (plain text, escaped here), e.g. Sheet rows waiting in
+    state/sheet_retry/."""
+    if not failed_fetch_runs and not notices:
         return ""
     lines = "".join(
         f'<div style="font-size:13px;color:#791F1F;margin:4px 0;">'
-        f'Fetch run {_fetch_run_time_et(run["started_at"])} failed: {_text(_fetch_failure_cause(run))}. '
+        f'Fetch run {_text(_fetch_run_time_et(run["started_at"]))} {_text(_fetch_conclusion_text(run))}: '
+        f'{_text(_fetch_failure_cause(run).rstrip(". "))}. '
         f'Postings from that run were not scored. '
         f'{_link(run.get("url"), "View run &#8594;", "color:#A32D2D;font-weight:600;")}</div>'
-        for run in failed_fetch_runs)
+        for run in failed_fetch_runs or ())
+    lines += "".join(f'<div style="font-size:13px;color:#791F1F;margin:4px 0;">{_text(note)}</div>'
+                     for note in notices or ())
     return ('<div style="background:#FCEBEB;border:1px solid #F09595;border-radius:10px;'
             f'padding:12px 18px;margin-bottom:24px;">{lines}</div>')
 
 
 def _build_html(main, worth_a_look, cool_wrong_role, fallback_jobs, is_first_run, is_fallback,
-                failed_fetch_runs=None):
-    banner = _fetch_failure_banner(failed_fetch_runs)
+                failed_fetch_runs=None, notices=None):
+    banner = _fetch_failure_banner(failed_fetch_runs, notices)
     body = banner
 
     if is_first_run:

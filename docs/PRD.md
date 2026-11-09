@@ -65,7 +65,7 @@ sources ──► filters ──► scoring ──► modifiers ──► queue 
 
 **fetch.yml** runs three times a day. Each run fetches one shard of the board set (so every board is visited at least every two days, most daily), plus the once-a-day sources on the first run. It filters, scores and writes one immutable batch file to `state/pending/`. It also updates the seen-job state so nothing is scored twice.
 
-**daily.yml** runs once a day, on the candidate's digest days, timed so the email arrives by the hour they chose. It reads the queue, builds the email, writes the Sheet, deletes the batch files it sent, and runs the optional inbox passes. It never writes the files fetch writes.
+**daily.yml** runs once a day, on the candidate's digest days, timed so the email arrives by the hour they chose. It reads the queue, writes the Sheet, sends the email, deletes the batch files it sent, and runs the optional inbox passes. It never writes the files fetch writes.
 
 **weekly_summary.yml** runs once a week on the no-digest day.
 
@@ -83,7 +83,7 @@ Each source is a module. `sources.enabled` in the profile turns each on or off; 
 | `startups` | The same kind of direct reads for the larger tier of companies from the candidate's lists (§13) | company lists | yes |
 | `watchlist` | Companies with no fetchable board: Workday tenants and plain career pages, pinned in `data/companies.yaml` | nothing | wider gate |
 | `bespoke` | Career pages with no board at all, for companies on the candidate's lists. A rolling crawler re-reads each page on its own schedule, notices when it changed, and has the model extract the new postings. Slower, and the first read of each page is a model call; works for plain pages, not for pages that only render with JavaScript | company lists | yes |
-| `linkedin_email` | Parses LinkedIn job-alert emails from a Gmail label. The agent never touches linkedin.com; it reads only the alert emails LinkedIn chose to send to the candidate's own inbox | Gmail app password; the candidate sets up alerts and a filter | no |
+| `linkedin_email` | Reads the job-alert emails LinkedIn sends you from one Gmail label. Opening each job's public page to read the description is a separate switch, off by default: LinkedIn's user agreement prohibits automated access to its site and it blocks many such requests, so turn it on only if you accept that; off, jobs are scored from the alert alone and marked 'title only'. The switch is `sources.linkedin_email.fetch_pages`; a title-only posting's scoring call is told the description is unavailable, its function fit is "unknown" and never capped, and the Sheet's Function Fit column (when present) says "unknown". Privacy: the label is read read-only, and, if page fetching is on, LinkedIn receives requests for each job page from the runner's address | Gmail app password; the candidate sets up alerts and a filter | no |
 | `adzuna` | Aggregator API, searched by the profile's queries and locations | free Adzuna app id and key | yes |
 | `jsearch` | Aggregator API on RapidAPI, searched by the profile's queries | RapidAPI key (free tier) | yes |
 | `usajobs` | US federal postings by job series and title keywords | free USAJOBS key | no (bounded by series, hiring path and pay floor) |
@@ -156,7 +156,7 @@ Digest thresholds (`scoring.thresholds`): main digest at 7 and above, "worth a l
 
 **The digest** is an HTML email to `delivery.email_to`, sent from the Gmail account in `GMAIL_ADDRESS`, on `delivery.digest_days`, timed to arrive by `delivery.digest_time_local` in `delivery.timezone`. Sections, in order: main digest, worth a look, and "cool company, wrong role" (capped at `scoring.cool_company_wrong_role_cap` entries by company fit; all are logged). Each entry shows score, title, company, location and work model, the "relo" tag where it applies, stated compensation, posting age with a fresh flag, the criteria and modifiers that produced the score, the rationale, and a resolved apply link. Any failed or cancelled fetch run since the last digest shows as a banner line with a link to the run.
 
-A digest day with no new postings sends no email when `delivery.skip_empty_days` is true, and counts as a skipped day in the weekly summary.
+A digest day with no new postings sends no email when `delivery.skip_empty_days` is true, and counts as a skipped day in the weekly summary. The exception is a failed or cancelled fetch run since the last digest: that always produces an email. With no new postings it is an alert-only digest (subject "Job digest: fetch runs failed": the header, the banner, one sentence and the footer), which still counts as a skipped day; the weekly summary says how many alert emails went out. Each failed run is reported in one sent email only.
 
 **The weekly summary** goes out on `delivery.weekly_summary_day` at `delivery.weekly_summary_time_local`: what scored well, what the candidate declined and why that matters for scoring, which sources produced, skipped days, and boards parked or recovered.
 
@@ -164,7 +164,9 @@ A digest day with no new postings sends no email when `delivery.skip_empty_days`
 
 ## 10. The Google Sheet
 
-Every posting the agent scores is logged. Score 1 and above go to the main index; score 0 goes to a Disqualified tab with the reason (hard block, dealbreaker). Postings dropped before scoring never reach the Sheet: wrong title, already seen, and, with the default `outside_country: disqualify`, outside the country (§6). Columns are always addressed by header name, never by position, so the candidate can reorder them; optional columns (criteria, hiring company) are written only if their header exists and are never created. `python main.py sheet-init` creates the tabs and headers in a blank Sheet.
+Every posting the agent scores is logged. Score 1 and above go to the main index; score 0 goes to a Disqualified tab with the reason (hard block, dealbreaker). Postings dropped before scoring never reach the Sheet: wrong title, already seen, and, with the default `outside_country: disqualify`, outside the country (§6). Columns are always addressed by header name, never by position, so the candidate can reorder them; optional columns (criteria, hiring company) are written only if their header exists and are never created. Each tab has a small set of required headers (main index: Job Title, Company, Apply Link, Status, Date First Seen, Score; Disqualified: Job Title, Company, Apply Link, Date First Seen, Score, Disqualify Reason). If row 1 lacks one, or repeats a header, the agent writes nothing to that tab: the rows wait for the next digest (below), the email says so, and `doctor` names the header. The agent never inserts a row or a column into the Sheet. `python main.py sheet-init` creates the tabs and headers in a blank Sheet.
+
+A Sheet write that fails (an outage, a changed share, a renamed column) never loses its rows. They are kept in `state/sheet_retry/`, one file per digest run with each row exactly as it would have been written and its tab, and committed with the digest's state. Every digest first retries every waiting file, oldest first, and deletes a file only once all its rows are on their tabs; a row whose Apply Link is already on its tab counts as written, so a write that failed halfway never duplicates rows. While a file waits, the digest banner says how many postings from which date are waiting and the last error (the oldest five files, then a count), the run fails visibly, `doctor` reports the files and the oldest date, and status updates for those postings wait until their rows exist. A file that cannot be read is renamed `.bad` and reported, never dropped.
 
 **Status** moves forward only: New → Interested → Applied → Interviewing → Rejected. `Declined` means the candidate passed; `Rejected` means the company did. The weekly summary's feedback reads Declined rows only, so the two are never confused. Declined and Closed are set by hand and never overwritten.
 
@@ -214,11 +216,11 @@ The candidate's own list, `my_companies.csv`, is where the net is widened for th
 
 ## 14. Cost
 
-- Model API: one scoring call per posting that passes the filters, about 1 cent each, plus bespoke's first read of each plain careers page (well under a cent), plus a few calls for the weekly summary. About $7 to $21 a month at a typical 20 to 60 scored postings a day. Conservative high: about $45 in the first month if the entire starter list is loaded unfiltered, because every board's existing postings are scored once; `scoring.max_calls_per_run` spreads that over the first week or two.
+- Model API: one scoring call per posting that passes the filters, a little over half a cent each (measured 9 Nov 2026 at $0.0063 a call, with the scoring prompt cached: about $0.0116 without the cache), plus bespoke's first read of each plain careers page (well under a cent), plus a few calls for the weekly summary. About $4 to $11 a month at a typical 20 to 60 scored postings a day. Conservative high: about $24 in the first month if the entire starter list is loaded unfiltered, because every board's existing postings are scored once; `scoring.max_calls_per_run` and the daily ceiling `scoring.max_calls_per_day` (scoring and bespoke extractions together, reset at local midnight) spread that over the first weeks.
 - GitHub Actions: three fetch runs and one digest run a day, each a few minutes, plus a monthly resolve run of up to a few hours. Within the free tier for a private repository.
 - Adzuna, RapidAPI (JSearch) and USAJOBS have free tiers that cover this volume. Google Sheets and Gmail are free.
 
-`calibrate` prints the measured cost per call for the candidate's model and profile, and `scoring.max_calls_per_run` caps a run so a large new list spreads its cost over days.
+`calibrate` prints the measured cost per call for the candidate's model and profile, cached and uncached input apart, and `scoring.max_calls_per_run` and `scoring.max_calls_per_day` cap a run and a day so a large new list spreads its cost over days.
 
 ## 15. Limits
 

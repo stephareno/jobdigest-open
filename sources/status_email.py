@@ -314,7 +314,8 @@ def call_claude(user_message, model=STATUS_EMAIL_MODEL, thinking=STATUS_EMAIL_TH
     """One classification call. Returns (reply text, usage dict)."""
     extra = {"thinking": thinking} if thinking else {}
     raw, usage = llm.complete(model, SYSTEM_PROMPT, [{"role": "user", "content": user_message}],
-                              MAX_TOKENS, json_mode=True, purpose="status email call", **extra)
+                              MAX_TOKENS, json_mode=True, purpose="status email call",
+                              cache_system=True, **extra)          # REV-06
     if usage.stop_reason == "max_tokens":
         raise ValueError(f"reply cut at max_tokens ({MAX_TOKENS})")
     if usage.stop_reason == "refusal":

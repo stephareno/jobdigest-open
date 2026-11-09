@@ -140,8 +140,8 @@ footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
 <section>
   <h2>Cost and limits</h2>
   <div class="grid">
-    <div class="card"><h4>What it costs</h4><p><strong>About $7 to $21 a month</strong> in model API calls at a typical 20 to 60 scored postings a day, about 1 cent a posting.</p><ul>
-      <li>Conservative high: about $45 in the first month if you load the entire starter list unfiltered, because every board's existing postings get scored once; the per-run cap spreads that over the first week or two. After that it settles to the typical range.</li>
+    <div class="card"><h4>What it costs</h4><p><strong>About $4 to $11 a month</strong> in model API calls at a typical 20 to 60 scored postings a day, a little over half a cent a posting.</p><ul>
+      <li>Conservative high: about $24 in the first month if you load the entire starter list unfiltered, because every board's existing postings get scored once; the per-run cap and daily ceiling spread that over the first weeks. After that it settles to the typical range.</li>
       <li>GitHub Actions: within the free tier for a private repository.</li>
       <li>Adzuna, RapidAPI, USAJOBS, Gmail, Google Sheets: free at this volume.</li>
     </ul></div>
@@ -152,7 +152,7 @@ footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
       <li>Guarantee the minute of arrival; GitHub's queue adds a couple of hours to scheduled runs, and the schedule allows for it.</li>
     </ul></div>
     <div class="card"><h4>The model</h4><p>Built and calibrated on Claude via the Anthropic API, which it requires today. All model calls go through one module; OpenAI-compatible endpoints are the first item on the public roadmap.</p></div>
-    <div class="card"><h4>Privacy and data</h4><ul><li>The model provider receives your profile's scoring text and each posting's text, plus text from the website of each company on a digest card and, weekly, your notes on roles you declined.</li><li>The Google Sheet and Gmail are your own accounts. The LinkedIn reader opens one label, read-only.</li><li>Status tracking, off by default, reads the last 14 days of your inbox read-only and sends the model only messages from others that name a company in your Sheet.</li><li>Your searches go to the job sources you turn on.</li></ul><p>Nothing is sent anywhere else: no server, analytics or telemetry of this project's.</p></div>
+    <div class="card"><h4>Privacy and data</h4><ul><li>The model provider receives your profile's scoring text and each posting's text, plus text from the website of each company on a digest card and, weekly, your notes on roles you declined.</li><li>The Google Sheet and Gmail are your own accounts. The LinkedIn reader opens one label, read-only, and, if page fetching is on, LinkedIn receives requests for each job page from the runner's address.</li><li>Status tracking, off by default, reads the last 14 days of your inbox read-only and sends the model only messages from others that name a company in your Sheet.</li><li>Your searches go to the job sources you turn on.</li></ul><p>Nothing is sent anywhere else: no server, analytics or telemetry of this project's.</p></div>
   </div>
 
 </section>
@@ -263,7 +263,7 @@ footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
     <tbody>
       <tr><td>Company career boards on Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Rippling, Recruitee, BambooHR, Breezy, Teamtailor, Personio, Oracle HCM, ADP, UKG Ready, Gem, Comeet, Manatal, JobScore and Workday</td><td>a list of companies</td><td>The best source: fresh, complete, direct apply links</td></tr>
       <tr><td>Plain career pages with no board</td><td>a list of companies</td><td>A slower crawler reads each page and has the model extract new postings when the page changes. The first read of each page is a model call, so keep this to companies you care about</td></tr>
-      <tr><td>LinkedIn job alerts</td><td>a Gmail label</td><td>Reads only the alert emails LinkedIn sends you; never touches linkedin.com</td></tr>
+      <tr><td>LinkedIn job alerts</td><td>a Gmail label</td><td>Reads the job-alert emails LinkedIn sends you from one Gmail label. Opening each job's public page to read the description is a separate switch, off by default: LinkedIn's user agreement prohibits automated access to its site and it blocks many such requests, so turn it on only if you accept that; off, jobs are scored from the alert alone and marked 'title only'.</td></tr>
       <tr><td>Adzuna, JSearch</td><td>free keys</td><td>Wide but noisier; apply links go through an intermediary</td></tr>
       <tr><td>USAJOBS</td><td>free key</td><td>US federal roles by job series</td></tr>
       <tr><td>Built In</td><td>nothing</td><td>Tech roles in a handful of metros</td></tr>

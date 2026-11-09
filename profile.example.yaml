@@ -491,6 +491,13 @@ scoring:
   # one costs at your scoring.model, and this caps a run at 150 times that
   # (at claude-sonnet-4-6, measured at about $0.013 a call: under $2 a run).
   max_calls_per_run: 150
+  # Code: at most this many model calls in a day (your delivery.timezone),
+  # across all fetch runs, scoring and careers-page extractions together.
+  # Past it, the remaining postings wait unseen for the next day and the
+  # digest says how many. At about $0.0063 a scoring call (claude-sonnet-4-6
+  # with the prompt cached, measured 9 Nov 2026) this caps a day at about
+  # $1.90 (under $60 even if every day of a month hit it).
+  max_calls_per_day: 300
 
 
 # --- Dream companies -----------------------------------------------------------
@@ -535,6 +542,12 @@ sources:
     # row for any it cannot find. Needs GOOGLE_DOC_ID and the Doc shared with
     # the service account.
     enabled: false
+  # Optional: careers-page reading (the bespoke source). At most this many
+  # model extractions in one fetch run (changed pages only); pages past it wait
+  # for the next run. Left out: 60. Extractions also count toward
+  # scoring.max_calls_per_day.
+  bespoke:
+    max_extractions_per_run: 60
   # Company lists (data/company_lists/*.csv; format in its README.md), in
   # order. tier dream: the dream-company threshold and the ATS/watchlist path;
   # tier watch: the board tier. A company in several lists takes the first
@@ -568,6 +581,13 @@ sources:
       tier: dream
   # Gmail label the LinkedIn alert emails are filed under.
   linkedin_label: li-job-alerts
+  # LinkedIn job pages. true: the agent opens each job's public LinkedIn page
+  # to read the description, the way a browser would, without logging in;
+  # LinkedIn's user agreement prohibits automated access to its site and it
+  # blocks many such requests. false: jobs are scored from the alert email
+  # alone (title, company, location) and tagged 'title only' in the digest.
+  linkedin_email:
+    fetch_pages: false
   adzuna:
     # One API call per query per location per run, so length is a cost.
     queries:
@@ -652,5 +672,13 @@ delivery:
   weekly_summary_time_local: "08:00"
   # true: a digest day with 0 new postings sends no email and counts as a
   # skipped day in the weekly summary. (A day with new postings but no matches
-  # still sends a "resurface list" of earlier unactioned roles.)
+  # still sends a "resurface list" of earlier unactioned roles.) A fetch run
+  # that failed or was cancelled since the last digest always sends an email,
+  # whatever this says: with nothing new, an alert-only one naming the runs.
   skip_empty_days: true
+  # false (the default): the workflows refuse to run, and doctor fails, when
+  # this repository is public or a fork, because every run commits this file
+  # and your job history (seen postings, queued batches, state) to it. true
+  # makes that a warning: everything the agent commits is then readable by
+  # anyone. Leave it false unless you mean to publish them.
+  allow_public_repo: false

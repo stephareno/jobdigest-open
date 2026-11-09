@@ -68,9 +68,16 @@ DEFAULTS = {
     "sources.company_lists": [],
     # PUB-12: the example profile's cap; a profile written before PUB-12 gets it too.
     "scoring.max_calls_per_run": 150,
+    # REV-06: the example profile's daily ceiling; a profile written before REV-06 gets it too.
+    "scoring.max_calls_per_day": 300,
+    # REV-01: the workflows and doctor refuse a public repository or a fork unless this is true.
+    "delivery.allow_public_repo": False,
+    # REV-08: LinkedIn page fetching is an explicit opt-in.
+    "sources.linkedin_email.fetch_pages": False,
 }
 # Sections the profile may leave out (their DEFAULTS apply).
-OPTIONAL_SECTIONS = {"location.work_models", "sources.status_tracking", "sources.applied_doc"}
+OPTIONAL_SECTIONS = {"location.work_models", "sources.status_tracking", "sources.applied_doc",
+                     "sources.bespoke", "sources.linkedin_email"}
 # Fields a release renamed: the old name is reported with its new one.
 RENAMED = {"roles.target_function": "roles.target_department",           # PUB-10
            "roles.exec_titles_standalone": "roles.target_titles"}         # PUB-09
@@ -220,6 +227,8 @@ SCHEMA = {
         "cool_company_wrong_role_cap": POSITIVE,
         # PUB-12: at most this many scoring calls per fetch run (main.fetch_run)
         "max_calls_per_run": Field("int", sign="positive", optional=True),
+        # REV-06: at most this many model calls a local day across fetch runs (fetch_budget.py)
+        "max_calls_per_day": Field("int", sign="positive", optional=True),
     },
     "dream_companies": {"file": STR},
     "sources": {
@@ -227,9 +236,13 @@ SCHEMA = {
         # PUB-10: the two inbox readers, which update Sheet rows and fetch no postings.
         "status_tracking": {"enabled": Field("bool", optional=True)},
         "applied_doc": {"enabled": Field("bool", optional=True)},
+        # REV-06: Bespoke extraction calls per fetch run (default config.BESPOKE_MAX_EXTRACTIONS_PER_RUN)
+        "bespoke": {"max_extractions_per_run": Field("int", sign="positive", optional=True)},
         # PUB-11: company lists (company_lists.py): [{file, tier, filter}]
         "company_lists": Field("company_lists", optional=True),
         "linkedin_label": STR,
+        # REV-08: open each LinkedIn job's public page for its description (default false)
+        "linkedin_email": {"fetch_pages": Field("bool", optional=True)},
         "adzuna": {"queries": STR_LIST, "locations": Field("list", item="str", optional=True)},
         "jsearch": {"queries": STR_LIST},
         "builtin": {"search_urls": Field("list", item="str", optional=True), "title_queries": STR_LIST},
@@ -248,6 +261,8 @@ SCHEMA = {
         "weekly_summary_day": STR,
         "weekly_summary_time_local": Field("str", optional=True),
         "skip_empty_days": BOOL,
+        # REV-01: let the workflows commit state to a public repository or a fork (default false)
+        "allow_public_repo": Field("bool", optional=True),
     },
 }
 

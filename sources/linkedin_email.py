@@ -27,8 +27,48 @@ _HEADERS = {
 }
 
 
+# REV-07: the outcome of each job page fetch, counted per run and shown in
+# main.py's fetch summary (and kept for doctor in fetch_budget.json).
+OUTCOMES = ("fetched", "blocked", "login_wall", "empty", "error", "kept", "unavailable")
+# REV-08: with sources.linkedin_email.fetch_pages false, the counts are these.
+ALERT_ONLY_OUTCOMES = ("title_only", "no_alert_details")
+# Title, company and location per job id, read from the alert emails
+# themselves (REV-07): the fallback when the job page does not load.
+ALERT_INFO = {}
+# Final-URL markers of LinkedIn's sign-in pages.
+LOGIN_WALL_MARKERS = ("/authwall", "/login", "/uas/login", "/checkpoint", "/signup")
+
+
+class LinkedInJobs(list):
+    """The run's jobs, plus commit(): save page-failure counts and the run's
+    counts (REV-07). main.py calls commit() only after the queue is written,
+    so a failure is never counted for a run whose postings were lost."""
+
+    def __init__(self, jobs=(), commit=None, counts=None):
+        super().__init__(jobs)
+        self._commit = commit
+        self.counts = counts or {}
+        self.summary = summary_line(self.counts) if counts else ""
+
+    def commit(self):
+        if self._commit is not None:
+            self._commit()
+
+
+def summary_line(counts):
+    if "title_only" in counts:
+        return (f"alert emails only (sources.linkedin_email.fetch_pages false): {counts['title_only']} title-only "
+                f"postings, {counts.get('no_alert_details', 0)} jobs skipped (the alert gave no title)")
+    return ("job pages: " + ", ".join(f"{name.replace('_', ' ')} {counts.get(name, 0)}" for name in OUTCOMES)
+            + f" (of {sum(counts.get(n, 0) for n in ('fetched', 'blocked', 'login_wall', 'empty', 'error'))} "
+              f"pages tried)")
+
+
 def fetch_all():
     print("\n[LinkedIn Email DEBUG] ========== fetch_all() START ==========")
+    import config
+    import state as _state
+    ALERT_INFO.clear()
     job_ids = _collect_job_ids_from_email()
 
     print(f"\n[LinkedIn Email DEBUG] --- Step 2: URL construction ---")
@@ -41,7 +81,6 @@ def fetch_all():
         print(f"[LinkedIn Email DEBUG]   job_id={jid}  url={url}")
 
     print(f"\n[LinkedIn Email DEBUG] --- Step 3: seen_jobs filter ---")
-    import state as _state
     unseen_ids = []
     for jid, url in zip(job_ids, urls):
         normalized = _state.normalize_url(url)
@@ -51,13 +90,53 @@ def fetch_all():
             unseen_ids.append(jid)
     print(f"[LinkedIn Email DEBUG]   {len(job_ids)} total → {len(unseen_ids)} after seen_jobs filter")
 
+    if not fetch_pages():
+        return _alert_only_jobs(unseen_ids)
+
     print(f"\n[LinkedIn Email DEBUG] --- Step 4: fetching job details for {len(unseen_ids)} job(s) ---")
+    # REV-07: a page that did not load drops its job, unseen, for a later run
+    # to retry; after LINKEDIN_MAX_PAGE_FAILURES runs in a row it is recorded
+    # at score 0 ("LinkedIn page unavailable") so it stops costing fetches.
+    failures = _state.load_linkedin_failures()
+    new_counts, cleared = {}, []
+    counts = {name: 0 for name in OUTCOMES}
     jobs = []
     for i, job_id in enumerate(unseen_ids):
-        details = _fetch_job_details(job_id)
-        jobs.append(details)
+        job, outcome = _fetch_page(job_id)
+        key = _state.linkedin_fail_key(job.get("apply_link") or f"https://www.linkedin.com/jobs/view/{job_id}/")
+        if outcome == "ok":
+            counts["fetched"] += 1
+            jobs.append(job)
+            if key in failures:
+                cleared.append(key)
+        else:
+            counts[outcome] += 1
+            failed_runs = failures.get(key, 0) + 1
+            alert = ALERT_INFO.get(job_id, {})
+            for field in ("title", "company", "location"):
+                job[field] = job[field] or alert.get(field, "")
+            if failed_runs >= config.LINKEDIN_MAX_PAGE_FAILURES:
+                job["unavailable_reason"] = config.LINKEDIN_UNAVAILABLE_REASON
+                job["description"] = ""
+                counts["unavailable"] += 1
+                cleared.append(key)
+                jobs.append(job)
+                print(f"[LinkedIn Email] {job_id}: page failed {failed_runs} runs in a row ({outcome}); "
+                      f"recorded at score 0 as '{config.LINKEDIN_UNAVAILABLE_REASON}'")
+            elif config.LINKEDIN_KEEP_ALERT_ONLY_ROWS and all(alert.get(f) for f in ("title", "company", "location")):
+                job["description"] = ""
+                counts["kept"] += 1
+                cleared.append(key)
+                jobs.append(job)
+                print(f"[LinkedIn Email] {job_id}: page {outcome}; kept from the alert email alone "
+                      f"(LINKEDIN_KEEP_ALERT_ONLY_ROWS)")
+            else:
+                new_counts[key] = failed_runs
+                print(f"[LinkedIn Email] {job_id}: page {outcome}; dropped unseen for a later run "
+                      f"(failure {failed_runs} of {config.LINKEDIN_MAX_PAGE_FAILURES})")
         if i < len(unseen_ids) - 1:
             time.sleep(1.5)
+    print(f"[LinkedIn Email] {summary_line(counts)}")
 
     print(f"\n[LinkedIn Email DEBUG] --- Step 5: location filter preview ---")
     from location import passes_location_filter, location_penalty
@@ -83,7 +162,55 @@ def fetch_all():
     print("[LinkedIn Email DEBUG] ========== fetch_all() END ==========\n")
 
     print(f"[LinkedIn Email] Extracted {len(jobs)} unique jobs")
-    return jobs
+
+    def commit():
+        _state.save_linkedin_failures(new_counts, cleared)
+        import fetch_budget
+        fetch_budget.record_linkedin(counts)
+    return LinkedInJobs(jobs, commit, counts)
+
+
+def fetch_pages():
+    """REV-08: sources.linkedin_email.fetch_pages, the explicit opt-in to
+    opening each job's public LinkedIn page (off by default)."""
+    return bool((profile_loader.active()["sources"].get("linkedin_email") or {}).get("fetch_pages"))
+
+
+def alert_only_job(job_id, info):
+    """A posting built from the alert email alone (REV-08): no page fetched,
+    no description, marked title_only for the scorer, the cap and the card."""
+    return {
+        "title": info.get("title", ""),
+        "company": info.get("company", ""),
+        "location": info.get("location", ""),
+        "work_model": "Remote" if "remote" in (info.get("title", "") + " " + info.get("location", "")).lower()
+                      else "Hybrid" if "hybrid" in info.get("location", "").lower() else "Unknown",
+        "comp": "",
+        "apply_link": f"https://www.linkedin.com/jobs/view/{job_id}/",
+        "description": "",
+        "date_posted": info.get("date_posted", ""),
+        "posted_precision": "day" if info.get("date_posted") else "",
+        "source": "linkedin_email",
+        "title_only": True,
+    }
+
+
+def _alert_only_jobs(job_ids):
+    """REV-08: fetch_pages false. Every unseen job the alert email names with a
+    title becomes a title-only posting; linkedin.com is never requested."""
+    counts = {"title_only": 0, "no_alert_details": 0}
+    jobs = []
+    for job_id in job_ids:
+        info = ALERT_INFO.get(job_id) or {}
+        if not info.get("title"):
+            counts["no_alert_details"] += 1
+            print(f"[LinkedIn Email] {job_id}: the alert email gave no title; skipped (no page is fetched)")
+            continue
+        jobs.append(alert_only_job(job_id, info))
+        counts["title_only"] += 1
+    print(f"[LinkedIn Email] {summary_line(counts)}")
+    print(f"[LinkedIn Email] Extracted {len(jobs)} unique jobs")
+    return LinkedInJobs(jobs, None, counts)
 
 
 def _collect_job_ids_from_email():
@@ -130,6 +257,8 @@ def _collect_job_ids_from_email():
             raw = msg_data[0][1]
             msg = email.message_from_bytes(raw)
             body = _get_email_body(msg)
+            for jid, info in alert_details(body).items():
+                ALERT_INFO.setdefault(jid, info)
             found_in_email = re.findall(r'linkedin\.com(?:/comm)?/jobs/view/(\d+)', body)
             new_in_email = [jid for jid in found_in_email if jid not in seen_ids]
             print(f"[LinkedIn Email DEBUG]   msg {msg_id.decode()}: {len(found_in_email)} job ID(s) in body, {len(new_in_email)} new → IDs: {new_in_email[:10]}{'...' if len(new_in_email) > 10 else ''}")
@@ -147,8 +276,64 @@ def _collect_job_ids_from_email():
     return job_ids
 
 
-def _fetch_job_details(job_id):
-    """Scrape title, company, location, and description from a LinkedIn job page."""
+def alert_details(body):
+    """{job id: {title, company, location}} from one alert email's HTML (REV-07).
+
+    LinkedIn's alert cards link the job title to /jobs/view/<id>, then give
+    the company and the location as the next lines ("Acme · Chicago, IL" or
+    two separate lines). Best effort: a field it cannot find is left out."""
+    if "<" not in body:
+        return {}
+    soup = BeautifulSoup(body, "html.parser")
+    out = {}
+    for a in soup.find_all("a", href=True):
+        m = re.search(r"linkedin\.com(?:/comm)?/jobs/view/(\d+)", a["href"])
+        title = " ".join(a.get_text(" ", strip=True).split())
+        if not m or not title or title.lower() in ("view job", "apply", "see all jobs"):
+            continue
+        jid = m.group(1)
+        if jid in out and out[jid].get("company"):
+            continue
+        block = a
+        for _ in range(4):                         # the card around the link
+            if block.parent is None:
+                break
+            block = block.parent
+            lines = [" ".join(t.split()) for t in block.stripped_strings]
+            if len(lines) >= 3 and title in lines:
+                break
+        lines = [" ".join(t.split()) for t in block.stripped_strings]
+        after = lines[lines.index(title) + 1:] if title in lines else []
+        info = {"title": title}
+        if after:
+            parts = [p.strip() for p in after[0].split("·")]
+            if len(parts) >= 2:
+                info["company"], info["location"] = parts[0], parts[1]
+            else:
+                info["company"] = parts[0]
+                if len(after) > 1:
+                    info["location"] = after[1]
+        out[jid] = info
+    return out
+
+
+def _page_outcome(resp, url):
+    """"ok", "blocked" (non-200, LinkedIn's 999 included) or "login_wall"
+    (redirected to a sign-in page) for one response."""
+    status = getattr(resp, "status_code", 200)
+    final = str(getattr(resp, "url", url) or url)
+    history = [str(getattr(h, "url", "")) for h in getattr(resp, "history", None) or ()]
+    if any(marker in u for u in [final] + history for marker in LOGIN_WALL_MARKERS):
+        return "login_wall"
+    if status != 200:
+        return "blocked"
+    return "ok"
+
+
+def _fetch_page(job_id):
+    """(job, outcome) for one LinkedIn job page (REV-07): outcome "ok",
+    "blocked" (non-200, 999 included), "login_wall", "error" (the request
+    raised) or "empty" (no title or no description parsed)."""
     url = f"https://www.linkedin.com/jobs/view/{job_id}/"
     base = {
         "title": "",
@@ -165,7 +350,15 @@ def _fetch_job_details(job_id):
     }
     try:
         resp = requests.get(url, headers=_HEADERS, timeout=10)
-        resp.raise_for_status()
+    except Exception as e:
+        print(f"[LinkedIn Email] Could not fetch details for job {job_id}: {type(e).__name__}: {e}")
+        return base, "error"
+    outcome = _page_outcome(resp, url)
+    if outcome != "ok":
+        print(f"[LinkedIn Email] {job_id}: {outcome} (HTTP {getattr(resp, 'status_code', '?')}, "
+              f"{getattr(resp, 'url', url)})")
+        return base, outcome
+    try:
         soup = BeautifulSoup(resp.text, "html.parser")
 
         title_el = (
@@ -193,26 +386,37 @@ def _fetch_job_details(job_id):
         location = location_el.get_text(strip=True) if location_el else ""
         # SRC-21: the scorer's JD_CHARS is the only limit on JD text.
         description = desc_el.get_text(strip=True)[:JD_CHARS] if desc_el else ""
-
-        text = (title + " " + description + " " + location).lower()
-        if "remote" in text:
-            work_model = "Remote"
-        elif "hybrid" in text:
-            work_model = "Hybrid"
-        else:
-            work_model = "Unknown"
-
-        base.update({
-            "title": title,
-            "company": company,
-            "location": location,
-            "work_model": work_model,
-            "description": description,
-        })
-        print(f"[LinkedIn Email] {job_id}: '{title}' at '{company}'")
     except Exception as e:
-        print(f"[LinkedIn Email] Could not fetch details for job {job_id}: {e}")
-    return base
+        print(f"[LinkedIn Email] Could not parse job {job_id}: {type(e).__name__}: {e}")
+        return base, "error"
+
+    text = (title + " " + description + " " + location).lower()
+    if "remote" in text:
+        work_model = "Remote"
+    elif "hybrid" in text:
+        work_model = "Hybrid"
+    else:
+        work_model = "Unknown"
+
+    base.update({
+        "title": title,
+        "company": company,
+        "location": location,
+        "work_model": work_model,
+        "description": description,
+    })
+    if not title or not description:
+        print(f"[LinkedIn Email] {job_id}: page loaded but parsed no "
+              f"{'title' if not title else 'description'}")
+        return base, "empty"
+    print(f"[LinkedIn Email] {job_id}: '{title}' at '{company}'")
+    return base, "ok"
+
+
+def _fetch_job_details(job_id):
+    """The job dict alone, whatever the outcome (kept for callers and tests
+    that read the parse; fetch_all uses _fetch_page)."""
+    return _fetch_page(job_id)[0]
 
 
 def _get_email_body(msg):

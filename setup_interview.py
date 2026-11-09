@@ -231,6 +231,14 @@ def _localtime_link():
     return target.split("zoneinfo/", 1)[1] if "zoneinfo/" in target else ""
 
 
+LINKEDIN_PAGES_EXPLAINER = (
+    "   LinkedIn pages: the agent can open each job's public LinkedIn page to read its description,\n"
+    "   the way a browser would, without logging in. LinkedIn's user agreement prohibits automated\n"
+    "   access to its site and it blocks many such requests, so say yes only if you accept that.\n"
+    "   No: jobs are scored from the alert email alone (title, company, location) and marked\n"
+    "   'title only' in the digest.")
+
+
 def interview(data, ui):
     """Ask every question; `data` (the example profile) is updated in place.
     Returns the dream-company names the user gave (empty: keep the file)."""
@@ -337,6 +345,11 @@ def interview(data, ui):
     if src["enabled"].get("linkedin_email"):
         src["linkedin_label"] = ui.text("Gmail label your LinkedIn job alerts are filed under",
                                         src["linkedin_label"])
+        # REV-08: page fetching is an explicit opt-in, asked with its trade-off.
+        ui.say(LINKEDIN_PAGES_EXPLAINER)
+        li = src.setdefault("linkedin_email", {})
+        li["fetch_pages"] = ui.yes("Open each LinkedIn job's public page to read the description",
+                                   bool(li.get("fetch_pages", False)))
     if src["enabled"].get("usajobs"):
         ui.say("   USAJOBS series: 2210 is IT Management. Others: "
                "https://www.opm.gov/policy-data-oversight/classification-qualifications/classifying-general-schedule-positions/")

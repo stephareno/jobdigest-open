@@ -300,6 +300,7 @@ scoring:
   function_cap: 4
   cool_company_wrong_role_cap: 3
   max_calls_per_run: 100
+  max_calls_per_day: 300
 dream_companies:
   file: tests/fixtures/dream_companies_test.txt
 sources:
@@ -318,6 +319,8 @@ sources:
     enabled: true
   applied_doc:
     enabled: true
+  bespoke:
+    max_extractions_per_run: 60
   company_lists:
   - file: data/company_lists/starter_companies.csv
     tier: watch
@@ -326,6 +329,8 @@ sources:
       segment:
       - startup
   linkedin_label: test-job-alerts
+  linkedin_email:
+    fetch_pages: true
   adzuna:
     queries:
     - VP of IT
@@ -377,3 +382,4 @@ delivery:
   weekly_summary_day: Saturday
   weekly_summary_time_local: 08:17
   skip_empty_days: true
+  allow_public_repo: false

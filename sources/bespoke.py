@@ -481,7 +481,7 @@ def extract_jobs(company: str, html: str, url: str,
     try:
         body, reply_usage = llm.complete(
             model, EXTRACT_SYSTEM, [{"role": "user", "content": page_digest(company, html, url)}], 4096,
-            json_mode=True, purpose="Bespoke extraction",
+            json_mode=True, purpose="Bespoke extraction", cache_system=True,   # REV-06
             # Bounded so one slow call cannot carry a run past its budget.
             timeout=config.BESPOKE_EXTRACT_TIMEOUT)
     except ApiAccessError:
@@ -731,7 +731,7 @@ def run_rolling(companies: list[dict[str, str]], state: dict[str, dict[str, Any]
                 cursor: dict[str, Any], budget_secs: float,
                 cancel: threading.Event | None = None, extract: bool = True,
                 model: str | None = None, api_ready: bool | None = None, clock=time.monotonic,
-                check=None) -> RollingRun:
+                check=None, max_extractions: int | None = None) -> RollingRun:
     """Continue the rolling pass from `cursor` for as long as the budget allows.
 
     Companies are taken in order_key order, starting after the cursor and
@@ -742,6 +742,11 @@ def run_rolling(companies: list[dict[str, str]], state: dict[str, dict[str, Any]
     (budget, an API outage, cancellation) is where the next run
     resumes. Nothing is written here: the caller commits entries and cursor
     after it has queued the jobs.
+
+    REV-06: at most `max_extractions` extraction calls (None: no cap). The
+    first company that would need one more stops the run (stop_reason
+    "extraction_cap") before it counts as done, so the cursor stays on it and
+    the next pass starts there. stats["extraction_calls"] counts the calls.
     """
     out = RollingRun()
     check = check or (lambda batch: asyncio.run(check_all(batch, state)))
@@ -761,6 +766,8 @@ def run_rolling(companies: list[dict[str, str]], state: dict[str, dict[str, Any]
     stats, counters, js_only = out.stats, out.counters, []
     stats["companies"] = 0
     live_streak = [0]   # consecutive extraction errors as calls finish, shared with workers
+    stats["extraction_calls"] = 0
+    cap = None if max_extractions is None else max(0, int(max_extractions))
     last_key = keys[-1] if keys else ""
 
     i = 0
@@ -801,6 +808,9 @@ def run_rolling(companies: list[dict[str, str]], state: dict[str, dict[str, Any]
                     if not api_ready:
                         out.stop_reason, stop = "no_api_client", True
                         break
+                    if cap is not None and stats["extraction_calls"] >= cap:
+                        out.stop_reason, stop = "extraction_cap", True
+                        break
                     while len(running) >= config.BESPOKE_EXTRACT_CONCURRENCY:
                         finished, running = wait(running, return_when=FIRST_COMPLETED)
                     if clock() >= deadline - config.BESPOKE_EXTRACT_RESERVE_SECS:
@@ -808,6 +818,7 @@ def run_rolling(companies: list[dict[str, str]], state: dict[str, dict[str, Any]
                         break
                     future = pool.submit(_extract_tracked, r, model, live_streak)
                     running.add(future)
+                    stats["extraction_calls"] += 1
                 records.append((r, entry, future))
             wait(running)  # each call is bounded by BESPOKE_EXTRACT_TIMEOUT
         if any(f is not None for _, _, f in records):
@@ -900,8 +911,25 @@ def fetch_all():
         return []
     state = load_state()
     cursor = load_cursor()
-    result = run_rolling(companies, state, cursor, config.BESPOKE_RUN_BUDGET_SECS, cancel=_CANCEL)
+    # REV-06: the per-run extraction cap, and what is left of the day's
+    # model-call ceiling (scoring.max_calls_per_day), whichever is lower.
+    import fetch_budget
+    import profile_loader
+    per_run = ((profile_loader.active()["sources"].get("bespoke") or {}).get("max_extractions_per_run")
+               or config.BESPOKE_MAX_EXTRACTIONS_PER_RUN)
+    daily_left = fetch_budget.remaining_today()
+    cap = min(per_run, daily_left)
+    result = run_rolling(companies, state, cursor, config.BESPOKE_RUN_BUDGET_SECS, cancel=_CANCEL,
+                         max_extractions=cap)
     stats, new = result.stats, result.cursor
+    fetch_budget.RUN["extractions"] += stats.get("extraction_calls", 0)
+    if result.stop_reason == "extraction_cap":
+        why = (f"sources.bespoke.max_extractions_per_run {per_run}" if per_run <= daily_left
+               else f"the daily ceiling scoring.max_calls_per_day {fetch_budget.ceiling()}, "
+                    f"{daily_left} calls left today")
+        print(f"[Bespoke] extraction cap reached after {stats['extraction_calls']} extractions ({why}); "
+              f"the rest of the pages wait for the next pass, cursor at the first one left")
+    print(f"[Bespoke] {stats.get('extraction_calls', 0)} extraction calls this run (cap {cap})")
 
     print(f"[Bespoke] pass {cursor.get('pass', 1)}: {stats['companies']} of {len(companies)} companies done "
           f"this run (stopped: {result.stop_reason or 'end of list'}); "

@@ -108,6 +108,42 @@ jobs:
       - name: Install dependencies
         run: pip install --require-hashes -r requirements.lock
 
+      - name: Refuse to commit state to a public repository
+        id: public-guard
+        # REV-01: this job commits profile.yaml's owner's job history and state
+        # to the repository. A public repository (or a fork of the public
+        # template, public by construction) would publish it. Runs before any
+        # step that touches a state file. Fails closed: if the API call fails,
+        # the event's own repository fields decide; if neither says private,
+        # it stops. delivery.allow_public_repo: true in profile.yaml turns the
+        # failure into a warning, deliberately.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_PRIVATE: ${{ github.event.repository.private }}
+          EVENT_FORK: ${{ github.event.repository.fork }}
+        run: |
+          private=$(gh api "repos/$GITHUB_REPOSITORY" --jq .private) || private=""
+          fork=$(gh api "repos/$GITHUB_REPOSITORY" --jq .fork) || fork=""
+          public=no
+          if [ "$EVENT_PRIVATE" = "false" ] || [ "$EVENT_FORK" = "true" ]; then public=yes; fi
+          if [ -n "$private" ]; then
+            if [ "$private" != "true" ] || [ "$fork" = "true" ]; then public=yes; fi
+          elif [ "$EVENT_PRIVATE" != "true" ]; then
+            echo "::warning::Could not read this repository's visibility from the GitHub API; treating it as public."
+            public=yes
+          fi
+          if [ "$public" = "no" ]; then
+            echo "Repository is private and not a fork."
+            exit 0
+          fi
+          allow=$(python -c 'import yaml; d = yaml.safe_load(open("profile.yaml")) or {}; print("true" if (d.get("delivery") or {}).get("allow_public_repo") is True else "false")')
+          if [ "$allow" = "true" ]; then
+            echo "::warning::This repository is public or a fork, and delivery.allow_public_repo is true: the agent commits your profile and job history to it, where anyone can read them."
+            exit 0
+          fi
+          echo "::error::This repository is public or a fork. The agent commits your profile and job history to it; make the repository private (Settings > General > Danger Zone) or use 'Use this template' instead of Fork. Nothing was written."
+          exit 1
+
       - name: Run weekly summary
         env:
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}

@@ -30,15 +30,23 @@ import pending
 import state
 from llm import ApiAccessError
 from state import board_id, content_key, normalize_url, same_posting
+# OPS-12 / REV-02: main.FAILED_FETCH_CONCLUSIONS and main.load_failed_fetch_runs stay importable here.
+from state import FAILED_FETCH_CONCLUSIONS, load_failed_fetch_runs  # noqa: F401
 from scorer import score_jobs, filter_jobs, is_disqualified, is_hard_blocked, cap_calls
+import sheet_retry
+import fetch_budget
+import scorer as scorer_module
 from sheets import (append_jobs, append_disqualified_jobs, get_unseen_jobs, get_declined_feedback,
+                    write_rows as write_sheet_rows, row_dicts as sheet_row_dicts,
+                    check_tabs as check_sheet_tabs,
                     get_recent_index_rows)
-from emailer import send_digest
+from emailer import send_digest, send_alert_only, ALERT_NO_MATCHES_NOTE, SHEET_NO_MATCHES_NOTE
 import profile_loader
 from config import (
     JOB_BOARD_COMPANY_BLOCKLIST, TITLE_GATED_SOURCES, FETCH_BUDGET_SECS,
     SOURCE_BUDGET_SECS, FETCH_CYCLE_SLOTS, DAILY_SOURCES, DAILY_SOURCE_SLOT_UTC, PENDING_DIR, EVERY_RUN_SOURCES,
     MAX_SCORING_DEFERRALS, HIRING_COLLAPSE_LOOKBACK_DAYS, title_gate, source_rank,
+    SHEET_NAME, DISQUALIFIED_SHEET_NAME,
 )
 from location import (passes_location_filter, location_penalty, needs_relo,
                       log_location_resolutions)
@@ -214,7 +222,8 @@ MODES = ("fetch", "digest", "all")
 
 
 class SheetWriteError(RuntimeError):
-    """A digest Sheet write failed after the email went out (TRK-06). Exits non-zero."""
+    """A digest Sheet write (or a REV-03 retry of one) failed; the email still
+    went and the rows wait in state/sheet_retry/ (TRK-06). Exits non-zero."""
 
 
 def main(mode="all", force_daily=False):
@@ -254,6 +263,7 @@ def fetch_run(shard="auto", force_daily=False):
     (a manual dispatch of fetch.yml). Nothing here writes the Sheet or sends email.
     """
     print("=== Job Digest Agent: fetch run ===")
+    fetch_budget.reset_run()                 # REV-06: this run's model-call tally
     found_at = datetime.utcnow()
     print(f"Time: {found_at.strftime('%Y-%m-%d %H:%M UTC')}")
 
@@ -398,14 +408,21 @@ def fetch_run(shard="auto", force_daily=False):
 
     fetch_deadline = time.monotonic() + FETCH_BUDGET_SECS
     commits = []  # sources whose state may be saved only once their jobs are queued
+    source_summaries = []     # REV-07: a source's own counts for the fetch summary
     for name, fetch in run_sources:
         batch = run_source(name, fetch, fetch_deadline)
         if name == "startups":
             startup_result = batch
+        if getattr(batch, "summary", ""):
+            source_summaries.append((name, batch.summary))
         if SOURCE_OK.get(name) and callable(getattr(batch, "commit", None)):
             commits.append((name, batch.commit))
         add(batch, name)
 
+    # REV-07: LinkedIn jobs whose page failed LINKEDIN_MAX_PAGE_FAILURES runs
+    # in a row skip location, the cap and the model: recorded at score 0 below.
+    unavailable = [j for j in all_jobs if j.get("unavailable_reason")]
+    all_jobs = [j for j in all_jobs if not j.get("unavailable_reason")]
     before_filter = len(all_jobs)
     gated_jobs = list(all_jobs)
     all_jobs = [j for j in all_jobs if passes_location_filter(j)]
@@ -437,9 +454,22 @@ def fetch_run(shard="auto", force_daily=False):
     # PUB-12: at most scoring.max_calls_per_run scoring calls. Postings past the
     # cap are held like an OPS-12 deferral (no count): not scored, not queued,
     # not marked seen, so the next run that serves them scores them.
+    # REV-06: and at most what is left of scoring.max_calls_per_day today
+    # (delivery.timezone), after this run's Bespoke extractions. Postings past
+    # the ceiling are held the same way, dream companies first.
     cap = profile_loader.active()["scoring"]["max_calls_per_run"]
-    new_jobs, held = cap_calls(new_jobs, cap, profile_loader.dream_companies())
-    if held:
+    daily_ceiling = fetch_budget.ceiling()
+    daily_left = fetch_budget.remaining_today()
+    by_ceiling = daily_left < cap
+    new_jobs, held = cap_calls(new_jobs, min(cap, daily_left), profile_loader.dream_companies())
+    held_by_ceiling = len(held) if by_ceiling else 0
+    if held and by_ceiling:
+        line = (f"daily scoring ceiling reached: {len(held)} postings held unseen for a later run "
+                f"(scoring.max_calls_per_day {daily_ceiling}, {daily_left} calls were left today "
+                f"{fetch_budget.today()})")
+        print(f"[Scorer] {line}")
+        SOURCE_WARNINGS.append(("scorer", line))
+    elif held:
         print(f"[Scorer] cap reached: {len(held)} postings held for the next run "
               f"(scoring.max_calls_per_run {cap})")
         SOURCE_WARNINGS.append(("scorer", f"cap reached: {len(held)} postings held for the next run "
@@ -489,6 +519,7 @@ def fetch_run(shard="auto", force_daily=False):
     with timed("Scoring"):
         declined_feedback = get_declined_feedback() if new_jobs else []
         print(f"Loaded {len(declined_feedback)} declined-role feedback entries")
+        calls_before = dict(scorer_module.USAGE)
         scored = score_jobs(new_jobs, declined_feedback=declined_feedback) if new_jobs else []
 
     # OPS-12: a scoring call that failed on a transient API error after the
@@ -529,6 +560,16 @@ def fetch_run(shard="auto", force_daily=False):
     # on the posted name, which posted_company keeps.
     named = sum(state.name_employer(job) for job in scored)
     print(f"[Employer] {named} postings named for the employer (Company = '<employer> (via <poster>)')")
+
+    if unavailable:
+        for job in unavailable:
+            job.update(score=0, base_score=0, rationale=job["unavailable_reason"], hard_block_industry=None,
+                       is_cool_company_wrong_role=False)
+            if job.get("apply_link"):
+                urls_to_mark_seen.append(job["apply_link"])
+        scored = scored + unavailable
+        print(f"[LinkedIn Email] {len(unavailable)} jobs recorded at score 0 as "
+              f"'{unavailable[0]['unavailable_reason']}' (Disqualified tab)")
 
     # Score distribution
     if scored:
@@ -588,6 +629,14 @@ def fetch_run(shard="auto", force_daily=False):
     print(f"[Dedup] persisted {marked} content keys for later runs "
           f"({restamped} re-stamped by a dropped repeat, FIL-12)")
     state.save_deferrals(deferral_counts, deferral_cleared, when=found_at)
+    # REV-06: this run's model calls toward today's ceiling. API calls
+    # (retries included), and never fewer than the postings sent to scoring.
+    sent_to_scoring = sum(1 for j in new_jobs if not scorer_module._is_hard_disqualify(j))
+    scoring_calls = max(scorer_module.USAGE["calls"] - calls_before["calls"], sent_to_scoring) if new_jobs else 0
+    day = fetch_budget.record(scoring_calls, fetch_budget.RUN["extractions"], held_by_ceiling)
+    print(f"[Budget] {fetch_budget.today()}: {scoring_calls} scoring + {fetch_budget.RUN['extractions']} "
+          f"extraction calls this run; {day['scoring_calls'] + day['extractions']} of "
+          f"{daily_ceiling} today (scoring.max_calls_per_day)")
     # Source state that records pages as read (Bespoke) is saved only now,
     # after the postings from those pages are queued.
     for name, commit in commits:
@@ -606,6 +655,14 @@ def fetch_run(shard="auto", force_daily=False):
                 print(f"[Plan] daily source {name} did not succeed — due again on the next fetch run")
         state.save_shard_state(shard_state)
 
+    # REV-06: scoring tokens, cached vs uncached, and what they cost.
+    run_usage = {k: scorer_module.USAGE[k] - calls_before.get(k, 0) for k in scorer_module.USAGE}
+    print(f"=== Scoring cost (this fetch run) ===\n  {scorer_module.usage_line(run_usage)}")
+    if source_summaries:
+        print("=== Source counts (this fetch run) ===")
+        for name, line in source_summaries:
+            print(f"  {name}: {line}")
+
     if SOURCE_WARNINGS:
         print("=== Warnings (this fetch run) ===")
         for name, line in SOURCE_WARNINGS:
@@ -622,36 +679,15 @@ def _by_channel(jobs):
     return ", ".join(f"{c} {counts[c]}" for c in channels)
 
 
-FAILED_FETCH_CONCLUSIONS = {"failure", "cancelled", "timed_out", "startup_failure"}
-
-
-def load_failed_fetch_runs(path=None):
-    """Fetch runs since the last digest that did not succeed (OPS-12).
-
-    daily.yml writes the file with tools/fetch_run_outcomes.py and names it in
-    FETCH_RUNS_FILE. Missing or unreadable means no banner, never no digest.
-    """
-    path = path or os.environ.get("FETCH_RUNS_FILE", "")
-    if not path:
-        print("[FetchRuns] FETCH_RUNS_FILE not set — no fetch-run banner (local run)")
-        return []
-    try:
-        with open(path) as f:
-            runs = json.load(f)
-    except (OSError, ValueError) as e:
-        print(f"::warning title=Fetch-run outcomes unavailable::{e} — digest sent without the failed-run banner")
-        return []
-    failed = [r for r in runs if r.get("conclusion") in FAILED_FETCH_CONCLUSIONS]
-    print(f"[FetchRuns] {len(runs)} fetch runs since the last digest, {len(failed)} failed or cancelled"
-          + "".join(f"\n  {r['run_id']} {r['started_at']} {r['conclusion']}: "
-                    f"{r.get('error_title') or r.get('error_message') or '(no error annotation)'}"
-                    for r in failed))
-    return failed
-
-
 def run_inbox_readers(sources):
     """PUB-10: the Applied-seed and status-tracking passes, each only when the
-    profile's sources.applied_doc / sources.status_tracking turns it on."""
+    profile's sources.applied_doc / sources.status_tracking turns it on.
+    REV-03: both work on rows already on the Sheet, so a posting still waiting
+    in state/sheet_retry/ gets no status update until its row is written."""
+    waiting = len(sheet_retry.waiting_rows())
+    if waiting:
+        print(f"[SheetRetry] {waiting} postings waiting in state/sheet_retry/ are not on the Sheet yet: "
+              f"status updates for them are skipped until they are written")
     if sources["applied_doc"]["enabled"]:
         with timed("Applied-seed (§16)"):
             try:
@@ -682,7 +718,16 @@ def digest_run():
     print("=== Job Digest Agent: digest ===")
     print(f"Time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
 
-    failed_fetch_runs = load_failed_fetch_runs()
+    # REV-02: a run reported in an earlier sent email is not reported again.
+    failed_fetch_runs = state.unreported_fetch_runs(load_failed_fetch_runs())
+    # REV-03: rows earlier digests could not write go in first, oldest file
+    # first, before anything reads the Sheet for this email.
+    # REV-04: both tabs' header rows, read only, so a broken header shows even
+    # on a day with nothing to write.
+    with timed("Sheet header check (REV-04)"):
+        header_problems = check_sheet_tabs()
+    with timed("Sheet retry (REV-03)"):
+        retry_errors = sheet_retry.replay(write_sheet_rows)
     paths, queued, first_run = pending.load_pending()
     # Batches queued before FIL-13's employer naming get it here; idempotent.
     named = sum(state.name_employer(job) for job in queued)
@@ -745,39 +790,104 @@ def digest_run():
         # failure never writes a row twice. TRK-06: a failed write no longer
         # passes silently. The email still goes and the queue still drains,
         # then the run fails at the end so the red run shows in Actions.
-        for name, write, jobs in (("append_jobs", append_jobs, scored_pass),
-                                  ("append_disqualified_jobs", append_disqualified_jobs, scored_fail)):
+        # REV-03: a failed write keeps its rows in state/sheet_retry/ (the
+        # whole tab's rows; the replay skips any the write did get in).
+        failures = []
+        for name, write, tab, jobs in (
+                ("append_jobs", append_jobs, SHEET_NAME, scored_pass),
+                ("append_disqualified_jobs", append_disqualified_jobs, DISQUALIFIED_SHEET_NAME, scored_fail)):
             try:
                 write(jobs)
             except Exception as e:
                 msg = f"{name} failed for {len(jobs)} jobs: {type(e).__name__}: {e}"
                 print(f"::error title=Sheet write failed::{msg}")
                 sheet_errors.append(msg)
+                failures.append((tab, sheet_row_dicts(tab, jobs), msg))
+        sheet_retry.write_retry_file(failures)
+    sheet_errors += retry_errors + [m for m in header_problems if m not in " ".join(sheet_errors)]
+    # One banner line per header problem, then per retry file still waiting
+    # (this run's included).
+    sheet_notices = header_problems + sheet_retry.banner_lines()
+    # REV-06: a day fetch hit the daily scoring ceiling, reported once
+    # (fetch_budget.json is fetch's; the digest only reads it).
+    try:
+        events = fetch_budget.ceiling_events()
+    except (OSError, ValueError) as e:
+        print(f"::warning title=Fetch budget unreadable::{e} — no ceiling line in the banner")
+        events = []
+    new_ceiling_days = state.unreported_ceiling_days([day for day, _, _ in events])
+    # REV-07: LinkedIn jobs recorded as unreadable in the last seven days.
+    try:
+        from datetime import timedelta
+        week_start = (profile_loader.local_today() - timedelta(days=6)).isoformat()
+        unreadable = fetch_budget.linkedin_unavailable_since(week_start)
+    except (OSError, ValueError):
+        unreadable = 0
+    if unreadable:
+        sheet_notices.append(
+            f"{unreadable} LinkedIn job{'s' if unreadable != 1 else ''} could not be read this week: the page "
+            f"was blocked or behind a login wall three runs running, so {'they are' if unreadable != 1 else 'it is'} "
+            f"in the Disqualified tab as \"LinkedIn page unavailable\".")
+    sheet_notices += [fetch_budget.banner_line(day, held, limit) for day, held, limit in events
+                      if day in new_ceiling_days]
+    sheet_alert_keys = [f"header:{m}" for m in header_problems] + sheet_retry.alert_keys()
+    new_sheet_alerts = state.unreported_sheet_alerts(sheet_alert_keys)
 
     new_jobs = scored
-    if not first_run:
-        state.record_run_day(had_new_jobs=bool(new_jobs))
-
     has_matches = bool(email_sections["main"] or email_sections["worth_a_look"]
                        or email_sections["cool_wrong_role"])
+    # REV-02: failed or cancelled fetch runs always produce an email. With no
+    # new postings it is the alert-only form, whatever skip_empty_days says;
+    # otherwise the normal digest, which carries the same banner.
+    # REV-04: a Sheet problem no email has reported yet (a header failure, a
+    # retry file waiting) counts like a failed fetch run.
+    alert_only = bool(failed_fetch_runs or new_sheet_alerts) and not first_run and not new_jobs
+    if not first_run:
+        # An alert-only day is still a skipped day: no postings went out.
+        state.record_run_day(had_new_jobs=bool(new_jobs))
 
+    sent = False
     with timed("Email"):
         if first_run:
             top_10 = sorted(email_jobs, key=lambda x: x.get("score", 0), reverse=True)[:10]
-            send_digest(filter_jobs(top_10), is_first_run=True, failed_fetch_runs=failed_fetch_runs)
+            send_digest(filter_jobs(top_10), is_first_run=True, failed_fetch_runs=failed_fetch_runs,
+                        notices=sheet_notices)
+            sent = True
             print("Sent first-run digest")
+        elif alert_only:
+            send_alert_only(failed_fetch_runs, notices=sheet_notices)
+            sent = True
+            state.record_alert_email()
+            print(f"0 new jobs, {len(failed_fetch_runs)} failed fetch runs, {len(new_sheet_alerts)} new "
+                  f"Sheet problems — sent the alert-only email (counted as a skipped day)")
         elif not new_jobs and profile_loader.active()["delivery"]["skip_empty_days"]:
             print("0 new jobs after dedup/filter — no daily email sent (counted toward weekly skipped-day total)")
         elif has_matches:
-            send_digest(email_sections, failed_fetch_runs=failed_fetch_runs)
+            send_digest(email_sections, failed_fetch_runs=failed_fetch_runs, notices=sheet_notices)
+            sent = True
             print("Sent digest")
         else:
             fallback = get_unseen_jobs()
             if fallback:
-                send_digest({"fallback_jobs": fallback}, is_fallback=True, failed_fetch_runs=failed_fetch_runs)
+                send_digest({"fallback_jobs": fallback}, is_fallback=True, failed_fetch_runs=failed_fetch_runs,
+                            notices=sheet_notices)
+                sent = True
                 print("Sent fallback with {} jobs".format(len(fallback)))
+            elif failed_fetch_runs or new_sheet_alerts:
+                # New postings, none worth a card and nothing to resurface:
+                # the failures still go out (REV-02, REV-04).
+                send_alert_only(failed_fetch_runs, notices=sheet_notices,
+                                note=ALERT_NO_MATCHES_NOTE if failed_fetch_runs else SHEET_NO_MATCHES_NOTE)
+                sent = True
+                state.record_alert_email()
+                state.record_run_day(had_new_jobs=False)     # no postings went out
+                print("No matches and no fallback — sent the alert-only email for the failed fetch runs")
             else:
                 print("No matches and no fallback — skipping email")
+    if sent:
+        state.mark_fetch_runs_reported(failed_fetch_runs)
+        state.mark_ceiling_days_reported(new_ceiling_days)
+    state.mark_sheet_alerts_reported(sheet_alert_keys, sent)
 
     # Dequeue only after the email step returned. A send that raises leaves the
     # batches queued for the next digest instead of losing them.

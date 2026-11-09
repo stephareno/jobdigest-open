@@ -371,5 +371,6 @@ def test_no_per_run_extraction_cap(monkeypatch):
     monkeypatch.setattr(bespoke, "listing_is_theirs", lambda *a, **k: "")
     run = bespoke.run_rolling(_companies(400), {}, {}, budget_secs=1000, api_ready=True,
                               clock=clock, check=_checker())
-    assert run.stats["extracted"] == 400
-    assert not hasattr(bespoke.config, "BESPOKE_MAX_EXTRACTIONS_PER_RUN")
+    assert run.stats["extracted"] == 400                  # run_rolling with no cap given: uncapped
+    # REV-06: fetch_all passes a cap (config default, profile override, daily ceiling).
+    assert bespoke.config.BESPOKE_MAX_EXTRACTIONS_PER_RUN == 60

@@ -450,7 +450,7 @@ def is_seen(url):
 def load_url_index(state=None):
     """Every seen-URL hash in one set, so a run reads the file once."""
     state = _load() if state is None else state
-    return {k for k in state if not k.startswith((CONTENT_PREFIX, DEFER_PREFIX))}
+    return {k for k in state if not k.startswith((CONTENT_PREFIX, DEFER_PREFIX, LINKEDIN_FAIL_PREFIX))}
 
 
 def mark_seen(url):
@@ -588,6 +588,43 @@ def save_deferrals(counts, cleared, when=None):
     _save(state)
 
 
+# --- LinkedIn page failures (REV-07) -------------------------------------------
+#
+#   "l:<32 hex>" : {"ts": "<iso>", "count": n}
+#
+# A LinkedIn job whose page did not load (HTTP 999, a login wall, an error,
+# nothing parsed) is dropped from the run unseen, so a later run retries it.
+# This counts consecutive failures by the seen check's URL hash; at
+# config.LINKEDIN_MAX_PAGE_FAILURES the job is recorded at score 0 instead.
+# Written by fetch only (sources/linkedin_email.py's commit, after the queue).
+
+LINKEDIN_FAIL_PREFIX = "l:"
+
+
+def linkedin_fail_key(url):
+    return LINKEDIN_FAIL_PREFIX + job_hash(url)
+
+
+def load_linkedin_failures(state=None):
+    """{failure key: consecutive failed runs} for LinkedIn job pages."""
+    state = _load() if state is None else state
+    return {k: int(v.get("count", 0)) for k, v in state.items()
+            if k.startswith(LINKEDIN_FAIL_PREFIX) and isinstance(v, dict)}
+
+
+def save_linkedin_failures(counts, cleared, when=None):
+    """Write failure counts and drop entries for pages that loaded or were recorded."""
+    if not counts and not cleared:
+        return
+    state = _load()
+    stamp = (when or datetime.utcnow()).isoformat()
+    for key, count in counts.items():
+        state[key] = {"ts": stamp, "count": count}
+    for key in cleared:
+        state.pop(key, None)
+    _save(state)
+
+
 def purge_old_entries():
     state = _load()
     cutoff = datetime.utcnow() - timedelta(days=RETENTION_DAYS)
@@ -610,14 +647,21 @@ def is_first_run():
 
 
 def _load_skip_state():
+    """skip_state.json, the digest's own state (AGENTS.md rule 9). run_days,
+    skipped_days and alert_emails reset every week; reported_fetch_runs
+    (REV-02) is kept across resets."""
+    data = {}
     if os.path.exists(SKIP_STATE_FILE):
         with open(SKIP_STATE_FILE, "r") as f:
             data = json.load(f)
-        return {
-            "run_days": data.get("run_days", []),
-            "skipped_days": data.get("skipped_days", []),
-        }
-    return {"run_days": [], "skipped_days": []}
+    return {
+        "run_days": data.get("run_days", []),
+        "skipped_days": data.get("skipped_days", []),
+        "alert_emails": data.get("alert_emails", []),
+        "reported_fetch_runs": data.get("reported_fetch_runs", []),
+        "reported_sheet_alerts": data.get("reported_sheet_alerts", []),
+        "reported_ceiling_days": data.get("reported_ceiling_days", []),
+    }
 
 
 def _save_skip_state(skip_state):
@@ -647,8 +691,121 @@ def get_skip_stats():
 
 
 def reset_skip_stats():
-    """Clear skip tracking — called after each weekly summary is sent."""
-    _save_skip_state({"run_days": [], "skipped_days": []})
+    """Clear skip tracking — called after each weekly summary is sent. The
+    reported fetch-run ids stay: a run reported last week is never reported
+    again (REV-02)."""
+    skip_state = _load_skip_state()
+    _save_skip_state({"run_days": [], "skipped_days": [], "alert_emails": [],
+                      "reported_fetch_runs": skip_state["reported_fetch_runs"],
+                      "reported_sheet_alerts": skip_state["reported_sheet_alerts"],
+                      "reported_ceiling_days": skip_state["reported_ceiling_days"]})
+
+
+# --- REV-02 / OPS-12 failed fetch runs ---------------------------------------
+
+FAILED_FETCH_CONCLUSIONS = {"failure", "cancelled", "timed_out", "startup_failure"}
+# Fetch runs three times a day and each run is in at most a few digests'
+# windows; the last 200 ids cover two months.
+REPORTED_FETCH_RUNS_KEEP = 200
+
+
+def load_failed_fetch_runs(path=None):
+    """Fetch runs since the last digest that did not succeed (OPS-12).
+
+    daily.yml writes the file with tools/fetch_run_outcomes.py and names it in
+    FETCH_RUNS_FILE. Missing or unreadable means no banner, never no digest.
+    """
+    path = path or os.environ.get("FETCH_RUNS_FILE", "")
+    if not path:
+        print("[FetchRuns] FETCH_RUNS_FILE not set — no fetch-run banner (local run)")
+        return []
+    try:
+        with open(path) as f:
+            runs = json.load(f)
+    except (OSError, ValueError) as e:
+        print(f"::warning title=Fetch-run outcomes unavailable::{e} — digest sent without the failed-run banner")
+        return []
+    failed = [r for r in runs if r.get("conclusion") in FAILED_FETCH_CONCLUSIONS]
+    print(f"[FetchRuns] {len(runs)} fetch runs since the last digest, {len(failed)} failed or cancelled"
+          + "".join(f"\n  {r['run_id']} {r['started_at']} {r['conclusion']}: "
+                    f"{r.get('error_title') or r.get('error_message') or '(no error annotation)'}"
+                    for r in failed))
+    return failed
+
+
+def unreported_fetch_runs(failed_runs):
+    """REV-02: the failed runs no sent email has reported yet. The collector's
+    window already starts at the last successful digest; this also covers a
+    digest that sent its email and then failed (so the window did not move)."""
+    reported = {str(r) for r in _load_skip_state()["reported_fetch_runs"]}
+    fresh = [r for r in failed_runs if str(r.get("run_id")) not in reported]
+    if len(fresh) != len(failed_runs):
+        print(f"[FetchRuns] {len(failed_runs) - len(fresh)} failed runs already reported in an "
+              f"earlier email — not reported again")
+    return fresh
+
+
+def mark_fetch_runs_reported(runs):
+    """Record that a sent email reported these runs (REV-02)."""
+    if not runs:
+        return
+    skip_state = _load_skip_state()
+    ids = [str(r) for r in skip_state["reported_fetch_runs"]]
+    ids += [str(r["run_id"]) for r in runs if str(r["run_id"]) not in ids]
+    skip_state["reported_fetch_runs"] = ids[-REPORTED_FETCH_RUNS_KEEP:]
+    _save_skip_state(skip_state)
+
+
+def unreported_sheet_alerts(keys):
+    """REV-04: the Sheet problems (retry files waiting, header errors) no sent
+    email has reported yet. keys identify each problem."""
+    reported = set(_load_skip_state()["reported_sheet_alerts"])
+    return [k for k in keys if k not in reported]
+
+
+def mark_sheet_alerts_reported(current, sent):
+    """After a digest: with an email sent, every current Sheet problem counts
+    as reported; without one, only those reported before stay so. Problems
+    no longer current are dropped, so one that clears and comes back is
+    reported again."""
+    skip_state = _load_skip_state()
+    current = list(dict.fromkeys(current))
+    before = set(skip_state["reported_sheet_alerts"])
+    keep = current if sent else [k for k in current if k in before]
+    if keep != skip_state["reported_sheet_alerts"]:
+        skip_state["reported_sheet_alerts"] = keep
+        _save_skip_state(skip_state)
+
+
+def unreported_ceiling_days(days):
+    """REV-06: the days fetch hit scoring.max_calls_per_day that no sent
+    digest has reported yet."""
+    reported = set(_load_skip_state()["reported_ceiling_days"])
+    return [d for d in days if d not in reported]
+
+
+def mark_ceiling_days_reported(days):
+    """Record that a sent email reported these ceiling days; keep the last 30."""
+    if not days:
+        return
+    skip_state = _load_skip_state()
+    kept = list(dict.fromkeys(skip_state["reported_ceiling_days"] + list(days)))
+    skip_state["reported_ceiling_days"] = sorted(kept)[-30:]
+    _save_skip_state(skip_state)
+
+
+def record_alert_email():
+    """Count one alert-only email (failed fetch runs, no postings) for the
+    weekly summary (REV-02)."""
+    import profile_loader
+    skip_state = _load_skip_state()
+    skip_state["alert_emails"].append(profile_loader.local_today().isoformat())
+    _save_skip_state(skip_state)
+
+
+def get_alert_email_count():
+    """Alert-only emails sent since the last weekly reset (REV-02)."""
+    return len(_load_skip_state()["alert_emails"])
 
 
 def last_run_date():

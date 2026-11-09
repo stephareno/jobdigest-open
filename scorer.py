@@ -44,7 +44,8 @@ MODEL = PROFILE["scoring"]["model"]
 
 # PUB-12: scoring calls answered and the tokens they used (the API's usage
 # fields), for calibrate's cost lines. Never reset by the pipeline.
-USAGE = {"calls": 0, "input": 0, "output": 0}
+# REV-06: "input" is uncached input; cache writes and reads are counted apart.
+USAGE = {"calls": 0, "input": 0, "output": 0, "cache_write": 0, "cache_read": 0}
 
 # DEL-15: a bare domain, at least one dot, letters / digits / hyphens.
 _DOMAIN_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+")
@@ -121,6 +122,29 @@ def _format_feedback(feedback):
     return "\n".join(lines)
 
 
+def checked_score(result, max_score=None):
+    """REV-05: the reply with its base score checked at parse time. The score
+    must be an integer in [0, scoring.max_score]; a float with no fraction
+    (10.0) is read as that integer. A bool, a string ("8"), null, a missing
+    score, a fraction or a number out of range is a malformed reply: raises
+    ValueError naming the raw value, so llm.complete_json asks once more and
+    a second bad reply is recorded as a scoring error, never with the bad
+    number. Never clamps: 99 is a bad reply, not a 10. `score` is the only
+    number the reply carries; every modifier is computed in code."""
+    top = _max_score() if max_score is None else max_score
+    raw = result.get("score") if isinstance(result, dict) else None
+    value = raw
+    if isinstance(raw, float) and raw.is_integer():
+        value = int(raw)
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= top:
+        raise ValueError(f"score {raw!r} is not an integer from 0 to {top}")
+    return {**result, "score": value}
+
+
+def _max_score():
+    return profile_loader.active()["scoring"]["max_score"]
+
+
 def _score_single(job, feedback_block=""):
     jd = f"""
 Title: {job.get('title', '')}
@@ -130,15 +154,19 @@ Work Model: {job.get('work_model', '')}
 Comp: {job.get('comp', 'Not listed')}
 Description: {job.get('description', 'None')[:JD_CHARS]}
 """
+    if job.get("title_only"):
+        # REV-08: a LinkedIn alert with no page fetched (fetch_pages false).
+        jd = (f"\n{TITLE_ONLY_LINE}\n" + jd)
     user_content = f"Score this job:\n{jd}"
     if feedback_block:
         user_content = f"{feedback_block}\n\n{user_content}"
     try:
         result, _ = llm.complete_json(
             MODEL, SYSTEM_PROMPT, [{"role": "user", "content": user_content}], MAX_TOKENS,
-            purpose="scoring call", on_usage=_count_usage)
+            purpose="scoring call", on_usage=_count_usage, validate=checked_score,
+            cache_system=True)                       # REV-06: the same prompt on every call
         return {
-            "score": int(result.get("score", 0)),
+            "score": result["score"],                  # REV-05: checked by checked_score
             "rationale": format_rationale(result.get("rationale")),
             # PUB-04: one of industries.hard_block, or None (was is_insurance)
             "hard_block_industry": _hard_block_industry(result, job),
@@ -166,7 +194,10 @@ Description: {job.get('description', 'None')[:JD_CHARS]}
         # on would record every posting at 0 and mark it seen; abort instead.
         raise
     except Exception as e:
-        print(f"[Scorer] Error: {e}")
+        # A malformed reply (REV-05: including a bad score, raw value named)
+        # after its one retry lands here and is recorded as a scoring error.
+        print(f"[Scorer] Error: {e} — recorded as '{SCORING_ERROR}' "
+              f"({job.get('company', '')} / {str(job.get('title', ''))[:60]})")
         result = {"score": 0, "rationale": SCORING_ERROR, "hard_block_industry": None,
                   "is_cool_company_wrong_role": False}
         if is_transient(e):
@@ -180,6 +211,19 @@ def _count_usage(usage):
     USAGE["calls"] += 1
     USAGE["input"] += usage.input_tokens
     USAGE["output"] += usage.output_tokens
+    USAGE["cache_write"] = USAGE.get("cache_write", 0) + (getattr(usage, "cache_creation_input_tokens", 0) or 0)
+    USAGE["cache_read"] = USAGE.get("cache_read", 0) + (getattr(usage, "cache_read_input_tokens", 0) or 0)
+
+
+def usage_line(usage=None, model=None):
+    """REV-06: one line of scoring calls, cached vs uncached input and cost."""
+    from config import format_cost, model_cost
+    u = usage or USAGE
+    model = model or MODEL
+    cost = model_cost(model, u["input"], u["output"], u.get("cache_write", 0), u.get("cache_read", 0))
+    return (f"{u['calls']} scoring calls at {model}: input {u['input'] + u.get('cache_write', 0) + u.get('cache_read', 0):,} "
+            f"tokens (uncached {u['input']:,}, cache write {u.get('cache_write', 0):,}, "
+            f"cache read {u.get('cache_read', 0):,}), output {u['output']:,}; cost {format_cost(cost)}")
 
 
 # The reply parser every JSON call shares (PUB-14: llm.parse_json).
@@ -253,11 +297,20 @@ def dealbreaker_evidence(result, criteria=None):
     return out
 
 
+# REV-08: the line a title-only posting's scoring call carries.
+TITLE_ONLY_LINE = ('Description unavailable: judge from the title and company only. '
+                   'function_fit may be "unknown".')
+
+
 def _function_fit(result, job):
     """The reply's function_fit, normalised. A missing or unknown value is
     logged and kept as "unknown", which the SCO-09 gate caps like any value
     other than leads_department. A pre-PUB-10 name (it_leadership...) is
-    mapped to its new one."""
+    mapped to its new one. REV-08: a title-only posting is always "unknown":
+    the department is judged from the description, which it does not have,
+    and location.apply_location_tier does not cap it."""
+    if job.get("title_only"):
+        return "unknown"
     fit = function_fit_value(result.get("function_fit") or "")
     if fit in FUNCTION_FIT_VALUES:
         return fit
