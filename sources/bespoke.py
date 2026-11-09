@@ -481,7 +481,10 @@ def extract_jobs(company: str, html: str, url: str,
     try:
         body, reply_usage = llm.complete(
             model, EXTRACT_SYSTEM, [{"role": "user", "content": page_digest(company, html, url)}], 4096,
-            json_mode=True, purpose="Bespoke extraction", cache_system=True,   # REV-06
+            # REV-09: no cache_system. EXTRACT_SYSTEM is about 233 tokens,
+            # under every model's minimum cacheable length (512 at the
+            # lowest), so the breakpoint REV-06 added was never honoured.
+            json_mode=True, purpose="Bespoke extraction",
             # Bounded so one slow call cannot carry a run past its budget.
             timeout=config.BESPOKE_EXTRACT_TIMEOUT)
     except ApiAccessError:

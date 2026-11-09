@@ -37,11 +37,20 @@
 # complete(..., cache_system=True) sends a string system prompt as one system
 # block with cache_control {"type": "ephemeral"} (Anthropic's 5-minute cache),
 # so calls that repeat it within five minutes read it at a tenth of the input
-# price. The scoring, status-email and Bespoke extraction prompts use it. The
+# price. The scoring and status-email prompts use it (REV-09: Bespoke
+# extraction's 233-token prompt is under every minimum, so it no longer asks). The
 # reply's cache_creation_input_tokens and cache_read_input_tokens land on
 # Usage; input_tokens stays the uncached part, as the API reports it. A
 # prompt shorter than the model's minimum cacheable length is simply not
 # cached (both cache fields 0).
+#
+# REV-09: so every call that asks for the cache logs it. Once per run per
+# call site (purpose, model, prompt): the system prompt's token count (the
+# provider's count_system_tokens, Anthropic's free count_tokens endpoint) and
+# the model's minimum (config.MODEL_CACHE_MIN_TOKENS):
+#   [Cache] scoring call: system prompt 2,297 tokens, claude-sonnet-4-6 caches from 1,024: cacheable
+# and per call the reply's two cache fields:
+#   [Cache] scoring call: cache write 0, cache read 2,297 tokens
 # Every model name comes from profile.yaml or config.py, so changing provider
 # is this module plus those values.
 #
@@ -156,6 +165,14 @@ class AnthropicProvider:
     name = "anthropic"
     supports_cache = True
 
+    def count_system_tokens(self, model, system):
+        """REV-09: the system prompt's own tokens, as the API counts them: a
+        count with it less a count without it (the same one-word message)."""
+        messages = [{"role": "user", "content": "x"}]
+        count = self.client().messages.count_tokens
+        return (count(model=model, system=system, messages=messages).input_tokens
+                - count(model=model, messages=messages).input_tokens)
+
     def __init__(self, client=None):
         self._client = client
         self._lock = threading.Lock()
@@ -251,14 +268,71 @@ def complete(model, system, messages, max_tokens, json_mode=False, attachments=N
     never sees the option."""
     if not getattr(_provider, "supports_cache", False):
         options.pop("cache_system", None)
+    cached = bool(options.get("cache_system")) and isinstance(system, str)
+    if cached:
+        log_cache_site(purpose, model, system)
     try:
-        return _provider.complete(model, system, messages, max_tokens, json_mode=json_mode,
-                                  attachments=attachments, **options)
+        text, usage = _provider.complete(model, system, messages, max_tokens, json_mode=json_mode,
+                                         attachments=attachments, **options)
+        if cached:
+            print(cache_usage_line(purpose, usage))
+        return text, usage
     except Exception as e:
         cause = access_error_cause(e)
         if not cause:
             raise
         raise ApiAccessError(f"{purpose} failed: {cause}" if purpose else cause) from e
+
+
+# --- prompt-cache logging (REV-09) ----------------------------------------------------
+
+_CACHE_SITES_LOGGED = set()
+
+
+def reset_cache_log():
+    """Forget which call sites were logged (a new run in the same process)."""
+    _CACHE_SITES_LOGGED.clear()
+
+
+def cache_minimum(model):
+    import config
+    return config.MODEL_CACHE_MIN_TOKENS.get(model)
+
+
+def system_prompt_tokens(model, system):
+    """(tokens, note): the provider's count, or (None, why not)."""
+    count = getattr(_provider, "count_system_tokens", None)
+    if count is None:
+        return None, "not counted: the provider has no token counter"
+    try:
+        return int(count(model, system)), ""
+    except Exception as e:                        # noqa: BLE001 - a log line must never stop a call
+        return None, f"not counted: {type(e).__name__}: {str(e)[:120]}"
+
+
+def cache_site_line(purpose, model, tokens, minimum, note=""):
+    site = purpose or "model call"
+    size = f"{tokens:,} tokens" if tokens is not None else note
+    if minimum is None:
+        return f"[Cache] {site}: system prompt {size}, {model} minimum unknown"
+    verdict = ("cannot tell" if tokens is None else
+               "cacheable" if tokens >= minimum else "below the minimum, never cached")
+    return f"[Cache] {site}: system prompt {size}, {model} caches from {minimum:,}: {verdict}"
+
+
+def log_cache_site(purpose, model, system):
+    """Print cache_site_line once per run for this (purpose, model, prompt)."""
+    key = (purpose, model, hash(system))
+    if key in _CACHE_SITES_LOGGED:
+        return
+    _CACHE_SITES_LOGGED.add(key)
+    tokens, note = system_prompt_tokens(model, system)
+    print(cache_site_line(purpose, model, tokens, cache_minimum(model), note))
+
+
+def cache_usage_line(purpose, usage):
+    return (f"[Cache] {purpose or 'model call'}: cache write {usage.cache_creation_input_tokens:,}, "
+            f"cache read {usage.cache_read_input_tokens:,} tokens")
 
 
 def parse_json(text):

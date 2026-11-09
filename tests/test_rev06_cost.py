@@ -266,7 +266,7 @@ def test_the_scoring_status_and_extraction_calls_ask_for_the_cache():
     from sources import status_email
     assert "cache_system=True" in inspect.getsource(scorer._score_single)
     assert "cache_system=True" in inspect.getsource(status_email.call_claude)
-    assert "cache_system=True" in inspect.getsource(bespoke.extract_jobs)
+    assert "cache_system=True" not in inspect.getsource(bespoke.extract_jobs)   # REV-09: under the minimum
 
 
 def test_scoring_usage_with_cache_fields_flows_into_the_counters_and_cost(monkeypatch):

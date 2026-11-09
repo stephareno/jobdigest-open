@@ -538,6 +538,17 @@ MODEL_CACHE_PRICES = {
     "claude-haiku-4-5": (1.25, 0.10),
 }
 
+# REV-09: the shortest system prompt each model will cache. A cache_control
+# breakpoint on a shorter prompt is accepted and silently ignored (both cache
+# usage fields 0), so llm.py logs the prompt's length against this once per
+# run. Figures from the REV-09 brief (Anthropic's prompt-caching page, read
+# 2026-11-09); a model not listed is reported as "minimum unknown".
+MODEL_CACHE_MIN_TOKENS = {
+    "claude-sonnet-4-6": 1024,
+    "claude-haiku-4-5": 4096,
+    "claude-haiku-5-5": 512,
+}
+
 
 def model_cost(model, input_tokens, output_tokens, cache_write_tokens=0, cache_read_tokens=0):
     """US$ for this many tokens on `model`, or None when the table does not know it.
