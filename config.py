@@ -235,7 +235,17 @@ DAILY_SOURCES = ("adzuna", "jsearch", "linkedin_email", "builtin", "ats", "watch
 # Sources taken on every fetch run. Startup is sharded across runs; Bespoke
 # continues its rolling cursor, so skipping a run would only slow the pass.
 EVERY_RUN_SOURCES = ("startups", "bespoke")
-DAILY_SOURCE_SLOT_UTC = (4, 17)  # (hour, minute); keep in step with fetch.yml's first cron hour
+# REV-11: fetch.yml's three cron times, (hour, minute) UTC; a test keeps them
+# equal to its cron line. An external trigger (trigger.py) fires on these, and
+# a run it starts takes the startup slot for its time of day.
+FETCH_SLOTS_UTC = ((4, 17), (12, 17), (20, 17))
+DAILY_SOURCE_SLOT_UTC = FETCH_SLOTS_UTC[0]  # (hour, minute); the first fetch slot
+# REV-11: a run up to this many minutes BEFORE the daily slot counts as that
+# slot's run. Cron runs only start late; an external trigger can fire early
+# (an Apps Script hourly timer picks its own minute; a fetch job kept in local
+# time runs an hour early in daylight time). Without it, an early run would
+# take the daily sources and the next slot would take them again.
+DAILY_SOURCE_EARLY_MINUTES = 90
 
 # Short labels for times shown in the digest ("12:17 AM ET"), by IANA zone. A
 # zone missing here shows its abbreviation ("EDT", "CET") instead.

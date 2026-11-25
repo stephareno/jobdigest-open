@@ -1,4 +1,6 @@
 name: Weekly Job Digest Summary
+# REV-11: an externally triggered run is named so in the Actions list.
+run-name: ${{ (inputs.scheduled == true || inputs.scheduled == 'true') && 'Weekly Job Digest Summary (external trigger)' || 'Weekly Job Digest Summary' }}
 
 # Schedule (PUB-08): `python main.py cron --write` writes the schedule: block:
 # delivery.weekly_summary_day at delivery.weekly_summary_time_local in
@@ -20,6 +22,14 @@ on:
     - cron: '57 13 * * 6'   # 08:00 America/Chicago when it is UTC-06:00
     - cron: '57 12 * * 6'   # 08:00 America/Chicago when it is UTC-05:00
   workflow_dispatch:
+    # REV-11: an external scheduler (python main.py trigger-setup) dispatches
+    # with scheduled=true: "treat this as the scheduled run". Off, it is a
+    # manual run. The API sends inputs as strings, the UI as a boolean.
+    inputs:
+      scheduled:
+        description: "Treat this as the scheduled run (set by the external trigger)"
+        type: boolean
+        default: false
 
 jobs:
   # PUB-06: the slot guard runs here, in its own job with no concurrency

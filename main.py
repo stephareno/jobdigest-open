@@ -226,11 +226,11 @@ class SheetWriteError(RuntimeError):
     went and the rows wait in state/sheet_retry/ (TRK-06). Exits non-zero."""
 
 
-def main(mode="all", force_daily=False):
+def main(mode="all", force_daily=False, by_clock=False):
     run_start = time.monotonic()
     try:
         if mode == "fetch":
-            fetch_run(force_daily=force_daily)
+            fetch_run(force_daily=force_daily, by_clock=by_clock)
         elif mode == "digest":
             digest_run()
         else:
@@ -242,25 +242,34 @@ def main(mode="all", force_daily=False):
         print_timing_summary(run_start)
 
 
-def _pick_fetch_plan(shard_state, shard, force_daily=False):
-    """Which startup cycle slot and which daily sources this fetch run takes."""
-    if shard == "auto":
+def _pick_fetch_plan(shard_state, shard, force_daily=False, by_clock=False, now=None):
+    """Which startup cycle slot and which daily sources this fetch run takes.
+
+    by_clock (REV-11, an on-time external trigger): the cycle slot for this
+    time of day (trigger.clock_shard), not the oldest overall."""
+    if shard == "auto" and by_clock:
+        import trigger
+        from config import FETCH_SLOTS_UTC
+        shard = trigger.clock_shard(shard_state, now or datetime.utcnow(), FETCH_SLOTS_UTC)
+    elif shard == "auto":
         shard = state.next_shard(shard_state)
     if shard is None or force_daily:
         daily = _enabled(DAILY_SOURCES)
     else:
         daily = [name for name in _enabled(DAILY_SOURCES)
-                 if state.daily_source_due(shard_state, name, DAILY_SOURCE_SLOT_UTC)]
+                 if state.daily_source_due(shard_state, name, DAILY_SOURCE_SLOT_UTC, now=now)]
     return shard, daily
 
 
-def fetch_run(shard="auto", force_daily=False):
+def fetch_run(shard="auto", force_daily=False, by_clock=False):
     """Fetch, dedup, score, and queue new postings for the digest (OPS-04).
 
     shard="auto" takes the startup cycle slot with the oldest last success;
     shard=None fetches the whole tier and every source (local standalone run).
     force_daily runs every daily source regardless of the 04:17 UTC slot rule
-    (a manual dispatch of fetch.yml). Nothing here writes the Sheet or sends email.
+    (a manual dispatch of fetch.yml). by_clock (REV-11: fetch.yml dispatched with
+    scheduled=true) takes the slot for this time of day and the daily sources
+    only when due, as the scheduled run would. Nothing here writes the Sheet or sends email.
     """
     print("=== Job Digest Agent: fetch run ===")
     fetch_budget.reset_run()                 # REV-06: this run's model-call tally
@@ -271,7 +280,7 @@ def fetch_run(shard="auto", force_daily=False):
     print(f"First run: {first_run}")
 
     shard_state = state.load_shard_state(FETCH_CYCLE_SLOTS)
-    shard, daily = _pick_fetch_plan(shard_state, shard, force_daily)
+    shard, daily = _pick_fetch_plan(shard_state, shard, force_daily, by_clock)
     if shard is None:
         print(f"[Plan] whole startup tier; all sources: {', '.join(_enabled(DAILY_SOURCES))}")
     else:
@@ -280,7 +289,8 @@ def fetch_run(shard="auto", force_daily=False):
               f"(last success: {shard_state['last_success'].get(str(shard), 'never')}); "
               f"daily sources due: {', '.join(daily) or 'none'}"
               f"{'; already fetched since %02d:%02d UTC: %s' % (*DAILY_SOURCE_SLOT_UTC, ', '.join(skipped)) if skipped else ''}"
-              f"{' (forced: manual dispatch)' if force_daily else ''}")
+              f"{' (forced: manual dispatch)' if force_daily else ''}"
+              f"{' (external trigger: slot chosen by the time of day)' if by_clock else ''}")
 
     def startup_fetch():
         if shard is None:
@@ -717,6 +727,14 @@ def digest_run():
     """
     print("=== Job Digest Agent: digest ===")
     print(f"Time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+    # REV-11: a cron run and an external trigger (scheduled=true) are the
+    # scheduled run; a plain manual dispatch is not, so it never adds a skipped
+    # day and leaves an alert-only email to the next scheduled run.
+    import trigger
+    kind = trigger.run_kind()
+    scheduled_run = kind != "manual"
+    print({"schedule": "[Run] scheduled run (cron)", "trigger": "[Run] scheduled run (external trigger)",
+           "manual": "[Run] manual run: not counted as the scheduled digest"}[kind])
 
     # REV-02: a run reported in an earlier sent email is not reported again.
     failed_fetch_runs = state.unreported_fetch_runs(load_failed_fetch_runs())
@@ -841,8 +859,10 @@ def digest_run():
     # otherwise the normal digest, which carries the same banner.
     # REV-04: a Sheet problem no email has reported yet (a header failure, a
     # retry file waiting) counts like a failed fetch run.
-    alert_only = bool(failed_fetch_runs or new_sheet_alerts) and not first_run and not new_jobs
-    if not first_run:
+    alert_due = bool(failed_fetch_runs or new_sheet_alerts) and not first_run and not new_jobs
+    alert_only = alert_due and scheduled_run
+    # REV-11: a manual run counts toward the week only when postings went out.
+    if not first_run and (scheduled_run or new_jobs):
         # An alert-only day is still a skipped day: no postings went out.
         state.record_run_day(had_new_jobs=bool(new_jobs))
 
@@ -860,6 +880,9 @@ def digest_run():
             state.record_alert_email()
             print(f"0 new jobs, {len(failed_fetch_runs)} failed fetch runs, {len(new_sheet_alerts)} new "
                   f"Sheet problems — sent the alert-only email (counted as a skipped day)")
+        elif alert_due:
+            print(f"0 new jobs, {len(failed_fetch_runs)} failed fetch runs, {len(new_sheet_alerts)} new Sheet "
+                  f"problems — manual run: no alert email; the next scheduled digest sends it")
         elif not new_jobs and profile_loader.active()["delivery"]["skip_empty_days"]:
             print("0 new jobs after dedup/filter — no daily email sent (counted toward weekly skipped-day total)")
         elif has_matches:
@@ -873,6 +896,8 @@ def digest_run():
                             notices=sheet_notices)
                 sent = True
                 print("Sent fallback with {} jobs".format(len(fallback)))
+            elif (failed_fetch_runs or new_sheet_alerts) and not scheduled_run:
+                print("No matches and no fallback — manual run: the alert email is left to the next scheduled digest")
             elif failed_fetch_runs or new_sheet_alerts:
                 # New postings, none worth a card and nothing to resurface:
                 # the failures still go out (REV-02, REV-04).
@@ -907,13 +932,15 @@ def digest_run():
 if __name__ == "__main__":
     args = sys.argv[1:]
     force_daily = "--daily-sources" in args
-    args = [a for a in args if a != "--daily-sources"]
+    by_clock = "--by-clock" in args
+    args = [a for a in args if a not in ("--daily-sources", "--by-clock")]
     mode = args[0] if args else "all"
-    if mode not in MODES or len(args) > 1 or (force_daily and mode != "fetch"):
-        sys.exit(f"usage: python main.py [{'|'.join(MODES)}] [--daily-sources (fetch only)]  (default: all)\n"
+    if (mode not in MODES or len(args) > 1 or ((force_daily or by_clock) and mode != "fetch")
+            or (force_daily and by_clock)):
+        sys.exit(f"usage: python main.py [{'|'.join(MODES)}] [--daily-sources | --by-clock (fetch only)]  (default: all)\n"
                  f"       python main.py --help   for every command")
     try:
-        main(mode, force_daily)
+        main(mode, force_daily, by_clock)
     except ApiAccessError as e:
         print(f"::error title=Anthropic API access failed::{e.cause} — fetch run aborted; "
               f"nothing was queued or marked seen, so the next run re-fetches these postings")

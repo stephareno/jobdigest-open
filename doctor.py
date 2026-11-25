@@ -650,6 +650,30 @@ def linkedin_pages():
                                               f"{runs} fetch run(s).")]
 
 
+# --- GitHub's scheduler lag (no --phase; REV-11) -------------------------------------
+
+def scheduler_lag(fetch_runs=None):
+    """Start time minus cron time for the repository's last five scheduled
+    runs; WARN when any is over trigger.LAG_WARN_MINUTES."""
+    import trigger
+    try:
+        runs = (fetch_runs or trigger.fetch_schedule_runs)()
+    except FileNotFoundError:
+        return [result(0, "scheduler lag", SKIP, "gh (the GitHub CLI) is not installed; lag not checked.")]
+    except Exception as e:                             # noqa: BLE001 -- offline, no auth, odd answer
+        return [result(0, "scheduler lag", SKIP, f"could not list scheduled runs ({_scrub(_error(e))[:120]}); "
+                                                 f"run gh auth login to check.")]
+    lags = trigger.run_lags(runs, trigger.crons_by_path())
+    if not lags:
+        return [result(0, "scheduler lag", PASS, "no scheduled runs yet.")]
+    listed = "; ".join(f"{name} {started:%d %b %H:%M} UTC +{lag} min" for name, started, lag in lags)
+    worst = max(lag for _, _, lag in lags)
+    if worst > trigger.LAG_WARN_MINUTES:
+        return [result(0, "scheduler lag", WARN, f"{trigger.LAG_WARNING}. Last {len(lags)} scheduled runs: {listed}.")]
+    return [result(0, "scheduler lag", PASS, f"last {len(lags)} scheduled runs started within "
+                                             f"{trigger.LAG_WARN_MINUTES} min of their cron time: {listed}.")]
+
+
 # --- Output ----------------------------------------------------------------------------
 
 def run(phase=None):
@@ -659,7 +683,7 @@ def run(phase=None):
         return phase2()
     if phase == 3:
         return phase3()
-    return phase1() + phase2() + phase3() + state_files() + sheet_retry_files() + linkedin_pages() + scoring_cost()
+    return phase1() + phase2() + phase3() + state_files() + sheet_retry_files() + linkedin_pages() + scheduler_lag() + scoring_cost()
 
 
 def summary(results, phase=None):
@@ -699,7 +723,8 @@ def main(argv=None):
                     print(f"[phase 2] NOTE  {note}")
                 pending_notes = []
             label = (f"phase {r['phase']}" if r["phase"] else
-                     "cost   " if r["check"] == "scoring cost" else "state  ")
+                     "cost   " if r["check"] == "scoring cost" else
+                     "sched  " if r["check"] == "scheduler lag" else "state  ")
             print(f"[{label}] {r['status']}  {r['check']:<{width}}  {r['reason']}")
         print(summary(results, args.phase))
     return 1 if any(r["status"] == FAIL for r in results) else 0

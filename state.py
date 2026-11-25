@@ -868,26 +868,34 @@ def record_shard_success(shard_state, shard, when=None):
     shard_state["last_success"][str(shard)] = (when or datetime.utcnow()).isoformat()
 
 
-def last_daily_slot(slot_utc, now=None):
-    """The most recent occurrence of the daily fetch slot (hour, minute UTC) at or before now."""
+def last_daily_slot(slot_utc, now=None, early_minutes=0):
+    """The most recent occurrence of the daily fetch slot (hour, minute UTC)
+    whose window has opened by now; the window opens `early_minutes` before
+    the slot (REV-11)."""
     now = now or datetime.utcnow()
     hour, minute = slot_utc
+    early = timedelta(minutes=early_minutes)
     slot = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    return slot if slot <= now else slot - timedelta(days=1)
+    return slot if slot - early <= now else slot - timedelta(days=1)
 
 
-def daily_source_due(shard_state, name, slot_utc, now=None):
-    """Due if the source has not succeeded since the most recent daily slot.
+def daily_source_due(shard_state, name, slot_utc, now=None, early_minutes=None):
+    """Due if the source has not succeeded since the most recent daily slot's
+    window opened (config.DAILY_SOURCE_EARLY_MINUTES before the slot).
 
     Scheduled runs start hours after their cron time, so this is keyed on the
     slot, not on which cron fired: the 04:17 run (whenever it actually starts)
     takes the daily sources, later runs that day find them done, and a failed
-    04:17 run leaves them due for the next slot.
+    04:17 run leaves them due for the next slot. REV-11: an external trigger
+    may fire a little early; such a run counts as the slot's own.
     """
+    if early_minutes is None:
+        from config import DAILY_SOURCE_EARLY_MINUTES as early_minutes
     last = shard_state["daily_sources"].get(name)
     if not last:
         return True
-    return datetime.fromisoformat(last) < last_daily_slot(slot_utc, now)
+    slot = last_daily_slot(slot_utc, now, early_minutes)
+    return datetime.fromisoformat(last) < slot - timedelta(minutes=early_minutes)
 
 
 def record_daily_source_success(shard_state, name, when=None):

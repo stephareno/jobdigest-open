@@ -70,7 +70,7 @@ The repository ships one starter list: about 4,700 US public companies from SEC 
 ## Limits
 
 - Built and tested for the United States. The location model uses an offline US places file; another country needs that file rebuilt from GeoNames (`tools/build_us_places.py` is the starting point) and has not been tried.
-- Delivery time depends on GitHub's scheduled-run queue, which on free-tier repositories routinely adds two to four hours. The schedule is set early enough that most digests arrive on time, not all.
+- Delivery time depends on GitHub's scheduler: scheduled runs are often hours late, and sometimes a slot is skipped; the optional external trigger (setup guide, phase 5) makes it on time. Without it, the schedule fires hours early so most digests still arrive by the set time, not all.
 - No source that requires a login. LinkedIn is covered through its alert emails.
 
 ## Privacy and data

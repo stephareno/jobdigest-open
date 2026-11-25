@@ -14,7 +14,8 @@ import sys
 HELP = """usage: python main.py <command> [options]
 
 Pipeline (GitHub Actions runs these):
-  fetch          fetch, score and queue new postings (one cycle slot; --daily-sources adds the daily ones)
+  fetch          fetch, score and queue new postings (one cycle slot; --daily-sources adds the daily ones;
+                   --by-clock takes the slot for this time of day, as an on-time external trigger does)
   digest         email and log every queued posting, then dequeue it (--scheduled: slot guard first)
   all            fetch then digest in one run (local use)
 
@@ -25,6 +26,7 @@ Setup and checks (no secrets needed unless noted):
   setup          interview in the terminal and write profile.yaml (--force to replace one;
                    --from-document PATH proposes defaults from a resume or job description, one model call)
   resolve        find boards for the companies in the profile's company lists: a preview first, then Continue? (--yes, --list, --max, --report-only, --guess-websites, --workdir)
+  trigger-setup  print the HTTP calls and steps for an external scheduler that starts runs on time (REV-11)
   sheet-init     create the Sheet's two tabs and header rows (GOOGLE_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_JSON)
   calibrate      rank postings under this profile (--json):
                    --titles [--sources a,b] [--max N]  live postings through the title gate and country filter; no model calls
@@ -123,7 +125,7 @@ def early(argv):
 
 
 def _early(argv):
-    if not argv or argv[0] in ("fetch", "all") or argv == ["digest"] or argv[:1] == ["--daily-sources"]:
+    if not argv or argv[0] in ("fetch", "all") or argv == ["digest"] or argv[:1] in (["--daily-sources"], ["--by-clock"]):
         return None
     cmd, rest = argv[0], argv[1:]
     if cmd in ("-h", "--help", "help"):
@@ -141,6 +143,9 @@ def _early(argv):
     if cmd == "resolve":
         import resolve
         return resolve.main(rest)
+    if cmd == "trigger-setup":
+        import trigger
+        return trigger.main(rest)
     if cmd == "sheet-init":
         import sheet_init
         return sheet_init.main(rest)

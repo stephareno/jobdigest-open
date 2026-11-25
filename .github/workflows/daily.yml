@@ -1,4 +1,6 @@
 name: Job Digest Agent
+# REV-11: an externally triggered run is named so in the Actions list.
+run-name: ${{ (inputs.scheduled == true || inputs.scheduled == 'true') && 'Job Digest Agent (external trigger)' || 'Job Digest Agent' }}
 
 # OPS-04: this workflow is the digest only. It emails and logs to the Sheet
 # every posting that fetch runs (fetch.yml) have scored and queued in
@@ -21,6 +23,14 @@ on:
     - cron: '17 8 * * 0-5'   # 02:17 America/Chicago when it is UTC-06:00
     - cron: '17 7 * * 0-5'   # 02:17 America/Chicago when it is UTC-05:00
   workflow_dispatch:
+    # REV-11: an external scheduler (python main.py trigger-setup) dispatches
+    # with scheduled=true: "treat this as the scheduled run". Off, it is a
+    # manual run. The API sends inputs as strings, the UI as a boolean.
+    inputs:
+      scheduled:
+        description: "Treat this as the scheduled run (set by the external trigger)"
+        type: boolean
+        default: false
 
 jobs:
   # PUB-06: the slot guard runs here, in its own job with no concurrency
@@ -176,6 +186,9 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           GOOGLE_DOC_ID: ${{ secrets.GOOGLE_DOC_ID }}
+          # REV-11: schedule | trigger (scheduled=true) | manual; a manual run
+          # adds no skipped day and leaves the alert-only email to a scheduled one.
+          RUN_KIND: ${{ github.event_name == 'schedule' && 'schedule' || ((inputs.scheduled == true || inputs.scheduled == 'true') && 'trigger' || 'manual') }}
         # The slot job has already decided this is the intended run.
         run: python main.py digest
 

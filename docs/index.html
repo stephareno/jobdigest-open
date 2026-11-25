@@ -149,7 +149,7 @@ footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
       <li>Apply, write, or contact anyone.</li>
       <li>Countries other than the US, without rebuilding the places file.</li>
       <li>Sources that need a login. LinkedIn is covered through its alert emails.</li>
-      <li>Guarantee the minute of arrival; GitHub's queue adds a couple of hours to scheduled runs, and the schedule allows for it.</li>
+      <li>Arrive on time on GitHub's schedule alone: scheduled runs are often hours late, and sometimes a slot is skipped; the optional external trigger (setup guide, phase 5) makes it on time.</li>
     </ul></div>
     <div class="card"><h4>The model</h4><p>Built and calibrated on Claude via the Anthropic API, which it requires today. All model calls go through one module; OpenAI-compatible endpoints are the first item on the public roadmap.</p></div>
     <div class="card"><h4>Privacy and data</h4><ul><li>The model provider receives your profile's scoring text and each posting's text, plus text from the website of each company on a digest card and, weekly, your notes on roles you declined.</li><li>The Google Sheet and Gmail are your own accounts. The LinkedIn reader opens one label, read-only, and, if page fetching is on, LinkedIn receives requests for each job page from the runner's address.</li><li>Status tracking, off by default, reads the last 14 days of your inbox read-only and sends the model only messages from others that name a company in your Sheet.</li><li>Your searches go to the job sources you turn on.</li></ul><p>Nothing is sent anywhere else: no server, analytics or telemetry of this project's.</p></div>

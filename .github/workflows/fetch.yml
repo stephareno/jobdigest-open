@@ -1,4 +1,6 @@
 name: Job Fetch (sharded)
+# REV-11: an externally triggered run is named so in the Actions list.
+run-name: ${{ (inputs.scheduled == true || inputs.scheduled == 'true') && 'Job Fetch (sharded) (external trigger)' || 'Job Fetch (sharded)' }}
 
 # OPS-04. Three runs a day. Each run fetches one slot of the startup tier's
 # two-day cycle (config.FETCH_CYCLE_SLOTS): every vendor's boards once a day
@@ -26,6 +28,14 @@ on:
     # needed: fetch time is not user-facing.
     - cron: '17 4,12,20 * * *'
   workflow_dispatch:
+    # REV-11: an external scheduler (python main.py trigger-setup) dispatches
+    # with scheduled=true: "treat this as the scheduled run". Off, it is a
+    # manual run. The API sends inputs as strings, the UI as a boolean.
+    inputs:
+      scheduled:
+        description: "Treat this as the scheduled run (set by the external trigger)"
+        type: boolean
+        default: false
 
 # One fetch at a time: seen_jobs.json and shard_state.json are written only
 # here. A different group from the digest -- see daily.yml.
@@ -105,9 +115,13 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          RUN_KIND: ${{ github.event_name == 'schedule' && 'schedule' || ((inputs.scheduled == true || inputs.scheduled == 'true') && 'trigger' || 'manual') }}
         # A manual dispatch always takes the daily sources; scheduled runs take
         # them only when due (not yet successful since 04:17 UTC today).
-        run: python main.py fetch ${{ github.event_name == 'workflow_dispatch' && '--daily-sources' || '' }}
+        # REV-11: a dispatch with scheduled=true is the scheduled run, on time:
+        # --by-clock takes the startup slot for this time of day, daily sources
+        # only when due.
+        run: python main.py fetch ${{ github.event_name == 'workflow_dispatch' && ((inputs.scheduled == true || inputs.scheduled == 'true') && '--by-clock' || '--daily-sources') || '' }}
 
       - name: Commit queue and fetch state
         # always(): a run killed after queueing must still commit the queue, or
